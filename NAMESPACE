@@ -1,0 +1,16 @@
+exportPattern(".+")
+
+import(ape)
+importFrom(ips, deleteEmptyCells, trimEnds, mafft, gblocks,
+           mrbayes, mrbayes.prset,
+           write.fas, write.phy, write.nex, phylo2mafft, read.fas,
+           descendants, sister, noi, fixNodes,
+           tipHeights, terminal.clades)
+import(methods)
+importFrom(RPostgreSQL, PostgreSQL, dbConnect, 
+           dbDisconnect, dbSendQuery, dbGetQuery, dbListTables, 
+           dbWriteTable, dbReadTable, dbExistsTable, dbRemoveTable)
+importFrom(seqinr, comp, c2s, s2c)
+import(snowfall)
+importFrom(tools, md5sum)
+import(XML)

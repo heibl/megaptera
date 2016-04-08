@@ -1,0 +1,30 @@
+megaptera package to-do (2015-11-18)
+
+* Erwartbare Fehler (z.B. 1 oder keine Arten pro Marker)
+  müssen abgepuffert werden, damit die pipeline durchläuft.
+  Dafür soll es ein log-file system geben, das Fehler und
+  Warnungen speichert und nachvollziehbar macht.
+
+* IGS: Derzeit funktioniert nur atpB-rbcL IGS. Das 
+  Ausschneiden der Referenzsequenzen scheint nicht ganz 
+  einfach zu sein, insbesondere bei trnS-G gibt es Probleme, 
+  da die tRNA häufiger wie 1 mal vorkommt
+
+* 28S 18S 5.8S ITS: vermeiden, dass Sequenzen doppelt 
+  verwendet werden
+
+* eine Funktion mit der man die Genabschnitte, die in einer 
+  bestimmten Gruppe vorliegen, suchen kann, wäre gut.
+
+* Text ausarbeiten: weiter mit "Taxonomy"
+
+* bei prune.to.rank() verschieben sich die node.label Werte!
+
+* stepG: Blockbildung und Maskierung (stepH) trennen
+
+* Maskierung auch mit Aliscore und TrimAl. Trim-Al muss noch in Ips implementiert werden; Aliscore ist es schon. 
+
+* "Marchantia polymorpha genes for 26S rRNA, 5S rRNA, 18S rRNA, 5.8S rRNA and 26S rRNA"
+  gi <- 4587226 
+
+* threshold für zeroDist einstellbar machen!

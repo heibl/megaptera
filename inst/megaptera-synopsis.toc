@@ -1,0 +1,15 @@
+\contentsline {section}{\numberline {1}Descricption of \texttt {step*} functions}{1}{section.1}
+\contentsline {subsection}{\numberline {1.1}stepA}{1}{subsection.1.1}
+\contentsline {subsection}{\numberline {1.2}stepB}{2}{subsection.1.2}
+\contentsline {subsection}{\numberline {1.3}stepC}{2}{subsection.1.3}
+\contentsline {subsection}{\numberline {1.4}stepD}{3}{subsection.1.4}
+\contentsline {subsection}{\numberline {1.5}stepE}{3}{subsection.1.5}
+\contentsline {subsection}{\numberline {1.6}stepF}{3}{subsection.1.6}
+\contentsline {subsection}{\numberline {1.7}stepG}{3}{subsection.1.7}
+\contentsline {section}{\numberline {2}Description of database}{3}{section.2}
+\contentsline {subsection}{\numberline {2.1}Table \texttt {acc\_*}}{3}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Table \texttt {spec\_*}/\texttt {gen\_*}}{4}{subsection.2.2}
+\contentsline {section}{\numberline {3}Updating the database}{4}{section.3}
+\contentsline {paragraph}{Problems}{5}{section*.2}
+\contentsline {section}{\numberline {4}Parallelization}{5}{section.4}
+\contentsline {section}{\numberline {5}Extended ingroup and surrogate species}{5}{section.5}
