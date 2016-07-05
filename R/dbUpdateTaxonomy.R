@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update: 2016-01-20)
+## © C. Heibl 2014 (last update: 2016-07-05)
 
 dbUpdateTaxonomy <- function(megapteraProj, taxonomy, tag){
   
@@ -136,7 +136,7 @@ dbUpdateTaxonomy <- function(megapteraProj, taxonomy, tag){
   
   ## 3. add higher ranks 
   ## -------------------
-  hr <- names(tax)[grep("ord", names(tax))[1]]
+  hr <- names(tax)[1] # hr: highest rank
   fam <- paste("SELECT DISTINCT fam",
                "FROM taxonomy", 
                "WHERE", wrapSQL("-", term = hr, operator = "="), 

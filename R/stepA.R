@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-02-02)
+## © C. Heibl 2014 (last update 2016-07-05)
 
 stepA <- function(x){
   
