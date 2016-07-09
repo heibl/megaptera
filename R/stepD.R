@@ -42,9 +42,6 @@ stepD <- function(x){
     stop("stepC has not been run")
   }
   
-  
-  
-  
   ## delete previous entries
   ## -----------------------
   if ( dbExistsTable(conn, "reference") ){

@@ -1,7 +1,11 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-02-25)
+## © C. Heibl 2014 (last update 2016-07-08)
 
-removeIsolatedTails <- function(x){
+removeIsolatedTails <- function(x, min.seq = 3){
+  
+  ## if alignment has fewer than predefined
+  ## number of sequences: do nothing!
+  if ( nrow(x) < min.seq ) return(x)
   
   core.function <- function(seqs){
     gaps <- seqs %in% as.raw(4)
@@ -21,13 +25,13 @@ removeIsolatedTails <- function(x){
     colnames(id) <- c("from", "to", "n", "gap")
     
     ## only one gap at the 3' end:
-    if ( nrow(id) == 2 & id[2, "gap"] == 1 ){
-      return(seqs)
+    if ( nrow(id) == 2 ){
+      if ( id[2, "gap"] == 1 ) return(seqs)
     }
     
     check <- which(id[, "gap"] == 1)
     remove.until <- 0
-    for (i in check ){
+    for ( i in check ){
       if ( id[i, "n"] > id[i + 1, "n"] ){
         break
       } else {
