@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-04-08)
+## © C. Heibl 2014 (last update 2016-07-13)
 
 stepD <- function(x){
   
@@ -91,7 +91,7 @@ stepD <- function(x){
         rr <- names(rr)[max(which(rr == 1))]
       } else {
         rr <- apply(tax, 2, grep, pattern = paste("^", "$", 
-                                                  sep = x@taxon@ingroup))
+                                                  sep = unlist(x@taxon@ingroup)))
         rr <- names(rr)[sapply(rr, length) > 0]
       }
     }

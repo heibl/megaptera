@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-07-08)
+## © C. Heibl 2014 (last update 2016-07-14)
 
 compareToRef <- function(megProj, spec, reference){
   
@@ -35,8 +35,10 @@ compareToRef <- function(megProj, spec, reference){
       }
       br <- sapply(names(reference), thisMean, d = d, sn = spec[1])
       br <- names(br)[which.min(br)]
-      reference <- reference[br]
     }
+    reference <- reference[br, ]
+    br <- paste("REF", br, sep = "_")
+    rownames(reference) <- br
   } else {
     br  <- "^REF_"
   }

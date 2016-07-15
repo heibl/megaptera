@@ -131,7 +131,7 @@ stepE <- function(x){
         rr <- names(rr)[max(which(rr == 1))]
       } else {
         rr <- apply(tax, 2, grep, pattern = paste("^", "$", 
-                                                  sep = x@taxon@ingroup))
+                                                  sep = unlist(x@taxon@ingroup)))
         rr <- names(rr)[sapply(rr, length) > 0]
       }
     }

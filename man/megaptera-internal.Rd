@@ -58,6 +58,7 @@
 \alias{getLineage}
 \alias{getMaxDist}
 \alias{htmlTable} % megaptera2Rmarkdown
+\alias{indet.species} % stepB, dbUpdateTaxonomy
 \alias{insert.tip.phylo}
 \alias{is.alignable}
 \alias{is.Linnean} % stepE

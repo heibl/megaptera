@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update: 2016-07-05)
+## © C. Heibl 2014 (last update: 2016-07-12)
 
 dbUpdateTaxonomy <- function(megapteraProj, taxonomy, tag){
   
@@ -174,18 +174,7 @@ dbUpdateTaxonomy <- function(megapteraProj, taxonomy, tag){
   ## 4. delete undeterminet species
   ##    (same set of tokens in stepB + stepBX)
   ## -----------------------------------------
-  indet <- c("_sp[.]?([_-]|$)", # Amanita_sp Amanita_sp. Amanita_sp_xxx Amanita_sp._xxx Amanita_sp-53
-             "_cf[.]", 
-             "_aff[.]", 
-             "hybrid(_sp.+)?$", # Juniperus_hybrid Juniperus_hybrid_sp._LO-2009
-             "Group$",
-             "cultivar$",
-             "environmental", # environmental_sample
-             "^fungal",
-             "uncultured",
-             "unknown",
-             ".[[:upper:]]",
-             "^[[:lower:]]")
+  indet <- indet.strings()
   if ( !megapteraProj@taxon@hybrids ){
     indet <- union(indet, "_x_|^x_")
   }
