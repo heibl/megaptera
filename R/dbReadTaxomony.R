@@ -1,9 +1,9 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-12-23)
+## © C. Heibl 2014 (last update 2016-07-28)
 
 dbReadTaxonomy <- function(megapteraProj, subset, tag){
   
-    conn <- dbconnect(megapteraProj)
+  conn <- dbconnect(megapteraProj)
   
   if ( !dbExistsTable(conn, "taxonomy") )
     stop("no taxonomy table - see ?dbUpdateTaxonomy for help")
@@ -20,7 +20,7 @@ dbReadTaxonomy <- function(megapteraProj, subset, tag){
     tax <- dbGetQuery(conn, "SELECT * FROM tmp")
     dbSendQuery(conn, "DROP TABLE tmp")
   }
-               
+  
   ## subsetting taxonomy ..
   ## ----------------------
   if ( !missing(subset) ){
@@ -30,29 +30,19 @@ dbReadTaxonomy <- function(megapteraProj, subset, tag){
       if ( is.list(subset) ) sset <- names(subset)
       if ( is.matrix(subset) ) sset <- rownames(subset)
       tax <- tax[tax[, megapteraProj@taxon@tip.rank] %in% sset, ]
-      
-      if ( megapteraProj@taxon@tip.rank != "spec" ){
-        tax <- unique(tax[, 1:which(names(tax) == megapteraProj@taxon@tip.rank)])
-      }
     }
     ## .. based on sequence names or ..
     ## --------------------------------
     if ( inherits(subset, "phylo") ){
       tax <- tax[tax[, megapteraProj@taxon@tip.rank] %in% subset$tip.label, ]
-      
-      if ( megapteraProj@taxon@tip.rank != "spec" ){
-        tax <- unique(tax[, 1:which(names(tax) == megapteraProj@taxon@tip.rank)])
-      }
     }
     ## .. based on <spec.*>
     ## --------------------
     if ( is.character(subset) ){
-      tip.rank <- gsub("_.+$", "", subset)
-      subset <- paste("SELECT", tip.rank, 
-                      "FROM", subset, 
-                      "WHERE status !~ 'excluded'")
-      subset <- dbGetQuery(conn, subset)[, tip.rank]
-      tax <- tax[tax[, tip.rank] %in% subset, ]
+      tax <- tax[tax[, megapteraProj@taxon@tip.rank] %in% subset, ]
+    }
+    if ( megapteraProj@taxon@tip.rank != "spec" ){
+      tax <- unique(tax[, 1:which(names(tax) == megapteraProj@taxon@tip.rank)])
     }
   }
   dbDisconnect(conn)
@@ -60,13 +50,13 @@ dbReadTaxonomy <- function(megapteraProj, subset, tag){
   ## remove trailing white spaces
   ## happens often when people prepare taxon lists in Excel
   ## ------------------------------------------------------
-#   tws <- grep(" $|_$", tax[, "spec"])
-#   if ( length(tws) > 0 ){
-#     tax[, "spec"] <- gsub(" $|_$", "", tax[, "spec"])
-#     warning("trailing white space removed in", 
-#             paste("\n - ", head(tax[, "spec"][tws], 3), sep = ""), 
-#             "\n - and ", length(tws) - 3, " more species")    
-#   }
+  #   tws <- grep(" $|_$", tax[, "spec"])
+  #   if ( length(tws) > 0 ){
+  #     tax[, "spec"] <- gsub(" $|_$", "", tax[, "spec"])
+  #     warning("trailing white space removed in", 
+  #             paste("\n - ", head(tax[, "spec"][tws], 3), sep = ""), 
+  #             "\n - and ", length(tws) - 3, " more species")    
+  #   }
   
   tax <- sqlTaxonomyHeader(tax) # should be obsolete
   tax

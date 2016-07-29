@@ -51,6 +51,7 @@
 \alias{extractIGS}
 \alias{extractLocus}
 \alias{filter.alignment}
+\alias{findRoot} % ncbiGenome
 \alias{fixTaxonomy} % deserves explicit doc
 \alias{force.mp}
 \alias{fuzzy.match}
@@ -58,7 +59,7 @@
 \alias{getLineage}
 \alias{getMaxDist}
 \alias{htmlTable} % megaptera2Rmarkdown
-\alias{indet.species} % stepB, dbUpdateTaxonomy
+\alias{indet.strings} % stepB, dbUpdateTaxonomy, ncbiGenome
 \alias{insert.tip.phylo}
 \alias{is.alignable}
 \alias{is.Linnean} % stepE

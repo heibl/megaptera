@@ -47,7 +47,7 @@ numeric between 0 and 1, giving the minimum proportion of nucleotide positions a
   }
   \item{check}{logical: if \code{TRUE}, the existance of a locus as specified by \code{...} and \code{not} will be checked. }
 }
-%%\details{}
+\details{The website \url{http://www.ncbi.nlm.nih.gov/genome/browse/?report=5} or \code{\link{ncbiGenome}} can be used to find complete organelle genomes that can be used as references.}
 \value{
 an object of class \code{locus} or \code{locusRef}
 }
@@ -55,6 +55,8 @@ an object of class \code{locus} or \code{locusRef}
 \author{Christoph Heibl}
 %%\note{}
 \seealso{
-\code{\link{dbPars}}, \code{\link{taxon}}, and \code{\link{megapteraPars}} for defining of database parameters, taxa, and the pipeline's parameters, respectively, and \code{\link{megapteraProj}} for the bundling of input data.
+\code{\link{ncbiGenome}} helps to select representative organelle genomes as references. 
+
+Use \code{\link{dbPars}}, \code{\link{taxon}}, and \code{\link{megapteraPars}} for defining of database parameters, taxa, and the pipeline's parameters, respectively, and \code{\link{megapteraProj}} for the bundling of input data.
 }
 %\examples{}

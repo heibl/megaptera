@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-01-04)
+## © C. Heibl 2014 (last update 2016-07-28)
 
 downloadSequences <- function(x, taxon){
   
@@ -14,13 +14,13 @@ downloadSequences <- function(x, taxon){
   
   ## post UIDs on Entrez History Server
   ## ----------------------------------
-  xml <- paste("http://eutils.ncbi.nlm.nih.gov/entrez/", 
+  xml <- paste0("http://eutils.ncbi.nlm.nih.gov/entrez/", 
                "eutils/esearch.fcgi?",
                "tool=megaptera",
                "&email=heibsta@gmx.net",
                "&usehistory=y", 
                "&retmax=99999",
-               "&db=nucleotide", sep = "")
+               "&db=nucleotide")
   xml <- paste(xml, "&term=", 
                term(taxon, x@taxon@kingdom, x@locus),
                sep = "")
@@ -43,6 +43,7 @@ downloadSequences <- function(x, taxon){
   ## start downloading only if at least one sequence
   ## needs to be downloaded
   ## -----------------------------------------------
+  ## NOTE as of 2016-07-26 this XML still contains only GIs and no GBs
   uid <- unlist(xpathSApply(xml, "//eSearchResult/IdList", xmlToList))
   conn <- dbconnect(x)
   present.gi <- dbGetQuery(conn, paste("SELECT gi FROM", acc.tab))$gi
@@ -51,7 +52,6 @@ downloadSequences <- function(x, taxon){
     slog("\n.. all", n, "sequences already in database ..", file = logfile)
     return(NULL)
   }
-  
   
   ## loop over sliding window
   ## ------------------------
@@ -67,13 +67,13 @@ downloadSequences <- function(x, taxon){
     
     ## get XML with full records
     ## -------------------------
-    xml <- paste("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/", 
+    xml <- paste0("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/", 
                  "efetch.fcgi?tool=megaptera&email=heibsta@gmx.net",
                  "&db=nucleotide&query_key=", queryKey, 
                  "&WebEnv=", webEnv,
                  "&rettype=gb&retmode=xml",
                  "&retstart=", sw$from[i], 
-                 "&retmax=", retmax, sep = "")
+                 "&retmax=", retmax)
     
     ## parse XML: this step is error-prone and therefore
     ## embedded into try()

@@ -4,7 +4,7 @@
 ncbiTaxonomy <- function(taxon, kingdom, extend = FALSE, trim, 
                          megapteraProj){
   
-  kingdom <- match.arg(kingdom, c("Fungi", "Metazoa", "Viridiplantae"))
+ kingdom <- match.arg(kingdom, c("Fungi", "Metazoa", "Viridiplantae"))
   
   taxon.untouched <- taxon
   species.list <- unique(is.Linnean(unlist(taxon)))
@@ -59,20 +59,12 @@ ncbiTaxonomy <- function(taxon, kingdom, extend = FALSE, trim,
     }
     z
   }
-  z <- lapply(z, dis)
+  z <- lapply(z, dis) 
   
   ## check ranks and add columns if necessary
   ## ----------------------------------------
-  ranks <- lapply(z, function(z) z$rank)
-  rankSet <- unique(ranks)
-  if ( length(rankSet) == 1 ){
-    cat("\n.. unique rank set ..")
-    ranks <- rankSet[[1]]
-  } else {
-    ranks <- sortRanks(rankSet)
-    z <- lapply(z, addRanks, ranks)
-  } # end of IF clause
-  
+  ranks <- sortRanks(z)
+  z <- lapply(z, addRanks, ranks)
   z <- lapply(z, function(z) z$name)
   z <- do.call(rbind, z)
   colnames(z) <- ranks
