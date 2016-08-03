@@ -1,12 +1,12 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-02-15)
+## © C. Heibl 2016 (last update 2016-08-01)
 
 checkStatus <- function(x, locus){
   
-  conn <- dbconnect(x)
-  
-  tabs <- dbTableNames(x)
   if ( missing(locus) ) locus <- x@locus@sql
+  
+  conn <- dbconnect(x)
+  tabs <- dbTableNames(x)
   locus <- gsub("^([[:digit:]])", "_\\1", locus) ## ex: 12s -> _12s
   acc.tab <- paste("acc", locus, sep = "_")
   acc.tab <- gsub("__", "_", acc.tab)
@@ -62,7 +62,13 @@ checkStatus <- function(x, locus){
   gg <- dbReadDNA(x, msa.tab, 
                   taxon = ".+", regex = TRUE,
                   blocks = "ignore")
-  if ( is.matrix(gg) ) obj["G"] <- TRUE
+  if ( is.matrix(gg) ){
+    obj["G"] <- TRUE
+  } else {
+    dbDisconnect(conn)
+    return(obj)
+  }
+  
   
   ## stepH
   hh <- paste("SELECT count(status)",

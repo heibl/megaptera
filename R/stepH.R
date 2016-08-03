@@ -77,8 +77,7 @@ stepH <- function(x, max.mad = 0.01){
     a <- do.call(rbind, a)
   } else {
     a <- dbReadDNA(x, msa.tab, taxon = ".+", regex = TRUE,
-                   ignore.excluded = TRUE, blocks = "ignore",
-                   max.bp = max.bp)
+                   ignore.excluded = TRUE, blocks = "ignore")
   }
   ## check if stepG has been run properly
   ## should include checking for status = 'raw'
@@ -115,6 +114,10 @@ stepH <- function(x, max.mad = 0.01){
   slog("\n.. assessing saturation: MAD =", round(check.mad, 5),
        file = logfile)
   if ( check.mad <= max.mad ){
+    SQL <- paste("UPDATE", msa.tab,
+                 "SET status = '1 block'",
+                 "WHERE status = 'aligned'")
+    dbSendQuery(conn, SQL)
     dbDisconnect(conn)
     slog(paste("\n.. MAD below threshold of ", max.mad, ": ",
          "alignment not saturated\n", sep = ""), file = logfile)

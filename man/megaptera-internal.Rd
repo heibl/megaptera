@@ -75,7 +75,6 @@
 \alias{ncbiLineage}
 \alias{NCBI.wrap}
 \alias{nucleotideOverlap}
-\alias{removeIsolatedTails} % stepD
 \alias{revCompTest}
 \alias{robustXMLparse} % downloadSequences
 \alias{select.seqs}

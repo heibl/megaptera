@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-07-13)
+## © C. Heibl 2014 (last update 2016-08-01)
 
 stepD <- function(x){
   
@@ -10,6 +10,11 @@ stepD <- function(x){
   if ( !inherits(x, "megapteraProj") )
     stop("'x' is not of class 'megapteraProj'")
   if ( x@locus@kind == "undefined" ) stop("undefined locus not allowed")
+  STATUS <- checkStatus(x)
+  if ( !all(STATUS[1:3]) ){
+    stop("step", names(STATUS)[min(which(!STATUS))] ,
+         " has not been run")
+  }
   
   ## PARAMETERS
   ## -----------
@@ -32,16 +37,6 @@ stepD <- function(x){
   ## ------------------------
   conn <- dbconnect(x)
   
-  ## check if stepC has been run
-  ## ---------------------------
-  status <- paste("SELECT DISTINCT status",
-                  "FROM", acc.tab)
-  status <- dbGetQuery(conn, status)
-  if ( "raw" %in% status$status ){
-    dbDisconnect(conn)
-    stop("stepC has not been run")
-  }
-  
   ## delete previous entries
   ## -----------------------
   if ( dbExistsTable(conn, "reference") ){
@@ -60,7 +55,6 @@ stepD <- function(x){
     ref <- as.list(ref)
     if ( length(ref) > 1 ){
       ref <- mafft(ref, path = x@align.exe) # realign in any case!
-      ref <- removeIsolatedTails(ref)
       ref <- trimEnds(ref, .75 * nrow(ref)) ## try to make coverage comparable
     } else {
       ref <- as.matrix(ref)

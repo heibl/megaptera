@@ -1,6 +1,15 @@
+## This code is part of the megaptera package
+## © C. Heibl 2016 (last update 2016-08-01)
+
 dbSummaryMSA <- function(x, masked = FALSE){
   
   tabs <- dbTableNames(x, x@taxon@tip.rank)
+  
+  ## which loci completed stepH?
+  STATUS <- gsub(paste0(x@taxon@tip.rank, "_"), "", tabs)
+  STATUS <- lapply(STATUS, checkStatus, x = x)
+  STATUS <- do.call(rbind, STATUS)
+  tabs <- tabs[STATUS[, "H"]]
   
   engine <- function(msa, masked, model = "JC69"){
     

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-04-08)
+## © C. Heibl 2014 (last update 2016-08-01)
 
 stepF <- function(x){
   
@@ -10,6 +10,11 @@ stepF <- function(x){
   if ( !inherits(x, "megapteraProj") )
     stop("'x' is not of class 'megapteraProj'")
   if ( x@locus@kind == "undefined" ) stop("undefined locus not allowed")
+  STATUS <- checkStatus(x)
+  if ( !all(STATUS[1:5]) ){
+    stop("step", names(STATUS)[min(which(!STATUS))] ,
+         " has not been run")
+  }
   
   ## PARAMETERS
   ## -----------
@@ -49,30 +54,6 @@ stepF <- function(x){
   
   ## open database connection
   conn <- dbconnect(x)
-  
-  ## check if stepC has been run
-  ## ---------------------------
-  status <- paste("SELECT DISTINCT status",
-                  "FROM", acc.tab)
-  status <- dbGetQuery(conn, status)
-  if ( "raw" %in% status$status ){
-    dbDisconnect(conn)
-    stop("stepC has not been run")
-  }
-  
-  ## check if stepE has been run
-  ## ---------------------------
-  SQL <- paste("SELECT identity, coverage ",
-               "FROM", acc.tab, 
-               "WHERE identity IS NOT NULL",
-               "AND coverage IS NOT NULL",
-               "AND status !~ 'excluded|too'")
-  check <- dbGetQuery(conn, SQL)
-  if ( nrow(check) == 0 ){
-    dbDisconnect(conn)
-    slog("\nWARNING: no species found\n", file = logfile)
-    return()
-  }
   
   ## UNDER DEVOLOPMENT: check if update necessary
   ## --------------------------------------------

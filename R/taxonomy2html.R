@@ -1,10 +1,11 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-02-04)
+## © C. Heibl 2016 (last update 2016-07-31)
 
 taxonomy2html <- function(tax){
+  
   tax$spec <- gsub("^.*_", "", tax$spec)
   
-  id <- apply(tax[, 1:grep("spec", names(tax))], 2, 
+  id <- apply(tax[, 1:grep("^spec$", names(tax))], 2, 
               function(z) length(unique(z)))
   id <- max(which(cumsum(id) == 1:length(id))) -1
   tax <- tax[, -(1:id)]

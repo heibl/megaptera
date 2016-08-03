@@ -6,14 +6,14 @@ megaptera2Rmarkdown <- function(x, file){
   if ( missing(file) ) file <- "megaptera.Rmd"
   
   z <- c("---", 
-         paste('title: "', 
-               paste("megaptera", packageDescription("megaptera")$Version),
-               '"', sep = ""),
+         paste0('title: "', 
+                paste("megaptera", packageDescription("megaptera")$Version),
+                '"'),
          paste("date:", Sys.time()),
          "output:", 
          "  html_document:",
          "    toc: true",
-         paste("    css:", gsub("Rmd", "css", file)),
+         "    css: megaptera.css",
          "---")
   
   save(x, file = "megapteraProj.rda")
@@ -77,32 +77,41 @@ megaptera2Rmarkdown <- function(x, file){
   
   ## 2: STATUS locus-wise
   ## -----------------
-  tabs <- dbTableNames(x)
-  tabs <- tabs[grep("acc_", tabs)]
+  tabs <- dbTableNames(x, "acc")
   if ( length(tabs) == 0 ){
-    ss <- c(TRUE, rep(FALSE, 8))
-    names(ss) <- LETTERS[1:9]
-    ss <- do.call(rbind, list(ss))
+    if ( "taxonomy" %in% dbTableNames(x, "all") ){
+      z <- c(z, "# Status of the pipeline", 
+             "Taxonomy table has been created (stepA)", "",
+             "No sequences have been downloaded yet (stepB)", "")
+    }
+  } else {
+    
+    ## create status table when stepB has been called
+    ## at least once
+    tabs <- gsub("acc_", "", tabs)
+    STATUS <- lapply(tabs, checkStatus, x = x)
+    STATUS <- do.call(rbind, STATUS)
+    rownames(STATUS) <- tabs
+    id <- order(apply(STATUS, 1, which.min),
+                decreasing = TRUE)
+    STATUS <- STATUS[id, , drop = FALSE]
+    
+    ss <- cbind(rownames(STATUS), STATUS)
+    ss[ss == "TRUE"] <- '<div class="gd"></div>'
+    ss[ss == "FALSE"] <- '<div class="rd"></div>'
     ss <- htmlTable(ss)
-    z <- c(z, "# Status of the pipeline", ss, "-")
-    write(z, file = file)
-    return()  
-  } 
-  tabs <- gsub("acc_", "", tabs)
-  STATUS <- lapply(tabs, checkStatus, x = x)
-  STATUS <- do.call(rbind, STATUS)
-  rownames(STATUS) <- tabs
-  id <- order(apply(STATUS, 1, which.min),
-              decreasing = TRUE)
-  STATUS <- STATUS[id, , drop = FALSE]
+    z <- c(z, 
+           "# Status of the pipeline",
+           "<table style=\"border-collapse: collapse;\">",
+           "<tr>",
+           "<td style=\"border:2px solid #fff;\"><div class=\"gd\"></div></td>",
+           "<td style=\"border:2px solid #fff;\">finished, </td>",
+           "<td style=\"border:2px solid #fff;\"><div class=\"rd\"></div></td>",
+           "<td style=\"border:2px solid #fff;\">pending</td></tr>",
+           "</table><br>",
+           ss, "")
+  }
   
-  ss <- cbind(rownames(STATUS), STATUS)
-  ss[ss == TRUE] <- '<div class="gd"></div>'
-  ss[ss == "FALSE"] <- '<div class="rd"></div>'
-  ss <- htmlTable(ss)
-  z <- c(z, 
-         "# Status of the pipeline",
-         ss, "")
   
   ## 3: TAXONOMY
   ## ------------------
@@ -163,52 +172,66 @@ megaptera2Rmarkdown <- function(x, file){
          # "```", 
          "")
   
+  ## stop here if no sequences have been downloaded so far
+  ## -----------------------------------------------------
+  if ( length(tabs) == 0  ){
+    write(z, file = file)
+    return()  
+  }
+  
   ## RAW SEQUENCES
   ## -------------
   z <- c(z, "# DNA sequence retrieval",
-  "## Species without any sequences",
-  "## Number of species per locus",
-  "```{r, echo=FALSE, message=FALSE}",
-  "gb <- checkSpecLocus(x, 'gb')",
-  "```", "")
-
-
-## SELECTED SEQUENCES
-## ------------------
-if ( all(!STATUS[, "F"]) ){
+         "## Species without any sequences",
+         "## Number of species per locus",
+         "```{r, echo=FALSE, message=FALSE}",
+         "gb <- checkSpecLocus(x, 'gb')",
+         "```", "")
+  
+  
+  ## SELECTED SEQUENCES
+  ## ------------------
+  if ( all(!STATUS[, "F"]) ){
+    write(z, file = file)
+    return()  
+  }
+  tab <- checkSpecLocus(x, 'sel', plot = FALSE)
+  tab <- cbind(rownames(tab$specPerMarker), tab$specPerMarker)
+  colnames(tab) <- c("Locus", "Number of sequences", 
+                     "Number of private sequences")
+  tab <- htmlTable(tab) 
+  z <- c(z, 
+         "# Sequence selection and alignment",
+         "## Species not selected for alignment",
+         "## Number of species per locus",
+         "```{r, echo=FALSE, message=FALSE}",
+         "sel <- checkSpecLocus(x, 'sel')",
+         "```", "", tab)
+  
+  if ( all(!STATUS[, "G"]) ){
+    write(z, file = file)
+    return()  
+  }
+  
+  if ( all(!STATUS[, "H"]) ){
+    write(z, file = file)
+    return()  
+  }
+  
+  ## SATURATION + BLOCKS
+  ## ------------------
+  msa <- dbSummaryMSA(x)
+  msa[, -1] <- apply(msa[, -1], 2, 
+                     function(y) round(as.numeric(y), digits = 4))
+  msa <- cbind(Locus = rownames(msa), msa)
+  tab <- htmlTable(msa)
+  z <- c(z, 
+         "# Evaluation of alignments",
+         "## Saturation",
+         tab, 
+         "```{r, echo=FALSE, message=FALSE}",
+         "b <- checkBlocks(x)",
+         "```", "")
+  
   write(z, file = file)
-  return()  
-}
-tab <- checkSpecLocus(x, 'sel', plot = FALSE)
-tab <- cbind(rownames(tab$specPerMarker), tab$specPerMarker)
-colnames(tab) <- c("Locus", "Number of sequences", 
-                   "Number of private sequences")
-tab <- htmlTable(tab) 
-z <- c(z, 
-       "# Sequence selection and alignment",
-       "## Species not selected for alignment",
-       "## Number of species per locus",
-       "```{r, echo=FALSE, message=FALSE}",
-       "sel <- checkSpecLocus(x, 'sel')",
-       "```", "", tab)
-
-## SATURATION + BLOCKS
-## ------------------
-msa <- dbSummaryMSA(x)
-msa[, -1] <- apply(msa[, -1], 2, 
-                   function(y) round(as.numeric(y), digits = 4))
-msa <- cbind(Locus = rownames(msa), msa)
-tab <- htmlTable(msa)
-z <- c(z, 
-       "# Evaluation of alignments",
-       "## Saturation",
-       tab, 
-       "```{r, echo=FALSE, message=FALSE}",
-       "b <- checkBlocks(x)",
-       "```", "")
-
-
-
-
-write(z, file = file)
 }

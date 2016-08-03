@@ -38,9 +38,23 @@ dbReadTaxonomy <- function(megapteraProj, subset, tag){
     }
     ## .. based on <spec.*>
     ## --------------------
-    if ( is.character(subset) ){
+    if ( is.character(subset) & length(subset) == 1 ){
+      tip.rank <- gsub("_.+$", "", subset)
+      subset <- paste("SELECT", tip.rank, 
+                      "FROM", subset, 
+                      "WHERE status !~ 'excluded'")
+      subset <- dbGetQuery(conn, subset)[, tip.rank]
+      tax <- tax[tax[, tip.rank] %in% subset, ]
+    }
+    ## .. based on a vector of species names
+    ## -------------------------------------
+    if ( is.character(subset) & length(subset) > 1 ){
       tax <- tax[tax[, megapteraProj@taxon@tip.rank] %in% subset, ]
     }
+    
+    
+    ## .. delete ranks lower than 'tip.rank'
+    ## -------------------------------------
     if ( megapteraProj@taxon@tip.rank != "spec" ){
       tax <- unique(tax[, 1:which(names(tax) == megapteraProj@taxon@tip.rank)])
     }

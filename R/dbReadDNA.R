@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-02-01)
+## © C. Heibl 2014 (last update 2016-07-30)
 
 dbReadDNA <- function(x, tab.name, taxon, regex = FALSE, 
                       max.bp, min.identity, min.coverage,
@@ -10,7 +10,6 @@ dbReadDNA <- function(x, tab.name, taxon, regex = FALSE,
   otaxon <- taxon
   dna <- ifelse(masked, "masked", "dna")
   blocks <- match.arg(blocks, c("ignore", "split", "concatenate"))
-  if ( missing(max.bp) ) max.bp <- x@params@max.bp
   
   ## esacape metacharacters in taxon names
   ## -------------------------------------
@@ -34,6 +33,7 @@ dbReadDNA <- function(x, tab.name, taxon, regex = FALSE,
     
     ## retrieve sequences from acc.table
     ## ---------------------------------
+    if ( missing(max.bp) ) max.bp <- x@params@max.bp
     SQL <- paste("SELECT taxon, gi, dna FROM ", tab.name, 
                  " WHERE taxon ~ '", taxon, "'", sep = "")
     SQL <- paste(SQL, "AND npos <=", max.bp)
@@ -55,11 +55,13 @@ dbReadDNA <- function(x, tab.name, taxon, regex = FALSE,
     ## ------------------------------------------------
     tip.rank <- x@taxon@tip.rank
     SQL <- ifelse(ignore.excluded,
-                   " AND status !~ 'excluded'", "") 
+                   "AND status !~ 'excluded'", "")
+    if ( !missing(max.bp)) {
+      SQL <- paste(paste("AND npos <=", max.bp), SQL)
+    }
     SQL <- paste("SELECT", paste(tip.rank, "status", dna, sep = ", "),
                  "FROM", tab.name, 
                  "WHERE", wrapSQL(taxon, term = tip.rank),
-                 "AND npos <=", max.bp,
                  SQL)
     # if ( masked ) SQL <- paste(SQL, "AND status ~ 'masked'") # masking can drop species from alignments!
     seqs <- dbGetQuery(conn, SQL)
@@ -69,8 +71,15 @@ dbReadDNA <- function(x, tab.name, taxon, regex = FALSE,
       return(NULL)
     }
     na <- is.na(seqs[, 3])
+    if ( all(na) ){
+      return(NULL)
+    }
     if ( any(na) ) {
-      nodata <- seqs$spec[na]
+      nodata <- sort(seqs$spec[na])
+      l <- length(nodata)
+      if ( l > 12 ){
+        nodata <- c(head(nodata), paste("... [", l, "species in total]"))
+      }
       warning(paste(nodata, collapse = ", "), " removed")
       seqs <- seqs[!na, ]
     }

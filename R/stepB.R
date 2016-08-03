@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-07-12)
+## © C. Heibl 2014 (last update 2016-07-31)
 
 stepB <- function(x, update.seqs = "no"){
   

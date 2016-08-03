@@ -82,8 +82,7 @@ stepI <- function(x){
   #     a <- do.call(rbind, a)
   #   } else {
   a <- dbReadDNA(x, msa.tab, taxon = ".+", regex = TRUE,
-                 ignore.excluded = TRUE, blocks = "split",
-                 max.bp = max.bp)
+                 ignore.excluded = TRUE, blocks = "split")
   # }
   if ( is.null(a) ) {
     dbDisconnect(conn)

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-04-08)
+## © C. Heibl 2014 (last update 2016-08-01)
 
 stepG <- function(x){	
   
@@ -12,6 +12,11 @@ stepG <- function(x){
     stop("'x' is not of class 'megapteraProj'")
   if ( x@locus@kind == "undefined" ) 
     stop("undefined locus not allowed")
+  STATUS <- checkStatus(x)
+  if ( !all(STATUS[1:6]) ){
+    stop("step", names(STATUS)[min(which(!STATUS))] ,
+         " has not been run")
+  }
   
   ## PARAMETERS
   ## ----------
@@ -31,18 +36,10 @@ stepG <- function(x){
                       "\nSTEP G: alignment\n", 
                       paste("\n.. locus:", x@locus@sql), file = logfile)
   
+  
+  
   ## open database connection
   conn <- dbconnect(x)
-  
-  ## check if stepC has been run
-  ## ---------------------------
-  status <- paste("SELECT DISTINCT status",
-                  "FROM", acc.tab)
-  status <- dbGetQuery(conn, status)
-  if ( "raw" %in% status$status ){
-    dbDisconnect(conn)
-    stop("stepC has not been run")
-  }
   
   ## check if msa table exists
   ## -------------------------

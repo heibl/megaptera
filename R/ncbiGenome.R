@@ -17,7 +17,7 @@ ncbiGenome <- function(x, organelle, n = 5){
     ingroup.root <- findRoot(ingroup.root)
   }
   slog("\n.. ingroup root  :", ingroup.root)
-
+  
   ## set outgroup root
   ## -----------------
   if ( length(x@taxon@outgroup) == 1 ){
@@ -35,14 +35,15 @@ ncbiGenome <- function(x, organelle, n = 5){
                 "tool=megaptera",
                 "&email=heibsta@gmx.net",
                 "&usehistory=y",
+                "&retmax=9999",
                 "&db=nucleotide",
-                "&term=(", x@taxon@ingroup, 
+                "&term=(", ingroup.root, 
                 "[Organism] AND ", organelle,
                 "[Title] AND \"complete genome\"[Title])",
-                "OR (", x@taxon@outgroup[[1]], 
+                "OR (", outgroup.root, 
                 "[Organism] AND ", organelle,
-                      "[Title] AND \"complete genome\"[Title])"
-                )
+                "[Title] AND \"complete genome\"[Title])"
+  )
   # cat(xml)
   
   ## get and parse results via eFetch from history server
@@ -53,7 +54,7 @@ ncbiGenome <- function(x, organelle, n = 5){
   queryKey <- xpathSApply(xml, fun = xmlToList,
                           path = "//eSearchResult/QueryKey")
   nn <- as.numeric(xpathSApply(xml, fun = xmlValue,
-                              path = "//eSearchResult/Count"))
+                               path = "//eSearchResult/Count"))
   if ( nn == 0 ){
     stop("no ", organelle, " genomes available for ", x@taxon@ingroup)
   }
@@ -62,7 +63,7 @@ ncbiGenome <- function(x, organelle, n = 5){
   ## ------------------------
   retmax = 50
   sw <- seq(from = 0, to = nn, by = retmax)
-  sw <- data.frame(from = sw, to = c(sw[-1] - 1, n))
+  sw <- data.frame(from = sw, to = c(sw[-1] - 1, nn))
   slog("\n.. posting", nn, "UIDs on Entrez History Server ..")
   b <- ifelse(nrow(sw) == 1, "batch", "batches")
   slog("\n.. retrieving full records in", nrow(sw), b, "..\n")
@@ -109,7 +110,11 @@ ncbiGenome <- function(x, organelle, n = 5){
   
   ## create unique set of genera of determined accessions
   ## ----------------------------------------------------
-  tr <- dbReadTaxonomy(x, subset = y$taxon)
+  # tr <- dbReadTaxonomy(x, subset = y$taxon)
+  # notintax <- setdiff(y$taxon, tr$spec)
+  tr <- ncbiTaxonomy(as.list(y$taxon), 
+                     kingdom = x@taxon@kingdom,
+                     megapteraProj = x)
   tr <- tax2tree(tr)
   tr <- compute.brlen(tr)
   # tr <- cophenetic.phylo(tr)

@@ -17,11 +17,8 @@ alignGenus <- function(genus, megProj){
   ## ----------------------------
   slog("\n   -", genus, file = logfile)
   if ( tip.rank == "spec" ) genus <- paste(genus, "_", sep = "")
-  ## note the factor in max.bp: this is because consensus sequences
-  ## can be longer than the longest of its input sequences
   seqs <- dbReadDNA(megProj, tab.name = msa.tab, 
                     taxon = genus, regex = TRUE,
-                    max.bp = max.bp * 1.5, 
                     blocks = "ignore")
   
   n <- ifelse(is.list(seqs), length(seqs), nrow(seqs))
@@ -37,9 +34,10 @@ alignGenus <- function(genus, megProj){
                   path = align.exe, quiet = TRUE)
     seqs <- seqs[rownames(seqs) != "REF", ]
     seqs <- trimEnds(seqs, 1)
+    seqs <- deleteEmptyCells(seqs)
     dbWriteMSA(megProj, dna = seqs, status = "genus-aligned")
-  }
-  else {
+  } else {
+    ## "alignment" of one single species
     seqs <- as.matrix(seqs)
     if ( tip.rank == "spec" ) slog(" --", n, "species", file = logfile)  
   }
