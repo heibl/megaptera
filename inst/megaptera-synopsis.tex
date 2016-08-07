@@ -32,7 +32,8 @@
 \maketitle
 \tableofcontents
 
-\section{Descricption of \texttt{step*} functions}
+\newpage
+\section{Description of \texttt{step*} functions}
 
 \subsection{stepA}
 
@@ -52,9 +53,9 @@
 
 \item Search the attribute \texttt{spec\_ncbi} for a set of regular expressions indicating sequences that stem from samples that are undetermined at the level of species and set their attribute \texttt{status} to \texttt{`excluded (indet)'}.
 
-\item Rename intraspecific taxa.
+\item Crop subspecies names in attribute \texttt{taxon} with \texttt{strip.infraspec()}; the full names are still available in attribute \texttt{spec\_ncbi}.
 
-\item Exclude sequences that are to long to align, i.e., sequences exceeding the the number of \texttt{max.bp} base pairs, by tagging their attribute \texttt{status} as \texttt{`excluded (too long)'}.
+\item Exclude sequences that are too long to align, i.e., sequences exceeding the the number of \texttt{max.bp} base pairs (default is 5000 bp), by tagging their attribute \texttt{status} as \texttt{`excluded (too long)'}.
 
 \item Run \texttt{dbMaxGIPerSpec} to chose the \texttt{max.gi.per.spec} longest sequences per species for alignment; the rest will be tagged as \texttt{`excluded (max.gi)'}.
 
@@ -113,6 +114,12 @@
 %% DATABASE
 \section{Description of database}
 
+%% TAXONOMY
+\subsection{Table \texttt{taxonomy}}
+
+%% REFERENCE
+\subsection{Table \texttt{reference}}
+
 %% ACC
 \subsection{Table \texttt{acc\_*}}
 
@@ -147,7 +154,8 @@
 \end{description}
 
 
-
+%% STATUS
+\section{Checking pipeline status}
 
 %% UPDATE
 \section{Updating the database}

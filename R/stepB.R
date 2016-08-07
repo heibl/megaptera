@@ -120,6 +120,7 @@ stepB <- function(x, update.seqs = "no"){
   dbSendQuery(conn, SQL)
   
   ## select sequences if there are > max.gi.per.spec
+  ## -----------------------------------------------
   dbMaxGIPerSpec(x)
   
   ## create and update relation <taxonomy>

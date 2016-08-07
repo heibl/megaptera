@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-03-02)
+## © C. Heibl 2014 (last update 2016-08-06)
 
 stepC <- function(x){
   
@@ -78,7 +78,8 @@ stepC <- function(x){
        file = logfile)
   SQL <- paste("UPDATE", acc.tab, 
                "SET status = 'single'",
-               "WHERE", sql.wrap(singles, term = "taxon", BOOL = NULL))
+               "WHERE", wrapSQL(singles, term = "taxon", boolean = NULL, operator = "="),
+               "AND status !~ 'excluded'")
   lapply(SQL, dbSendQuery, conn = conn)
   
   ## mark species that have already been aligned
