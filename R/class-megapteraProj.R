@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-12-22)
+## © C. Heibl 2014 (last update 2016-08-16)
 
 setClass("taxon", 
          representation = list(
@@ -25,6 +25,7 @@ setClass("megapteraProj",
            taxon = "taxon",
            locus = "locus",
            align.exe = "character", 
+           merge.exe = "character", 
            mask.exe = "character",
            params = "megapteraPars",
            update = "logical")
@@ -33,6 +34,7 @@ setClass("megapteraProj",
 "megapteraProj" <- function(db, taxon, 
                             locus = locus(), 
                             align.exe = "undefined",
+                            merge.exe = "undefined",
                             mask.exe = "undefined",
                             params = megapteraPars(),
                             update = FALSE){
@@ -42,6 +44,7 @@ setClass("megapteraProj",
       taxon = taxon,
       locus = locus,
       align.exe = align.exe,
+      merge.exe = merge.exe,
       mask.exe = mask.exe,
       params = params,
       update = update
@@ -80,6 +83,9 @@ setMethod("show",
                        "serial"))
             cat("\nupdate         :", 
                 ifelse(object@update, "yes", "no"))
+            cat("\nalignment      :", object@align.exe)
+            cat("\nmerging        :", object@merge.exe)
+            cat("\nmasking        :", object@mask.exe)
           }
 )
 

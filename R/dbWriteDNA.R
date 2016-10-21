@@ -1,7 +1,8 @@
 ## This code is part of the megaptera package
 ## © C. Heibl 2014 (last update 2016-02-25)
 
-dbWriteDNA <- function(conn, tab.name, dna, enforce.binomial = TRUE, status){
+dbWriteDNA <- function(conn, tab.name, dna, 
+                       enforce.binomial = TRUE, status){
   
   if ( is.matrix(dna) ) dna <- as.list(dna)
   dna <- as.character(dna)

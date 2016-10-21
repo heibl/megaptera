@@ -3,7 +3,7 @@
 
 dbReadDNA <- function(x, tab.name, taxon, regex = FALSE, 
                       max.bp, min.identity, min.coverage,
-                      ignore.excluded = TRUE, 
+                      ignore.excluded = TRUE, subtree = FALSE,
                       blocks = "split", masked = FALSE){
   
   if ( missing(taxon) ) taxon <- ".+"
@@ -59,9 +59,15 @@ dbReadDNA <- function(x, tab.name, taxon, regex = FALSE,
     if ( !missing(max.bp)) {
       SQL <- paste(paste("AND npos <=", max.bp), SQL)
     }
+    if ( subtree ){
+      SQL <- paste("WHERE", wrapSQL(taxon, term = "subtree"),
+                   SQL)
+    } else {
+      SQL <- paste("WHERE", wrapSQL(taxon, term = tip.rank),
+                   SQL)
+    }
     SQL <- paste("SELECT", paste(tip.rank, "status", dna, sep = ", "),
                  "FROM", tab.name, 
-                 "WHERE", wrapSQL(taxon, term = tip.rank),
                  SQL)
     # if ( masked ) SQL <- paste(SQL, "AND status ~ 'masked'") # masking can drop species from alignments!
     seqs <- dbGetQuery(conn, SQL)

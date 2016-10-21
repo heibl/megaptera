@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-02-26)
+## © C. Heibl 2014 (last update 2016-09-15)
 
 ## kingdom is not accounted for
 ## both accepted and synonyms return TRUE
@@ -7,15 +7,15 @@
 
 valid.NCBI.taxon <- function(taxon){
   
-  term <- paste(taxon, collapse = " OR ")
-  xml <- paste("http://eutils.ncbi.nlm.nih.gov/entrez/", 
+  term <- paste(taxon, collapse = "+OR+")
+  xml <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/", 
                "eutils/esearch.fcgi?",
                "tool=megaptera",
                "&email=heibsta@gmx.net",
                "&usehistory=n", 
                "&db=taxonomy",
-               "&term=", term, sep = "")
-  xml <- xmlParse(xml)
+               "&term=", term)
+  xml <- xmlParse(getURL(xml))
   
   error <- xpathSApply(xml, fun = xmlValue,
                         path = "//PhraseNotFound")

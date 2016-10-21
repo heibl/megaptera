@@ -1,5 +1,9 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-07-29)
+## © C. Heibl 2016 (last update 2016-09-15)
+
+## to do:
+## must be adapted for plants e.g. lines 15, 104
+## extend outgroup to genus if it is a single species
 
 ncbiGenome <- function(x, organelle, n = 5){
   
@@ -7,6 +11,8 @@ ncbiGenome <- function(x, organelle, n = 5){
   ## -------------
   organelle <- match.arg(organelle, c("mitochondrion", "chloroplast"))
   slog("\n.. organelle     :", organelle)
+  ## tag can either be 'mitochondrion' or 'mitochondrial DNA'
+  organelle <- gsub("drion", "dri*", organelle)
   
   ## set ingroup root
   ## ----------------
@@ -27,10 +33,11 @@ ncbiGenome <- function(x, organelle, n = 5){
     outgroup.root <- findRoot(outgroup.root)
   }
   slog("\n.. outgroup root :", outgroup.root)
+  outgroup.root <- gsub(" ", "+", outgroup.root)
   
   ## query ENTREZ and save history on server
   ## ---------------------------------------
-  xml <- paste0("http://eutils.ncbi.nlm.nih.gov/entrez/", 
+  xml <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/", 
                 "eutils/esearch.fcgi?",
                 "tool=megaptera",
                 "&email=heibsta@gmx.net",
@@ -38,11 +45,11 @@ ncbiGenome <- function(x, organelle, n = 5){
                 "&retmax=9999",
                 "&db=nucleotide",
                 "&term=(", ingroup.root, 
-                "[Organism] AND ", organelle,
-                "[Title] AND \"complete genome\"[Title])",
-                "OR (", outgroup.root, 
-                "[Organism] AND ", organelle,
-                "[Title] AND \"complete genome\"[Title])"
+                "[Organism]+AND+", organelle,
+                "[Title]+AND+complete+genome[Title])",
+                "+OR+(", outgroup.root, 
+                "[Organism]+AND+", organelle,
+                "[Title]+AND+complete+genome[Title])"
   )
   # cat(xml)
   
@@ -73,7 +80,7 @@ ncbiGenome <- function(x, organelle, n = 5){
     
     ## get XML with full records
     ## -------------------------
-    xml <- paste0("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/", 
+    xml <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/", 
                   "esummary.fcgi?tool=megaptera&email=heibsta@gmx.net",
                   "&db=nucleotide&query_key=", queryKey, 
                   "&WebEnv=", webEnv,
@@ -94,7 +101,7 @@ ncbiGenome <- function(x, organelle, n = 5){
     gi <- sapply(gi, function(x) x$text)
     ti <- xpathApply(xml, "//Item[@Name = 'Title']", xmlToList)
     ti <- sapply(ti, function(x) x$text)
-    ti <- gsub(" mitochondrion, complete genome", "", ti)
+    ti <- gsub(" mitochondri.+complete genome", "", ti)
     ti <- data.frame(taxon = ti, gb = gb, gi = gi,
                      stringsAsFactors = FALSE)
     y <- rbind(y, ti)
@@ -103,36 +110,41 @@ ncbiGenome <- function(x, organelle, n = 5){
   ## delete undetermined accessions
   ## false decision: "Eucryptorrhynchus chinensis voucher ECHIN20150110"
   ## ----------------------------
-  y <- y[-grep(paste(indet.strings(), collapse = "|"), y$taxon), ]
+  indet <- grep(paste(indet.strings(), collapse = "|"), y$taxon)
+  if ( length(indet) > 0 ){
+    y <- y[-indet, ]
+  }
   y$taxon <- strip.infraspec(y$taxon)
   y$taxon <- gsub(" ", "_", y$taxon)
   y <- y[!duplicated(y$taxon), ]
   
-  ## create unique set of genera of determined accessions
-  ## ----------------------------------------------------
-  # tr <- dbReadTaxonomy(x, subset = y$taxon)
-  # notintax <- setdiff(y$taxon, tr$spec)
-  tr <- ncbiTaxonomy(as.list(y$taxon), 
-                     kingdom = x@taxon@kingdom,
-                     megapteraProj = x)
-  tr <- tax2tree(tr)
-  tr <- compute.brlen(tr)
-  # tr <- cophenetic.phylo(tr)
-  branching.order <- names(sort(branching.times(tr), decreasing = TRUE))
-  branching.order <- as.numeric(branching.order)
-  dd <- lapply(branching.order, descendants, phy = tr, type = "d")
-  nl <- sapply(dd, length)
-  nl[-1] <- nl[-1] - 1
-  nl <- data.frame(node = branching.order,
-                   number.lineages = cumsum(nl))
-  id <- which(nl$number.lineages <= n)
-  dd <- setdiff(unlist(dd[id]), nl$node[id])
-  
-  ## select species
-  ## --------------
-  spec <- lapply(dd, descendants, phy = tr, type = "t", 
-                 labels = TRUE, ignore.tip = TRUE)
-  spec <- sapply(spec, sample, size = 1)
-  y <- y[y$taxon %in% spec, ]
+  ## create a phylogenetically balanced sample
+  ## of genomes in case the number of available
+  ## genomes exceeds n (the number of desired genomes)
+  ## -------------------------------------------------
+  if ( nrow(y) > n ){
+    tr <- ncbiTaxonomy(as.list(y$taxon), 
+                       kingdom = x@taxon@kingdom,
+                       megapteraProj = x)
+    tr <- tax2tree(tr)
+    tr <- compute.brlen(tr)
+    # tr <- cophenetic.phylo(tr)
+    branching.order <- names(sort(branching.times(tr), decreasing = TRUE))
+    branching.order <- as.numeric(branching.order)
+    dd <- lapply(branching.order, descendants, phy = tr, type = "d")
+    nl <- sapply(dd, length)
+    nl[-1] <- nl[-1] - 1
+    nl <- data.frame(node = branching.order,
+                     number.lineages = cumsum(nl))
+    id <- which(nl$number.lineages <= n)
+    dd <- setdiff(unlist(dd[id]), nl$node[id])
+    
+    ## select species
+    ## --------------
+    spec <- lapply(dd, descendants, phy = tr, type = "t", 
+                   labels = TRUE, ignore.tip = TRUE)
+    spec <- sapply(spec, sample, size = 1)
+    y <- y[y$taxon %in% spec, ]
+  }
   y
 }

@@ -1,7 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update: 2016-02-12)
+## © C. Heibl 2014 (last update: 2016-08-11)
 
-dbWriteMSA <- function(megapteraProj, dna, status = "raw",
+dbWriteMSA <- function(megapteraProj, dna, 
+                       status = "raw", subtree = NULL,
                        n, md5, masked = FALSE){
   
   gene <- megapteraProj@locus@sql
@@ -31,10 +32,11 @@ dbWriteMSA <- function(megapteraProj, dna, status = "raw",
     for ( i in seq_along(dna) ){
       SQL <- ifelse(insert[i],
                     paste("INSERT INTO", tab.name, 
-                          paste("(", tip.rank, ", n, md5, status, npos, dna, masked)", sep = ""),  
+                          paste0("(", tip.rank, ", n, md5, subtree, status, npos, dna, masked)"),  
                           "VALUES (", 
                           sql.wrap(spec[i], term = NULL), ",",
                           sql.wrap(n, term = NULL), ",",
+                          sql.wrap(subtree, term = NULL), ",",
                           sql.wrap(md5, term = NULL), ",",
                           sql.wrap(status, term = NULL), ",",
                           sql.wrap(npos[i], term = NULL), ",", 
@@ -42,6 +44,7 @@ dbWriteMSA <- function(megapteraProj, dna, status = "raw",
                           ", NULL)"),
                     paste("UPDATE", tab.name, 
                           "SET", 
+                          wrapSQL(subtree, term = "subtree", operator = "="), ",", 
                           nmd5, 
                           wrapSQL(status, term = "status", operator = "="), ",", 
                           wrapSQL(npos[i], term = "npos", operator = "="), ",", 

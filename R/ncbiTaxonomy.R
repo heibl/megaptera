@@ -26,7 +26,6 @@ ncbiTaxonomy <- function(taxon, kingdom, extend = FALSE, trim,
     taxon <- sort(taxon) ## makes debugging easier
   }
   
-  
   ## download in batches of 50
   ## -------------------------
   id <- seq(from = 1, to = length(taxon), by = 50)

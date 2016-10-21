@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-07-28)
+## © C. Heibl 2014 (last update 2016-09-15)
 
 downloadSequences <- function(x, taxon){
   
@@ -14,16 +14,15 @@ downloadSequences <- function(x, taxon){
   
   ## post UIDs on Entrez History Server
   ## ----------------------------------
-  xml <- paste0("http://eutils.ncbi.nlm.nih.gov/entrez/", 
+  xml <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/", 
                "eutils/esearch.fcgi?",
                "tool=megaptera",
                "&email=heibsta@gmx.net",
                "&usehistory=y", 
                "&retmax=99999",
                "&db=nucleotide")
-  xml <- paste(xml, "&term=", 
-               term(taxon, x@taxon@kingdom, x@locus),
-               sep = "")
+  xml <- paste0(xml, "&term=", 
+               term(taxon, x@taxon@kingdom, x@locus))
   
   ## get and parse results via eFetch
   ## --------------------------------
@@ -67,7 +66,7 @@ downloadSequences <- function(x, taxon){
     
     ## get XML with full records
     ## -------------------------
-    xml <- paste0("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/", 
+    xml <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/", 
                  "efetch.fcgi?tool=megaptera&email=heibsta@gmx.net",
                  "&db=nucleotide&query_key=", queryKey, 
                  "&WebEnv=", webEnv,

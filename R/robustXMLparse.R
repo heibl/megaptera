@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-04-22)
+## © C. Heibl 2014 (last update 2016-09-15)
 
 robustXMLparse <- function(url, trial = 3, logfile){
   
@@ -7,7 +7,7 @@ robustXMLparse <- function(url, trial = 3, logfile){
   ## -------------------------------
   for (i in 1:trial ){
     err <- try(silent = TRUE,
-               xml <- xmlTreeParse(url, getDTD = FALSE, 
+               xml <- xmlTreeParse(getURL(url), getDTD = FALSE, 
                                    useInternalNodes = TRUE))
     if ( "try-error" %in% class(err) ){
       slog("\n.. trial", i, "FAILED:", err, file = logfile)

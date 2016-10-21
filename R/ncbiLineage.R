@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-11-12)
+## © C. Heibl 2014 (last update 2016-09-08)
 
 ncbiLineage <- function(taxon, kingdom, megapteraProj){
   
@@ -9,31 +9,35 @@ ncbiLineage <- function(taxon, kingdom, megapteraProj){
   
   ## diagnostic message
   ## ------------------
-  cat("\n.. taxon: ", paste(head(taxon, 2), collapse = ", "), 
-      ", ... [", length(taxon), " taxa]", sep = "")
+  nt <- length(taxon)
+  cat(ifelse(nt == 1, "\n.. taxon: ", "\n.. taxa: "),
+      paste(head(taxon, 2), collapse = ", "), 
+      ifelse(nt > 2, paste0(", ... [", nt, " in total]"), ""), 
+      sep = "")
   
   ## construct search term
   ## ---------------------
   rank <- ifelse(species.list, 
-                 "genus [rank]",
-                 "species [rank] AND specified [prop]")
-  taxon <- paste(taxon, "[subtree] AND", rank)
+                 "genus+[rank]",
+                 "species+[rank]+AND+specified+[prop]")
+  taxon <- paste(taxon, "[subtree]+AND", rank, sep = "+")
   if ( length(taxon) > 1 ) {
-    taxon <- paste("(", taxon, ")", sep = "")
-    taxon <- paste(taxon, collapse = " OR ")
+    taxon <- paste0("(", taxon, ")")
+    taxon <- paste(taxon, collapse = "+OR+")
   }
   
   ## get UID of 'taxon'
   ## ------------------
   cat("\n.. posting UIDs on Entrez History Server ..")
-  xml <- paste("http://eutils.ncbi.nlm.nih.gov/entrez/", 
+  xml <- paste("https://eutils.ncbi.nlm.nih.gov/entrez/", 
                "eutils/esearch.fcgi?",
                "tool=megaptera",
                "&email=heibsta@gmx.net",
-               "&usehistory=y", 
+               "&usehistory=y",
                "&db=taxonomy",
                "&term=", taxon, sep = "")
-  xml <- xmlParse(xml)
+  # xml <- xmlParse(readLines(curl(xml))) # curl
+  xml <- xmlParse(getURL(xml)) # RCurl
   
   ## get and parse results via eFetch
   ## --------------------------------
@@ -55,11 +59,15 @@ ncbiLineage <- function(taxon, kingdom, megapteraProj){
     ## get XML with full records
     ## -------------------------
     #     slog("\n.. retrieving full records ( batch", i, ") ..", file = logfile)
-    xml <- paste("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/", 
-                 "efetch.fcgi?tool=megaptera&email=heibsta@gmx.net",
-                 "&db=taxonomy", "&query_key=", queryKey, "&WebEnv=", webEnv,
-                 "&retmode=xml&retmax=", retmax, "&retstart=", retstart, sep = "")
-    xml <- xmlParse(xml, getDTD = FALSE)
+    xml <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/", 
+                  "efetch.fcgi?tool=megaptera&email=heibsta@gmx.net",
+                  "&db=taxonomy", 
+                  "&query_key=", queryKey, 
+                  "&WebEnv=", webEnv,
+                  "&retmode=xml", 
+                  "&retmax=", retmax, 
+                  "&retstart=", retstart)
+    xml <- xmlParse(getURL(xml), getDTD = FALSE)
     newXMLNamespace(xmlRoot(xml), "http://www.w3.org/XML/1998/namespace", 
                     prefix = "ncbi", set = TRUE)
     #     xml <- xmlRoot(xml)

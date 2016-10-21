@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-08-01)
+## © C. Heibl 2014 (last update 2016-09-19)
 
 stepF <- function(x){
   
@@ -9,7 +9,7 @@ stepF <- function(x){
   ## ------
   if ( !inherits(x, "megapteraProj") )
     stop("'x' is not of class 'megapteraProj'")
-  if ( x@locus@kind == "undefined" ) stop("undefined locus not allowed")
+  if ( x@locus@kind == "undefined" ) stop("please define locus")
   STATUS <- checkStatus(x)
   if ( !all(STATUS[1:5]) ){
     stop("step", names(STATUS)[min(which(!STATUS))] ,
@@ -190,6 +190,7 @@ stepF <- function(x){
                  "(", tip.rank, "text NOT NULL,",
                  "n integer,",
                  "md5 text,",
+                 "subtree text,",
                  "status text,",
                  "npos integer NOT NULL,", 
                  "dna text NOT NULL,",

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-02-20)
+## © C. Heibl 2014 (last update 2016-09-15)
 
 setOldClass("DNAbin")
 setClass(Class = "locusRef", 
@@ -95,10 +95,10 @@ setMethod("initialize", "locusRef",
       n <- paste("\"", not, "\"", sep = "")
       url <- paste(url, "NOT", not)
     }
-    url <- paste("http://eutils.ncbi.nlm.nih.gov/entrez/eutils/", 
-                 "esearch.fcgi?db=nucleotide&term=", url, 
-                 "&rettype=gb&retmode=xml", sep = "")
-    x <- xmlTreeParse(url, getDTD = FALSE, 
+    x <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/", 
+                "esearch.fcgi?db=nucleotide&term=", url, 
+                "&rettype=gb&retmode=xml")
+    x <- xmlTreeParse(getURL(x), getDTD = FALSE, 
                       useInternalNodes = TRUE)
     x <- unique(xpathSApply(x, "//Count", xmlValue))
     cat("\n.. found", x[1], "records")

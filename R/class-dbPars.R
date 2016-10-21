@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-01-21)
+## © C. Heibl 2014 (last update 2016-10-21)
 
 setClass("dbPars", 
          representation = list(
@@ -21,15 +21,18 @@ setClass("dbPars",
   dbname <- tolower(dbname)
   
   ## check if database exists ...
-  conn <- dbConnect(PostgreSQL(), dbname = "template1",
-                    user = user, port = port, 
+  conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), 
+                    dbname = "postgres",
+                    host = host,
+                    user = user, 
+                    port = port, 
                     password = password)
   sql <- paste("SELECT 1 FROM pg_database WHERE",
                sql.wrap(dbname, term = "datname"))
   if ( nrow(dbGetQuery(conn, sql)) == 1 ){
     cat("\ndatabase '", dbname, "' exists", sep = "")  
   } else {
-    ## .. and crate if it does not exist
+    ## .. and create if it does not exist
     cat("\ndatabase '", dbname, "' created", sep = "") 
     sql <- paste("CREATE DATABASE", dbname,
                  "WITH ENCODING='UTF8'",

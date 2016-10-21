@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-08-03)
+## © C. Heibl 2016 (last update 2016-10-20)
 
 checkStatus <- function(x, locus){
   
@@ -52,7 +52,17 @@ checkStatus <- function(x, locus){
   
   ## stepF
   if ( msa.tab %in% tabs ){
-    obj["F"] <- TRUE
+    
+    ## check if msa table is empty
+    ff <- paste("SELECT count(dna) FROM", msa.tab)
+    ff <- dbGetQuery(conn, ff)
+    if ( ff$count > 0 ){
+      obj["F"] <- TRUE
+    } else {
+      dbDisconnect(conn)
+      return(obj)
+    }
+    
   } else {
     dbDisconnect(conn)
     return(obj)
@@ -68,7 +78,6 @@ checkStatus <- function(x, locus){
     dbDisconnect(conn)
     return(obj)
   }
-  
   
   ## stepH
   hh <- paste("SELECT count(status)",

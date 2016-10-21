@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-01-20)
+## © C. Heibl 2014 (last update 2016-09-15)
 
 term <- function(organism, kingdom, locus) {
   
@@ -9,7 +9,7 @@ term <- function(organism, kingdom, locus) {
     stop("locus must be of class 'locus'")
   
   ## kingdom added 2016-01-22
-  organism <- paste(organism, "[orgn] AND ", kingdom, "[orgn]", sep = "")
+  organism <- paste0(organism, "[orgn]+AND+", kingdom, "[orgn]")
   ## eventually move to higher level:
   ##aliases <- paste("\"", locus@aliases, "\"", sep = "")
   aliases <- gsub(" ", "+", locus@aliases)
@@ -24,21 +24,20 @@ term <- function(organism, kingdom, locus) {
   ## -------------------------------
   URL <- vector(length = length(organism))
   for ( i in seq_along(organism) ){
-    url <- paste(organism[i], "AND", aliases
-                 )
+    url <- paste0(organism[i], "+AND+", aliases)
     if ( !"not" %in% locus@not ){
-      not <- paste("\"", locus@not, "\"", sep = "")
-      url <- paste(url, "NOT", not)
+      not <- paste0("\"", locus@not, "\"")
+      url <- paste0(url, "+NOT+", not)
     }
     if ( length(url) > 1 ){
-      url <- paste("(", url, ")", sep = "")
-      url <- paste(url, collapse = " OR ")
+      url <- paste0("(", url, ")")
+      url <- paste(url, collapse = "+OR+")
     }
     URL[i] <- url
   } # end of FOR-loop over i
   if ( length(URL) > 1 ){
-    URL <- paste("(", URL, ")", sep = "")
-    URL <- paste(URL, collapse = " OR ")
+    URL <- paste0("(", URL, ")")
+    URL <- paste(URL, collapse = "+OR+")
   }
   URL
 }

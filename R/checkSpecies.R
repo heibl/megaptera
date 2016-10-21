@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-02-22)
+## © C. Heibl 2014 (last update 2016-09-19)
 
 checkSpecies <- function(megapteraProj, spec){
   
