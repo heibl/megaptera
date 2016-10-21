@@ -1,14 +1,28 @@
 Package: megaptera
 Type: Package
 Title: MEGAPhylogeny Techniques in R
-Version: 1.0-51
-Date: 2016-04-08
-Author: Christoph Heibl
-Maintainer: Christoph Heibl <christoph.heibl@gmx.net>
-Depends: R (>= 2.10), snowfall, ips, RPostgreSQL, tools
-Imports: ape, rmarkdown, seqinr, methods, XML
+Version: 1.0-52
+Date: 2016-10-20
+Authors@R: person("Christoph", "Heibl", 
+  email = "christoph.heibl@gmx.net",
+  role = c("aut", "cre"))
+Imports: 
+  ape, 
+  DBI,
+  knitr, 
+  methods,
+  RCurl,
+  rmarkdown,
+  RPostgreSQL,
+  seqinr,
+  snowfall, 
+  tools,
+  XML
+Depends: R (>= 3.1),
+  ips
 Encoding: UTF-8
 Description: Given a set of taxa and marker, the goal is build a complete and correct sequence alignment for phylogenetic analysis.
 License: GPL (>= 2)
+LazyData: true
 VignetteBuilder: knitr
-Packaged: Fri Apr  8 10:37:31 2016
+Packaged: Thu Oct 20 19:35:17 2016

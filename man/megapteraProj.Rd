@@ -7,7 +7,7 @@ Create an object of class \code{megapteraProj} to hold all the input data necess
 }
 \usage{
 megapteraProj(db, taxon, locus = locus(), 
-   align.exe, mask.exe, 
+   align.exe, merge.exe, mask.exe, 
    params = megapteraPars(), 
    update = FALSE)
 }
@@ -20,7 +20,10 @@ an object of class \code{\link[=dbPars-class]{dbPars}}.
   \item{locus}{an object of class \code{\link[=locus-class]{locus}}.}
   \item{align.exe}{
 a vector of mode \code{"character"}, giving name of the alignment program; currently only \bold{MAFFT} is allowed
-}
+  }
+  \item{merge.exe}{
+a vector of mode \code{"character"}, giving name of the alignment merging program; currently only \bold{OPAL} is allowed
+  }
   \item{mask.exe}{
 a vector of mode \code{"character"}, giving name of the alignment masking program; currently only \bold{Gblocks} is allowed
 }
@@ -33,7 +36,13 @@ logical: if \code{TRUE}, the pipeline's steps are executed as if called fro the 
 \value{
 an object of class \code{megapteraProj}
 }
-%\references{}
+\references{
+MAFFT: \url{http://mafft.cbrc.jp/alignment/software/}
+
+OPAL: \url{http://opal.cs.arizona.edu/}
+
+Gblocks: \url{http://molevol.cmima.csic.es/castresana/Gblocks.html}
+}
 \author{Christoph Heibl}
 \seealso{
 \code{\link{dbPars}}, \code{\link{taxon}}, \code{\link{locus}}, and \code{\link{megapteraPars}} for defining of database parameters, taxa, loci, and the pipeline's parameters, respectively.

@@ -14,7 +14,7 @@ stepB(x, update.seqs = "no")
 an object of class \code{\link{megapteraProj}}.
   }
   \item{update.seqs}{
-\emph{currently unused}.
+a character string determining the behaviour of \code{stepB} when it is run more than one time on the same locus/taxon combination: \code{"no"} means that only sequences that have been made available on GenBank since the last execution \code{stepB} will be downloaded; \code{"all"} means the database table with all sequences will be removed and all sequences will be downloaded de novo. Naturely, this option has no effect if \code{stepB} is called for the first time.
   }
 }
 \details{

@@ -7,7 +7,7 @@
 Class for holding all input data of the pipeline.
 }
 \section{Objects from the Class}{
-Objects can be created by calls of the form \code{megapteraProj(db, taxon, locus, align.exe, mask.exe, params = megapteraPars(), update = FALSE)}.
+Objects can be created by calls of the form \code{megapteraProj(db, taxon, locus, align.exe, merge.exe, mask.exe, params = megapteraPars(), update = FALSE)}.
 }
 %% Slots
 \section{Slots}{
@@ -17,11 +17,16 @@ Objects can be created by calls of the form \code{megapteraProj(db, taxon, locus
   \item{locus}{an object of class \code{\link{locus}}.}
   \item{align.exe}{
 a vector of mode \code{"character"}, giving name of the alignment program; currently only \bold{MAFFT} is allowed
-}
+  }
+  \item{merge.exe}{
+a vector of mode \code{"character"}, giving name of the alignment merging program; currently only \bold{OPAL} is allowed
+  }
   \item{mask.exe}{
 a vector of mode \code{"character"}, giving name of the alignment masking program; currently only \bold{Gblocks} is allowed
-}
-  \item{params}{an object of class \code{\link{megapteraPars}}.}
+  }
+  \item{params}{
+an object of class \code{\link{megapteraPars}}.
+  }
   \item{update}{
 logical: if \code{TRUE}, the pipeline's steps are executed as if called fro the first time, i.e., possibly overriding data and setting that have been previously achieved.
   }

@@ -47,7 +47,6 @@
 \alias{EFetchHigherTaxon}
 \alias{EFetchLocus}
 \alias{EFetchXML}
-\alias{esearch}
 \alias{extractIGS}
 \alias{extractLocus}
 \alias{filter.alignment}
@@ -92,7 +91,7 @@
 \alias{tab}
 \alias{tax2tree}
 \alias{taxonomy2html} % megaptera2Rmarkdown
-\alias{term}
+\alias{term} % downloadSequences
 \alias{valid.NCBI.taxon}
 \alias{whereToInsert}
 \alias{wrapSQL}

@@ -7,9 +7,18 @@ importFrom(ips, deleteEmptyCells, trimEnds, mafft, gblocks,
            descendants, sister, noi, fixNodes,
            tipHeights, terminal.clades)
 import(methods)
-importFrom(RPostgreSQL, PostgreSQL, dbConnect, 
-           dbDisconnect, dbSendQuery, dbGetQuery, dbListTables, 
-           dbWriteTable, dbReadTable, dbExistsTable, dbRemoveTable)
+importFrom(RCurl, getURL)
+importFrom(DBI, dbConnect)
+importFrom(RPostgreSQL,
+           dbDisconnect, 
+           dbSendQuery, 
+           dbGetQuery, 
+           dbListTables, 
+           dbWriteTable, 
+           dbReadTable, 
+           dbExistsTable, 
+           dbRemoveTable,
+           PostgreSQL)
 importFrom(seqinr, comp, c2s, s2c)
 import(snowfall)
 importFrom(tools, md5sum)
