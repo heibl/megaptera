@@ -1,5 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-01-20)
+## © C. Heibl 2014 (last update 2017-02-20)
+
+#' @export
+#' @import DBI
 
 stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
   
@@ -12,11 +15,12 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
   
   ## DEFINITIONS
   ## -----------
-  acc.tab <- paste("acc", x@locus@sql, sep = "_")
+  gene <- x@locus@sql
+  acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
   
   ## iniate logfile
   ## --------------
-  logfile <- paste(acc.tab, "stepBX.log", sep = "-")
+  logfile <- paste0("log/", gene, "-stepBX.log")
   if ( file.exists(logfile) ) unlink(logfile)
   slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
        paste("\n", Sys.time(), sep = ""), 
@@ -26,13 +30,17 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
   ## format sequences
   ## ----------------
   gitax <- splitGiTaxon(names(dna))
+  indet <- indet.strings(x@taxon@hybrids, TRUE)
+  status <- rep("raw", nrow(gitax))
+  indet <- grep(indet, gitax$taxon)
+  status[indet] <- "excluded (indet)"
   dna <- as.character(dna)
   dna <- sapply(dna, paste, collapse = "")
   dna <- data.frame(
     gi = gitax$gi,
-    taxon = gitax$taxon,
+    taxon = strip.infraspec(gitax$taxon),
     spec_ncbi = gitax$taxon,
-    status = "raw", 
+    status = status, 
     genom = tag,
     npos = sapply(dna, nchar),
     identity = NA,
@@ -70,41 +78,13 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
          file = logfile)  
   }
   
-  ## declare excluded taxa 
-  ## (same set of tokens in stepB + dbUpdateTaxonomy)
-  ## ------------------------------------------------
-  indet <- c("_sp[.]?([_-]|$)", # Amanita_sp Amanita_sp. Amanita_sp_xxx Amanita_sp._xxx Amanita_sp-53
-             "spec$",
-             "_cf[.]", 
-             "_aff[.]", 
-             "hybrid(_sp.+)?$", # Juniperus_hybrid Juniperus_hybrid_sp._LO-2009
-             "Group$",
-             "cultivar$",
-             "environmental", # environmental_sample
-             "^fungal",
-             "uncultured",
-             "unknown",
-             ".[[:upper:]]",
-             "^[[:lower:]]") 
-  if ( !x@taxon@hybrids ){
-    indet <- union(indet, "_x_|^x_")
-  }
-  indet <- paste(indet, collapse = "|")
-  indet <- paste("UPDATE", acc.tab, 
-                 "SET status = 'excluded (indet)'",
-                 "WHERE", wrapSQL(indet, term = "spec_ncbi", 
-                                  boolean = NULL))
-  dbSendQuery(conn, indet)
-  # singles quotes are escaped by single quotes in pgSQL!
-  dbSendQuery(conn, paste("UPDATE", acc.tab, 
-                          "SET status = 'excluded (indet)'",
-                          "WHERE spec_ncbi~''''"))
+  ## declare excluded taxa: has been removed upstream to XML2acc (2016-11-03)
   
   ## select sequences if there are > max.gi.per.spec
   dbMaxGIPerSpec(x)
   
   ## create and update relation <taxonomy>
-  dbUpdateTaxonomy(x) # handle species found in stepB 
+  # dbUpdateTaxonomy(x) # handle species found in stepB 
   # that are not included in taxonomy table
   
   # summary

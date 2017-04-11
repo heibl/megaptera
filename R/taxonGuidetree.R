@@ -1,12 +1,16 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2015 (last update 2015-12-22)
+## © C. Heibl 2015 (last update 2017-03-28)
+
+#' @include taxonGuidetree-class.R
+#' @importFrom methods new
+#' @export
 
 ## USER LEVEL CONSTRUCTOR
 ## ----------------------
 "taxonGuidetree" <- function(ingroup, extend.ingroup = FALSE,
                              outgroup, extend.outgroup = FALSE,
                              kingdom, hybrids = FALSE,
-                             tip.rank = "spec",
+                             tip.rank = "species",
                              reference.rank = "auto",
                              guide.tree){
   ingroup <- unique(ingroup); outgroup <- unique(outgroup)
@@ -15,11 +19,7 @@
   if ( is.character(ingroup) ) ingroup <- as.list(ingroup)
   if ( is.character(outgroup) ) outgroup <- as.list(outgroup)
   
-  ## enforce canonical reference rank name
-  ## -------------------------------------
-  if ( reference.rank != "auto" ){
-    reference.rank <- sqlTaxonomyHeader(reference.rank)
-  }
+  tip.rank <- match.arg(tip.rank, c("genus", "species"))
   
   new("taxonGuidetree", 
       ingroup = ingroup,

@@ -1,5 +1,10 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-08-16)
+## © C. Heibl 2014 (last update 2017-02-20)
+
+#' @export
+#' @import DBI
+#' @import snowfall
+#' @importFrom snowfall sfInit
 
 stepGG <- function(x){	
   
@@ -29,11 +34,11 @@ stepGG <- function(x){
   
   ## iniate logfile
   ## --------------
-  logfile <- paste(gene, "stepG.log", sep = "-")
+  logfile <- paste0("log/", gene, "-stepGG.log")
   if ( !quiet & file.exists(logfile) ) unlink(logfile)
   if ( !quiet )  slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
                       paste("\n", Sys.time(), sep = ""),
-                      "\nSTEP G: alignment\n", 
+                      "\nSTEP GG: alignment\n", 
                       paste("\n.. locus:", x@locus@sql), file = logfile)
   
   
@@ -49,6 +54,20 @@ stepGG <- function(x){
          file = logfile)
     td <- Sys.time() - start
     slog("\nSTEP G finished after", round(td, 2), attr(td, "units"), 
+         "\n", file = logfile)
+    return()
+  }
+  
+  ## check if at least 3 species are available
+  ## -----------------------------------------
+  n <- paste("SELECT count(spec) FROM", msa.tab)
+  n <- dbGetQuery(conn, n)$count
+  if ( n < 3 ){
+    dbDisconnect(conn)
+    slog("\nWARNING: only", n, "species available, no alignment possible\n", 
+         file = logfile)
+    td <- Sys.time() - start
+    slog("\nSTEP GG finished after", round(td, 2), attr(td, "units"), 
          "\n", file = logfile)
     return()
   }
@@ -72,8 +91,13 @@ stepGG <- function(x){
   
   ## read taxonomy relation from database
   ## ------------------------------------
-  tax <- dbReadTaxonomy(x, subset = msa.tab)
-  gt <- tax2tree(tax, tip.rank = "spec")
+  if ( inherits(x@taxon, "taxonGuidetree") ){
+    gt <- comprehensiveGuidetree(x, tip.rank = "spec", subset = msa.tab)
+  } else { 
+    tax <- dbReadTaxonomy(x, subset = msa.tab)
+    gt <- tax2tree(tax, tip.rank = "spec")
+  }
+  guidetree <- gt
   gt <- decomposePhylo(gt)
   subtree <- sort(unique(gt$subtree.set$subtree))
   
@@ -85,7 +109,7 @@ stepGG <- function(x){
     slog("\n.. aligning", length(subtree),
          "subtrees ..", file = logfile)
     cpus <- x@params@cpus
-    if ( length(gt$subtree.set) < cpus | !x@params@parallel ){
+    if ( Ntip(gt$guidetree) < cpus | !x@params@parallel ){
       lapply(subtree, alignSubtree, 
              megProj = x, taxon = gt$subtree.set)
       cluster.open <- FALSE
@@ -94,38 +118,14 @@ stepGG <- function(x){
       sfInit(parallel = TRUE, cpus = cpus, 
              type = x@params@cluster.type)
       sfLibrary("megaptera", character.only = TRUE)
-      sfExport("gt$subtree.set", "x")
-      seqs <- sfLapply(gt$subtree.set, alignSubtree, megProj = x)
+      sfExport("gt", "x")
+      seqs <- sfLapply(subtree, alignSubtree, 
+                       megProj = x, taxon = gt$subtree.set)
       cluster.open <- TRUE
     }
   } else {
     cluster.open <- FALSE
   }
-  ## if dataset contains only one genus, 
-  ## there is no need
-  ## for alignment along guide tree
-  ## ------------------------------
-  # if ( length(seqs) == 1 ){
-  #   seqs <- seqs[[1]]
-  # } else {
-  
-  ## prepare guide tree for alignment
-  ## --------------------------------
-  # if ( inherits(x@taxon, "taxonGuidetree") ){
-  #   gt <- comprehensiveGuidetree(x, tip.rank = "gen")
-  # } else { 
-  #   gt <- tax2tree(tax, tip.rank = "gen")
-  # }
-  # gt <- drop.tip(gt, pruned <- setdiff(gt$tip.label, 
-  #                                      names(seqs)))
-  # if ( !is.binary.tree(gt) ){
-  #   gt <- multi2di(gt)
-  # }
-  # 
-  # if ( length(pruned) > 0 ) 
-  #   slog("\n.. pruning", length(pruned), 
-  #        "taxa from guide tree ..", file = logfile)
-  # seqs <- seqs[intersect(names(seqs), gt$tip.label)]
   
   ## loop over internal nodes of guide tree
   ## --------------------------------------
@@ -133,8 +133,8 @@ stepGG <- function(x){
   slog("\n.. aligning sister clades higher than genera ..", 
        file = logfile)
   i <- 1
-  # while ( Ntip(gt) >= 2 ){
-          for ( i in 2:13 ){
+  while ( Ntip(gt) >= 2 ){
+          # for ( i in 2:48  ){
     #         load("~/r/dicaryota/data/BUGSEARCH.rda.RData")
     if ( !quiet ) slog("\n\nLEVEL", i, file = logfile)
     ## tp: list of 'terminal clades', i.e. clades that
@@ -154,89 +154,52 @@ stepGG <- function(x){
       if ( ntp > 1 ){
         slog(" in parallel on", min(ntp, x@params@cpus), 
              "nodes", file = logfile)
-        sfExport("tp", "seqs") # megProj already exported
-        xx <- sfSapply(tp, alignSisterClades, seqs = seqs, 
-                       megProj = x)
+        sfLibrary("megaptera", character.only = TRUE)
+        sfExport("tp") # x already exported
+        xx <- sfSapply(tp, mergeSubMSA, x = x)
       } else {
         slog(" serially", file = logfile)
         xx <- sapply(tp, mergeSubMSA, x = x)
       }
     }
-    
-    # if ( Nnode(gt) == 1 ) { ## basale Polytomie
-    #   seqs <- xx
-    #   i <- i + 1
-    #   break
-    # }
     keep.tips <- sapply(tp, head, 1)
     drop.tips <- unlist(lapply(tp, tail, -1))
     gt$tip.label[match(keep.tips, gt$tip.label)] <- xx
+    if ( Ntip(gt) == 2 ) break
     gt <- drop.tip(gt, drop.tips)
     i <- i + 1
   } # end of WHILE-loop
   
-  ## align outgroup
-  # if ( !quiet ) slog("\nLEVEL", i, file = logfile)
-  # if ( length(seqs) > 2 )
-  #   stop("uncomplete alignment in WHILE loop")
-  # if ( length(seqs) == 2 )
-  # seqs <- mergeSubMSA(x, )
-  # else seqs <- seqs[[1]]
-  # }
+  seqs <- dbReadDNA(x, msa.tab, regex = TRUE, blocks = "ignore")
   
   ## prune ends of alignment from 'thin tails'
   ## -----------------------------------------
   seqs <- trimEnds(seqs, min(nrow(seqs), min.n.seq))
   seqs <- deleteEmptyCells(seqs, quiet = TRUE)
-  
+
   ## sort alignment taxonomically
   ## ----------------------------
   if ( nrow(seqs) > 1 ){
-    rownames(seqs) <- gsub("_R_", "", rownames(seqs))
-    gt <- tax2tree(tax, tip.rank = tip.rank)
-    gt <- ladderize(gt)
+    # rownames(seqs) <- gsub("_R_", "", rownames(seqs))
+    gt <- ladderize(guidetree)
     gt <- drop.tip(gt, setdiff(gt$tip.label, rownames(seqs)))
     seqs <- seqs[match(gt$tip.label, rownames(seqs)), ]
   }
-  
-  ## write to database -- serially or in parallel
-  ## --------------------------------------------
-  slog("\n.. write alignment to database ..", file = logfile)
-  if ( cluster.open ){
-    if ( nrow(seqs) > 1000 ){
-      id <- seq(from = 1, to = nrow(seqs), by = ceiling(nrow(seqs)/x@params@cpus))
-      id <- data.frame(from = id, to = c(id[-1] - 1, nrow(seqs)))
-      aa <- apply(id, 1, function(i, a) a[i[1]:i[2], ], a = seqs)
-      sfLibrary("seqinr", character.only = TRUE)
-      sfExport("aa")
-      sfLapply(x = aa, fun = dbWriteMSA, megapteraProj = x, 
-               status = "aligned")
-    } else {
-      dbWriteMSA(x, dna = seqs, status = "aligned")
-    }
-    sfStop()
-  } else {
-    dbWriteMSA(x, dna = seqs, status = "aligned")
-  }
-  ## This is just a hack to allow for negative matching of regexs
-  ## In the future stepG should insert the highest non-saturated taxonomic rank
-  dbSendQuery(conn, paste("UPDATE", msa.tab, 
-                          "SET status = 'included'", 
-                          "WHERE status is NULL"))
+
   dbDisconnect(conn)
   
-  ## write files
-  ## -----------
+  # write files
+  # -----------
   write.phy(seqs, paste(gene, "phy", sep = "."))
   rownames(seqs) <- gsub("-", "_", rownames(seqs))
   write.nex(seqs, paste(gene, "nex", sep = "."))
-  
+
   ## calculate mean absolute deviation (MAD)
   ## see Smith, Beaulieau, Donoghue (2009)
   this.mad <- round(MAD(seqs), 5)
-  slog("\n.. mean absolute deviation:", 
+  slog("\n.. mean absolute deviation:",
        this.mad, "..", file = logfile)
-  
+
   ## summary
   ## -------
   if ( !quiet ) {
@@ -245,7 +208,7 @@ stepGG <- function(x){
       paste("\nnumber of sequences     :", nrow(seqs)),
       paste("\nnumber of base pairs    :", ncol(seqs)),
       paste("\nmean absolute deviation :", this.mad),
-      "\n\nSTEP G finished",
+      "\n\nSTEP GG finished",
       file = logfile)
     td <- Sys.time() - start
     slog(" after", round(td, 2), attr(td, "units"), file = logfile)

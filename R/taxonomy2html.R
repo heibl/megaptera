@@ -1,11 +1,18 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-07-31)
+## © C. Heibl 2016 (last update 2016-12-07)
+
+#' @export
 
 taxonomy2html <- function(tax){
   
-  tax$spec <- gsub("^.*_", "", tax$spec)
-  
-  id <- apply(tax[, 1:grep("^spec$", names(tax))], 2, 
+  if (length(grep("^spec$", names(tax))) == 1){
+    ## isolate epitheta
+    tax$spec <- gsub("^.*[_| ]", "", tax$spec)
+    tip.rank <- "^spec$"
+  } else {
+    tip.rank <- "^gen$"
+  }
+  id <- apply(tax[, 1:grep(tip.rank, names(tax))], 2, 
               function(z) length(unique(z)))
   id <- max(which(cumsum(id) == 1:length(id))) -1
   tax <- tax[, -(1:id)]
@@ -43,5 +50,5 @@ taxonomy2html <- function(tax){
          "<div id='header'>", 
          "<h1 class='title'>Taxonomic classification</h1>",
          tab, "</div>", "</body>", "</html>")
-  write(z, file = "taxonomy.html")
+  write(z, file = "report/taxonomy.html")
 }

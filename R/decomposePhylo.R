@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (2016-08-11)
+## © C. Heibl 2016 (2016-11-16)
+
+#' @export
 
 decomposePhylo <- function(phy, k = 200){
   
@@ -13,9 +15,9 @@ decomposePhylo <- function(phy, k = 200){
   
   st.sizes <- sapply(subtrees, length)
   while ( any(st.sizes > k) ){
-    
+
     id <- which(st.sizes > k)[1]
-    
+
     dsc <- phy$edge[phy$edge[, 1] == names(id), 2]
     sbt <- lapply(dsc, descendants, phy = phy)
     names(sbt) <- dsc
@@ -27,8 +29,8 @@ decomposePhylo <- function(phy, k = 200){
   st.label <- paste("st", 1:length(subtrees), sep = "-")
   names(subtrees) <- st.label
   z <- rep(st.label, st.size)
-  z <- data.frame(subtree = z, 
-                  taxon = unlist(subtrees), 
+  z <- data.frame(subtree = z,
+                  taxon = unlist(subtrees),
                   stringsAsFactors = FALSE)
   z <- z[match(phy$tip.label, z[, 2]), ]
   phy$tip.label <- z$subtree

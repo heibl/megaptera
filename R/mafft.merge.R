@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-01-27)
+## © C. Heibl 2014 (last update 2017-03-22)
+
+#' @export
 
 mafft.merge <- function(subMSA, method = "auto", gt,
                         quiet = TRUE, thread = -1, mafft.exe){
@@ -69,7 +71,7 @@ mafft.merge <- function(subMSA, method = "auto", gt,
 #   if ( os == "unix" ){
     system(call.mafft, intern = FALSE, ignore.stdout = FALSE)
     res <- length(scan(fns[3], what = "c", quiet = TRUE))
-    if ( res != 0 ) res <- read.fas(fns[3])
+    if (res != 0) res <- read.fas(fns[3])
 #   }
   unlink(fns[file.exists(fns)])
   return(res)

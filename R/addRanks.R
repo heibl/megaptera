@@ -1,9 +1,11 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2015 (last update 2015-07-27)
+## © C. Heibl 2015 (last update 2016-11-03)
 
 ## Calathus vivesi: Calathus is included twice in the lineage
 ## as genus and as no rank. I included (2016-07-26) a patch that removes
 ## the no-rank-row in these cases.
+
+#' @export
 
 addRanks <- function(z, ranks){
   

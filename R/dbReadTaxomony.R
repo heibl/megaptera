@@ -1,15 +1,22 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-07-28)
+## © C. Heibl 2017 (last update 2017-04-07)
 
-dbReadTaxonomy <- function(megapteraProj, subset, tag){
+#' @export
+#' @import DBI
+
+dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
   
-  conn <- dbconnect(megapteraProj)
+  if (missing(tip.rank)) tip.rank <- megProj@taxon@tip.rank
+  root <- match.arg(root, c("tol", "mrca"))
   
-  if ( !dbExistsTable(conn, "taxonomy") )
+  conn <- dbconnect(megProj)
+  
+  if (!dbExistsTable(conn, "taxonomy"))
     stop("no taxonomy table - see ?dbUpdateTaxonomy for help")
   
   ## read taxonomy table
-  if ( missing(tag) ){
+  ## -------------------
+  if (missing(tag)){
     tax <- dbGetQuery(conn, "SELECT * FROM taxonomy")
   } else {
     SQL <- paste("SELECT * INTO tmp",
@@ -21,57 +28,84 @@ dbReadTaxonomy <- function(megapteraProj, subset, tag){
     dbSendQuery(conn, "DROP TABLE tmp")
   }
   
+  ## truncate taxonomy to tip rank
+  ## -----------------------------
+  id <- tax[tax$rank == tip.rank, "id"]
+  tdDescendants <- function(tax, id){
+    all_ids <- vector()
+    gain <- length(id)
+    while (gain > 0){
+      id <- tax[tax$parent_id %in% id, "id"]
+      all_ids <- c(all_ids, id)
+      gain <- length(id)
+    }
+    all_ids
+  }
+  id <- lapply(id, tdDescendants, tax = tax)
+  id <- unlist(id)
+  tax <- tax[!tax$id %in% id, ]
+  
   ## subsetting taxonomy ..
   ## ----------------------
-  if ( !missing(subset) ){
+  if (!missing(subset)){
     ## .. based on sequence names or ..
     ## --------------------------------
-    if ( inherits(subset, "DNAbin") ){
-      if ( is.list(subset) ) sset <- names(subset)
-      if ( is.matrix(subset) ) sset <- rownames(subset)
-      tax <- tax[tax[, megapteraProj@taxon@tip.rank] %in% sset, ]
+    if (inherits(subset, "DNAbin")){
+      if (is.list(subset)) subset <- names(subset)
+      if (is.matrix(subset)) subset <- rownames(subset)
     }
-    ## .. based on sequence names or ..
-    ## --------------------------------
-    if ( inherits(subset, "phylo") ){
-      tax <- tax[tax[, megapteraProj@taxon@tip.rank] %in% subset$tip.label, ]
+    ## .. based on a phylogeny or ..
+    ## -----------------------------
+    if (inherits(subset, "phylo")){
+      subset <-  subset$tip.label
     }
-    ## .. based on <spec.*>
-    ## --------------------
-    if ( is.character(subset) & length(subset) == 1 ){
+    ## .. based on MAS table or ..
+    ## ---------------------------
+    if (is.character(subset) & length(grep("^[genus]|[species]_", subset))){
       tip.rank <- gsub("_.+$", "", subset)
-      subset <- paste("SELECT", tip.rank, 
+      subset <- paste("SELECT taxon", 
                       "FROM", subset, 
                       "WHERE status !~ 'excluded'")
-      subset <- dbGetQuery(conn, subset)[, tip.rank]
-      tax <- tax[tax[, tip.rank] %in% subset, ]
+      subset <- dbGetQuery(conn, subset)[, "taxon"]
     }
     ## .. based on a vector of species names
     ## -------------------------------------
-    if ( is.character(subset) & length(subset) > 1 ){
-      tax <- tax[tax[, megapteraProj@taxon@tip.rank] %in% subset, ]
+    if (is.character(subset) & !length(grep("^[genus]|[species]_", subset))){
+      subset <- subset
     }
     
+    ## do the actual subsetting
+    ## ------------------------
+    subset <- gsub("_", " ", subset)
+    id <- all_ids <- tax[tax$taxon %in% subset, "id"]
+    while (length(id) > 1) {
+      id <- unique(tax[tax$id %in% id, "parent_id"])
+      all_ids <- c(all_ids, id)
+    }
+    tax <- tax[tax$id %in% all_ids, ]
     
-    ## .. delete ranks lower than 'tip.rank'
-    ## -------------------------------------
-    if ( megapteraProj@taxon@tip.rank != "spec" ){
-      tax <- unique(tax[, 1:which(names(tax) == megapteraProj@taxon@tip.rank)])
+    ## test if taxa that are present in subset
+    ## are missing from taxonomy table
+    ## -------------------------------
+    id <- setdiff(subset, tax$taxon)
+    if (length(id)){
+      warning(length(id), " taxa of 'subset' are missing from taxonomy table:",
+              paste("\n", sort(id), collapse = ""))
     }
   }
+  
+  ## remove tree-of-life-root (if necessary, see 2nd condition)
+  ## ----------------------------------------------------------
+  if (root == "mrca" & 1 %in% tax$parent_id){
+    nodes <- 1
+    repeat{
+      nn <- tax[tax$parent_id == nodes[1], "id"]
+      nn <- nn[nn != 1]
+      if (length(nn) > 1) break
+      nodes <- c(nn, nodes)
+    }
+    tax <- tax[!tax$id %in% nodes[-1], ]
+  }
   dbDisconnect(conn)
-  
-  ## remove trailing white spaces
-  ## happens often when people prepare taxon lists in Excel
-  ## ------------------------------------------------------
-  #   tws <- grep(" $|_$", tax[, "spec"])
-  #   if ( length(tws) > 0 ){
-  #     tax[, "spec"] <- gsub(" $|_$", "", tax[, "spec"])
-  #     warning("trailing white space removed in", 
-  #             paste("\n - ", head(tax[, "spec"][tws], 3), sep = ""), 
-  #             "\n - and ", length(tws) - 3, " more species")    
-  #   }
-  
-  tax <- sqlTaxonomyHeader(tax) # should be obsolete
   tax
 }

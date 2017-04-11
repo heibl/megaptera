@@ -4,12 +4,14 @@
 ## when searching/reading x should be interpretable both as literal or regular expression
 ## when writing, x is literal and the operator must be the equal sign
 
+#' @export
+
 wrapSQL <- function(x, term = "spec", operator = "~", boolean = "OR", by = 500) {
   
   if ( !is.numeric(x) ) {
     
-    ## mask the evil single quotes
-    x <- gsub("'", ".", x) # e.g. "Gigantochloa_sp._'daluoensis'"
+    ## singles quotes are escaped by single quotes in pgSQL!
+    x <- gsub("'", "''", x) # e.g. "Gigantochloa_sp._'daluoensis'"
     
 #     if ( !literal ){
 #       ## convert meta characters to literals
@@ -30,5 +32,3 @@ wrapSQL <- function(x, term = "spec", operator = "~", boolean = "OR", by = 500) 
   }
   x
 }
-
-# x <- "Poa_pratensis

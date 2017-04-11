@@ -1,11 +1,15 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-09-15)
+## © C. Heibl 2014 (last update 2017-01-25)
+
+#' @export
+#' @import RCurl
+#' @import XML
 
 robustXMLparse <- function(url, trial = 3, logfile){
   
   ## 1. try to parse XML trial times
   ## -------------------------------
-  for (i in 1:trial ){
+  for (i in 1:trial){
     err <- try(silent = TRUE,
                xml <- xmlTreeParse(getURL(url), getDTD = FALSE, 
                                    useInternalNodes = TRUE))
@@ -13,7 +17,7 @@ robustXMLparse <- function(url, trial = 3, logfile){
       slog("\n.. trial", i, "FAILED:", err, file = logfile)
     } else break
   } 
-  if ( "try-error" %in% class(err) ){
+  if ("try-error" %in% class(err)){
     warning(err)
     return(NULL)
   }
@@ -21,13 +25,13 @@ robustXMLparse <- function(url, trial = 3, logfile){
   
   ## 2. return NULL if 'resources temporarily unavailable'
   ## -----------------------------------------------------
-  for ( i in 1:trial ){
+  for (i in 1:trial){
     err <- xpathSApply(xml, "/GBSet/Error", xmlValue)
-    if ( length(err) > 0 ) {
+    if (length(err)) {
       slog("\n.. trial", i, "FAILED:", err, file = logfile)
     } else break 
   }
-  if ( length(err) > 0 ) {
+  if (length(err)) {
     warning(err)
     return(NULL)
   }
@@ -35,7 +39,7 @@ robustXMLparse <- function(url, trial = 3, logfile){
   ## 3. return NULL when results are empty
   ## -------------------------------------
   ERROR <- xpathSApply(xml, fun = xmlValue, path = "//ERROR")
-  if ( length(ERROR) > 0 ){
+  if (length(ERROR)){
     slog("\n.. FAILED:", ERROR, "..", file = logfile)
     return(NULL)
   } 

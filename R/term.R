@@ -1,12 +1,17 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-09-15)
+## © C. Heibl 2014 (last update 2017-02-13)
+
+#' @export
 
 term <- function(organism, kingdom, locus) {
   
-  if ( !is.character(organism) )
+  if (!is.character(organism))
     stop("organism must be of mode 'character'")
-  if ( !inherits(locus, "locus") )
+  if (!inherits(locus, "locus"))
     stop("locus must be of class 'locus'")
+  
+  ## species names must not contain whitespace
+  organism <- gsub(" ", "+", organism)
   
   ## kingdom added 2016-01-22
   organism <- paste0(organism, "[orgn]+AND+", kingdom, "[orgn]")
@@ -27,6 +32,7 @@ term <- function(organism, kingdom, locus) {
     url <- paste0(organism[i], "+AND+", aliases)
     if ( !"not" %in% locus@not ){
       not <- paste0("\"", locus@not, "\"")
+      not <- paste(not, collapse = "+NOT+")
       url <- paste0(url, "+NOT+", not)
     }
     if ( length(url) > 1 ){

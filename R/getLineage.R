@@ -1,7 +1,11 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-02-25)
+## © C. Heibl 2014 (last update 2016-11-03)
+
+#' @export
+#' @import XML
 
 getLineage <- function(xml, spec, kingdom){
+  
   # this xPath expression avoids the 'double kingdom error' CH 2014-10-23
   xPath <- paste("/ncbi:TaxaSet/Taxon[ScientificName='", spec, 
                  "']/LineageEx[Taxon[Rank='kingdom']/ScientificName='", 
@@ -18,6 +22,3 @@ getLineage <- function(xml, spec, kingdom){
     return(rbind(out, c(spec, "species")))
   }
 }
-
-# c("ncbi" = "http://www.w3.org/XML/1998/namespace")
-# matchNamespaces(xml, c(xml = "http://www.omegahat.org"))

@@ -1,49 +1,37 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-01-04)
+## © C. Heibl 2014 (last update 2017-02-01)
 
-dbReadLocus <- function(x, provenance = ".", tag){
+#' @importFrom DBI dbDisconnect dbGetQuery
+#' @export
+
+dbReadLocus <- function(megProj, provenance = ".", tag){
   
-  tip.rank <- x@taxon@tip.rank
-  conn <- dbconnect(x)
-
-  ## select columns: curently not used
-  ## ---------------------------------
-  #   col.set <- c("all", "gb", "sel")
-  #   cols <- match.arg(cols, col.set, several.ok = TRUE)
-  #   if ( "all" %in% cols ) cols <- col.set[-1]
-  #   cols  <- paste("_", cols, "$", sep = "")
-  #   cols <- paste(cols, collapse = "|")
-  #   loc <- loc[, grep(cols, colnames(loc))]
-  #   
+  tip.rank <- megProj@taxon@tip.rank
+  conn <- dbconnect(megProj)
   
   ## names of acc_* tables
   ## ---------------------
-  acc <- dbTableNames(x, "acc")
-#   not.empty <- paste("SELECT count(gi) FROM", acc)
-#   not.empty <- sapply(not.empty, dbGetQuery, conn = conn)
-#   not.empty <- unlist(not.empty) > 0
-#   acc <- acc[not.empty]
-  
+  acc <- dbTableNames(megProj, "acc")
+
   ## names of spec_* or gen_* tables
   ## -------------------------------
-  msa <- dbTableNames(x, tip.rank)
+  msa <- dbTableNames(megProj, tip.rank)
   
   ## gb:
   dbGenBank <- function(conn, tab, tip.rank, provenance, tag){
-    tag <- ifelse(missing(tag), "",
-                  paste("WHERE", wrapSQL(tag, "t.tag")))
-    SQL <- paste("SELECT taxon",
-                 "FROM", tab,
-                 "WHERE", wrapSQL(provenance, term = "genom"))
-    SQL <- paste("SELECT t.xxx, count(a.taxon)",
+    # tag <- ifelse(missing(tag), "",
+    #               paste("AND", wrapSQL(tag, "t.tag")))
+    SQL <- ifelse(tip.rank == "genus", "regexp_replace(taxon, ' .+$', '') AS taxon", "taxon")
+    SQL <- paste("SELECT", SQL, "FROM", tab)
+    SQL <- paste("SELECT t.taxon, count(a.taxon)",
                  "AS", gsub("acc", "gb", tab),
                  "FROM taxonomy AS t", 
                  "LEFT JOIN (", SQL, ") AS a", 
-                 "ON t.spec = a.taxon",
-                 tag,
-                 "GROUP BY t.xxx",
-                 "ORDER BY t.xxx")
-    SQL <- gsub("xxx", tip.rank, SQL)
+                 "ON t.taxon = a.taxon",
+                 "WHERE", wrapSQL(tip.rank, "t.rank", "="),
+                 # tag,
+                 "GROUP BY t.taxon",
+                 "ORDER BY t.taxon")
     tab <- dbGetQuery(conn, SQL)
     rownames(tab) <- tab[, 1]
     tab[, 2, drop = FALSE]
@@ -58,18 +46,17 @@ dbReadLocus <- function(x, provenance = ".", tag){
   dbSelected <- function(conn, tab, tip.rank, tag){
     tag <- ifelse(missing(tag), "",
                   paste("WHERE", wrapSQL(tag, "t.tag")))
-    if ( tip.rank == "gen" ) tag <- ""
-    SQL <- ifelse(tip.rank == "spec", 
-                  "FROM taxonomy AS t",
-                  "FROM (SELECT DISTINCT gen FROM taxonomy) AS t")
-    SQL <- paste("SELECT t.xxx, s.status", 
+    if (tip.rank == "genus") tag <- ""
+    SQL <- paste("(SELECT taxon",
+                  "FROM taxonomy",
+                  "WHERE", wrapSQL(tip.rank, "rank", "="))
+    SQL <- paste("SELECT t.taxon, s.status", 
                  "AS", gsub(tip.rank, "sel", tab),
-                  SQL,
-                 "LEFT JOIN", tab, "AS s",
-                 "ON t.xxx = s.xxx", 
+                 "FROM", SQL,
+                 ") AS t LEFT JOIN", tab, "AS s",
+                 "ON t.taxon = s.taxon", 
                  tag,
-                 "ORDER BY t.xxx")
-    SQL <- gsub("xxx", tip.rank, SQL)
+                 "ORDER BY t.taxon")
     tab <- dbGetQuery(conn, SQL)
     tab[is.na(tab)] <- 0
     rownames(tab) <- tab[, 1]
@@ -84,7 +71,7 @@ dbReadLocus <- function(x, provenance = ".", tag){
   
   ## create complete table
   ## ---------------------
-  if ( !is.null(tab.sel) ){
+  if (!is.null(tab.sel)){
     obj <- cbind(tab.gb, tab.sel)
     ## order columns
     loc <- rep(gsub("acc_", "", acc), each = 2)

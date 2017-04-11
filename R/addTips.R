@@ -1,6 +1,26 @@
 ## This code is part of the megaptera package
 ## © C. Heibl 2014 (2015-12-18)
 
+#' @title Add Tips to a Phylogenetic Tree
+#' @description Add tips (species) to a phylogenetic tree according 
+#' to their taxonomic classification.
+#' @param phy An object of class \code{\link{phylo}}.
+#' @param tax A character string giving the name of the 
+#' species to be added.
+#' @param tip.rank A character string giving the ranks of the 
+#' tips in \code{phy}; must be present as a column name in 
+#' \code{tax}.
+#' @param tag \emph{To be added.}
+#' @param quiet Logical, indicating if screen output should be 
+#' suppressed.
+#' @return An object of class \code{\link{phylo}}.
+#' @seealso \code{\link{dbReadTaxonomy}} for reading a taxonomy table 
+#' from the postgreSQL database.
+#' @examples 
+#' data(cetacea)
+#' tre <- addTips(cetacea$tree, cetacea$tax)
+#' @export
+
 addTips <- function(phy, tax, tip.rank = "spec", tag = NULL, quiet = FALSE){
   
   if ( !inherits(phy, "phylo") )

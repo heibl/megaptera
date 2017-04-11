@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-07-27)
+## © C. Heibl 2014 (last update 2016-11-03)
+
+#' @export
 
 sortRanks <- function(x){
   
@@ -50,7 +52,6 @@ sortRanks <- function(x){
   unified <- unique(unified)
   unified <- c(rep("no rank", max(unlist(unified)) - 1), 
                ranks[1])
-  
   
   ## loop over each pair of neighbouring ranks
   for ( i in 1:(length(ranks) - 1) ){

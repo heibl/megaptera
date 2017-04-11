@@ -1,5 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-07-05)
+## © C. Heibl 2014 (last update 2017-02-22)
+
+#' @export
+#' @import RCurl RPostgreSQL
 
 stepA <- function(x){
   
@@ -7,57 +10,86 @@ stepA <- function(x){
   
   ## CHECKS
   ## ------
-  if ( !inherits(x, "megapteraProj") )
+  if (!inherits(x, "megapteraProj"))
     stop("'x' is not of class 'megapteraProj'")
+  if (!url.exists("https://eutils.ncbi.nlm.nih.gov"))
+    stop("internet connection required for stepA")
   
   ## iniate logfile
   ## --------------
-  logfile <- "stepA.log"
-  if ( file.exists(logfile) ) unlink(logfile)
+  logfile <- "log/stepA.log"
+  if (file.exists(logfile)) unlink(logfile)
   slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
        paste("\n", Sys.time(), sep = ""), 
        "\nSTEP A: searching and downloading taxonomy from GenBank\n",
        file = logfile)
   
-  if ( file.exists("ncbiTaxonomy-missing.txt") ) unlink("ncbiTaxonomy-missing.txt")
+  if (file.exists("ncbiTaxonomy-missing.txt")) unlink("ncbiTaxonomy-missing.txt")
   
   conn <- dbconnect(x)
   notable <- !dbExistsTable(conn, "taxonomy")
   dbDisconnect(conn)
   
-  if (  notable | x@update ){
-    
-    ## download NCBI taxonomy for ingroup
-    ingroup <- ncbiTaxonomy(taxon = x@taxon@ingroup, 
-                            extend = x@taxon@extend.ingroup,
-                            kingdom = x@taxon@kingdom, 
-                            megapteraProj = x)
-    if ( is.null(ingroup) ){
-      stop("could not retrieve taxonomy for ingroup")
-    }
-    ingroup <- fixTaxonomy(ingroup, auto = TRUE, ignore = "synonym")
-    tag <- rep("ingroup (NCBI)", nrow(ingroup))
-    if ( x@taxon@extend.ingroup ){
-      extended.species.list <- !ingroup$spec %in% sapply(x@taxon@ingroup, head, 1)
-      if ( any(extended.species.list) ){
-        tag[extended.species.list] <- "extended ingroup (NCBI)"
-      }
-    }
-    dbUpdateTaxonomy(x, ingroup, tag = tag)
-    
-    ## download NCBI taxonomy for ingroup
-    outgroup <- ncbiTaxonomy(taxon = x@taxon@outgroup, 
-                             kingdom = x@taxon@kingdom, 
-                             megapteraProj = x)
-    if ( is.null(outgroup) ){
-      stop("could not retrieve taxonomy for outgroup")
-    }
-    outgroup <- fixTaxonomy(outgroup, auto = TRUE, ignore = "synonym")
-    dbUpdateTaxonomy(x, outgroup, tag = "outgroup (NCBI)")
-    
-  } else {
-    slog("\ntaxonomy already downloaded", file = logfile)
+  ## get global NCBI taxonomy
+  conn <- dbConnect(PostgreSQL(), dbname = "ncbitaxonomy", host = "localhost", 
+                    port = 5432, user = "postgres", password = "oxalis")
+  SQL <- paste("SELECT *",
+               "FROM nodes",
+               "JOIN names USING (id)",
+               "WHERE name_class = 'scientific name'")
+  tax <- dbGetQuery(conn, SQL)
+  dbDisconnect(conn)
+  
+  ## subset to kingdom of interest
+  ## -----------------------------
+  tax <- taxdumpSubset(tax, mrca = x@taxon@kingdom)
+  
+  ## ingroup
+  ## -------
+  ig <- x@taxon@ingroup
+  a <- sapply(ig, function(z, ncbi) any(z %in% ncbi), ncbi = tax$taxon)
+  if (!all(a)){
+    message("Ingroup taxa not in NCBI Taxonomy database:", paste("\n", ig[!a]))
+    ig <- ig[a]
   }
+  if (unique(sapply(ig, is.Linnean))){
+    ingroup <- taxdumpSubset(tax, species = unlist(ig))
+    ingroup <- rbind(taxdumpLineage(tax, ig[1]), ingroup) ## add lineage to root
+  } else {
+    ## use lapply to handle more than one taxon
+    ingroup <- c(lapply(ig, taxdumpDaughters, x = tax, tip.rank = "species"),
+                 lapply(ig, taxdumpLineage, x = tax))
+    ingroup <- do.call(rbind, ingroup)
+  }
+  
+  ## outgroup
+  ## --------
+  og <- x@taxon@outgroup
+  a <- sapply(og, function(z, ncbi) any(z %in% ncbi), ncbi = tax$taxon)
+  if (!all(a)){
+    message("Ingroup taxa not in NCBI Taxonomy database:", paste("\n", og[!a]))
+    og <- og[a]
+  }
+  if (unique(sapply(og, is.Linnean))){
+    outgroup <- taxdumpSubset(tax, species = unlist(og))
+    outgroup <- rbind(taxdumpLineage(tax, outgroup$taxon[1]), outgroup) ## add lineage to root
+  } else {
+    ## use lapply to handle more than one taxon
+    outgroup <- c(lapply(og, taxdumpDaughters, x = tax, tip.rank = "species"),
+                 lapply(og, taxdumpLineage, x = tax))
+    outgroup <- do.call(rbind, outgroup)
+  }
+  
+  tax <- unique(rbind(ingroup, outgroup))
+  
+  ## write parent-child taxonomy table to database
+  ## ---------------------------------------------
+  conn <- dbconnect(x)
+  dbRemoveTable(conn, "taxonomy")
+  dbWriteTable(conn, "taxonomy", tax, row.names = FALSE)
+  dbSendQuery(conn, "ALTER TABLE taxonomy ADD PRIMARY KEY (id)")
+  dbDisconnect(conn)
+  # gt <- taxdump2phylo(tax)
   
   slog("\n\nSTEP A finished", file = logfile)
   td <- Sys.time() - start

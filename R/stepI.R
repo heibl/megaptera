@@ -1,5 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-04-08)
+## © C. Heibl 2014 (last update 2017-04-06)
+
+#' @export
+#' @import DBI
 
 stepI <- function(x){
   
@@ -7,9 +10,27 @@ stepI <- function(x){
   
   ## CHECKS
   ## ------
-  if ( !inherits(x, "megapteraProj") )
+  if (!inherits(x, "megapteraProj"))
     stop("'x' is not of class 'megapteraProj'")
-  if ( x@locus@kind == "undefined" ) stop("undefined locus not allowed")
+  if (x@locus@kind == "undefined") stop("undefined locus not allowed")
+  
+  ## check if previous step has been run
+  ## -----------------------------------
+  status <- dbProgress(x)
+  if (status$step_h == "pending") {
+    stop("the previous step has not been called yet")
+  }
+  if (status$step_h == "error") {
+    stop("the previous step has terminated with an error")
+  }
+  if (status$step_h == "failure") {
+    slog("\nNo data from upstream available - quitting", file = "")
+    dbProgress(x, "step_i", "failure")
+    return()
+  }
+  if (status$step_h == "success") {
+    dbProgress(x, "step_i", "error")
+  }
   
   ## DEFINITIONS
   ## -----------
@@ -29,8 +50,8 @@ stepI <- function(x){
   
   ## iniate logfile
   ## --------------
-  logfile <- paste(gene, "stepI.log", sep = "-")
-  if ( file.exists(logfile) ) unlink(logfile)
+  logfile <- paste0("log/", gene, "-stepI.log")
+  if (file.exists(logfile)) unlink(logfile)
   slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
        paste("\n", Sys.time(), sep = ""),
        "\nSTEP I: detecting nucleotide positions of uncertain homology\n",
@@ -41,25 +62,43 @@ stepI <- function(x){
   ## ------------------------
   conn <- dbconnect(x@db)
   
-  ## check if stepC has been run
-  ## ---------------------------
-  status <- paste("SELECT DISTINCT status",
-                  "FROM", acc.tab)
-  status <- dbGetQuery(conn, status)
-  if ( "raw" %in% status$status ){
-    dbDisconnect(conn)
-    stop("stepC has not been run")
-  }
-  
   ## check if msa table exists
   ## -------------------------
-  if ( !dbExistsTable(conn, msa.tab) ){
+  if (!dbExistsTable(conn, msa.tab)){
     dbDisconnect(conn)
     slog("\nWARNING: table", msa.tab, "does not exist!\n", file = logfile)
     td <- Sys.time() - start
     slog("\nSTEP I finished after", round(td, 2), attr(td, "units"), "\n",
          file = logfile)
     return()
+  }
+  
+  ## check if at least 3 species/genera are available
+  ## -----------------------------------------
+  n <- paste("SELECT count(taxon) FROM", msa.tab)
+  n <- dbGetQuery(conn, n)$count
+  if (n < 3){
+    dbDisconnect(conn)
+    slog("\nWARNING: only", n, "taxa available, no masking possible\n", 
+         file = logfile)
+    td <- Sys.time() - start
+    slog("\nSTEP I finished after", round(td, 2), attr(td, "units"), 
+         "\n", file = logfile)
+    return()
+  }
+  if (n < 100){ # 100 is arbitrary
+    n <- paste("SELECT taxon FROM", msa.tab)
+    n <- dbGetQuery(conn, n)
+    n <- which(is.ingroup(x, n$taxon))
+    if (length(n) < 3){
+      dbDisconnect(conn)
+      slog("\nWARNING:", length(n), "ingroup taxa available,", 
+           "no masking possible\n", file = logfile)
+      td <- Sys.time() - start
+      slog("\nSTEP GG finished after", round(td, 2), attr(td, "units"), 
+           "\n", file = logfile)
+      return()
+    }
   }
   
   ## read alignment
@@ -81,10 +120,9 @@ stepI <- function(x){
   #     a <- sfLapply(x = spec, fun = dbPReadDNA, conn = megProj, tab.name = msa.tab, regex = TRUE)
   #     a <- do.call(rbind, a)
   #   } else {
-  a <- dbReadDNA(x, msa.tab, taxon = ".+", regex = TRUE,
-                 ignore.excluded = TRUE, blocks = "split")
+  a <- dbReadDNA(x, msa.tab, blocks = "split")
   # }
-  if ( is.null(a) ) {
+  if (is.null(a)) {
     dbDisconnect(conn)
     slog("\nWARNING: no sequences conform to current parameter setting\n", file = logfile)
     td <- Sys.time() - start
@@ -92,27 +130,14 @@ stepI <- function(x){
          file = logfile)
     return()
   }
-  if ( is.matrix(a) ) a <- list(a)
-  if ( !all(sapply(a, is.matrix)) ){
+  if (is.matrix(a)) a <- list(a)
+  if (!all(sapply(a, is.matrix))){
     stop("stepG has not been called yet")
   }
   slog("\n.. number of blocks:", length(a), file = logfile)
   n <- sapply(a, nrow)
   slog("\n.. number of taxa in blocks:", 
        paste(n, collapse = " - "), file = logfile)
-  #   if ( nrow(a) == 1 ) {
-  #     dbDisconnect(conn)
-  #     slog("\n", file = logfile)
-  #     dbWriteMSA(x, dna = a, masked = TRUE)
-  #     return()
-  #   }
-  
-  ## write files
-  ## -----------
-  #   slog("\n.. write alignment to files ..", file = logfile)
-  #   write.phy(a, paste(gene, "phy", sep = "."))
-  #   rownames(a) <- gsub("-", "_", rownames(a))
-  #   write.nex(a, paste(gene, "nex", sep = "."))
   
   ## masking of poorly aligned nucleotides
   ## -----------------------------------
@@ -123,26 +148,22 @@ stepI <- function(x){
   
   ## sort alignment taxonomically
   ## ----------------------------
-  if ( inherits(x@taxon, "taxonGuidetree") ){
-    gt <- comprehensiveGuidetree(x, tip.rank = tip.rank, subset = a)
-  } else { 
-    gt <- dbReadTaxonomy(x, subset = a)
-    gt <- tax2tree(gt, tip.rank = tip.rank)
-  }
-  matchAlignment <- function(ali, phy){
-    if ( nrow(ali) > 2 ){
-      nt <- setdiff(phy$tip.label, rownames(ali))
-      phy <- ladderize(drop.tip(phy, nt))
-      ali[match(phy$tip.label, rownames(ali)), ]
-    }
-    ali
-  }
-  a <- lapply(a, matchAlignment, phy = gt)
+  # gt <- comprehensiveGuidetree(x, tip.rank = tip.rank, subset = a)
+  # 
+  # matchAlignment <- function(ali, phy){
+  #   if ( nrow(ali) > 2 ){
+  #     nt <- setdiff(phy$tip.label, rownames(ali))
+  #     phy <- ladderize(drop.tip(phy, nt))
+  #     ali[match(phy$tip.label, rownames(ali)), ]
+  #   }
+  #   ali
+  # }
+  # a <- lapply(a, matchAlignment, phy = gt)
   
   ## write to database -- serially (or in parallel)
   ## ----------------------------------------------
   slog("\n.. write alignment/blocks to database ..", file = logfile)
-  lapply(a, dbWriteMSA, megapteraProj = x, masked = TRUE)
+  lapply(a, dbWriteMSA, megProj = x, masked = TRUE)
   #   if ( x@params@parallel ){
   #     if ( nrow(a) > 2000 ){
   #       id <- seq(from = 1, to = nrow(a), by = ceiling(nrow(a)/x@params@cpus))
@@ -164,21 +185,21 @@ stepI <- function(x){
   ## -----------
   slog("\n.. write alignment to files ..", file = logfile)
   if ( length(a) == 1 ) {
-    write.phy(a[[1]], paste(gene, "masked.phy", sep = "-"))
+    write.phy(a[[1]], paste0("msa/", gene, "-masked.phy"))
     rownames(a[[1]]) <- gsub("-", "_", rownames(a[[1]]))
-    write.nex(a[[1]], paste(gene, "masked.nex", sep = "-"))
+    write.nex(a[[1]], paste0("msa/", gene, "-masked.nex"))
   } else {
     for ( i in 1:length(a) ){
       b <- paste("block", i, sep = "")
-      write.phy(a[[i]], paste(gene, b, "masked.phy", sep = "-"))
+      write.phy(a[[i]], paste0("msa/", gene, "-", b, "-masked.phy"))
       rownames(a[[i]]) <- gsub("-", "_", rownames(a[[i]]))
-      write.nex(a[[i]], paste(gene, b, "masked.nex", sep = "-"))
+      write.nex(a[[i]], paste0("msa/", gene, "-", b, "-masked.nex"))
     }
     a <- do.call(cbind.DNAbin, c(a, fill.with.gaps = TRUE))
     b <- paste(length(n), "blocks", sep = "")
-    write.phy(a, paste(gene, "masked.phy", sep = "-"))
+    write.phy(a, paste0("msa/", gene, "-masked.phy"))
     rownames(a) <- gsub("-", "_", rownames(a))
-    write.nex(a, paste(gene, "masked.nex", sep = "-"))
+    write.nex(a, paste0("msa/", gene, "-masked.nex"))
   }
   
   ## summary of result
@@ -197,5 +218,5 @@ stepI <- function(x){
   slog("\n\nSTEP I finished", file = logfile)
   td <- Sys.time() - start
   slog(" after", round(td, 2), attr(td, "units"), file = logfile)
-  invisible(x)
+  dbProgress(x, "step_i", "success")
 }

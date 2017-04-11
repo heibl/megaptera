@@ -1,6 +1,37 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update: 2015-02-10)
+## © C. Heibl 2014 (last update: 2017-03-24)
 
+#' @title Add Tips to a Phylogenetic Tree
+#' @description Add tips (species) to a phylogenetic tree according 
+#' to their taxonomic classification.
+#' @param phy An object of class \code{\link{phylo}}.
+#' @param tip A character string giving the name of the species to be added.
+#' @param tip.rank A character string giving the ranks of the 
+#' tips in \code{phy}; must be present as a column name in 
+#' \code{tax}.
+#' @param tax A data frame containing the taxonomic classification.
+#' @param insert A character string indicating the positions where the 
+#' species is to be inserted: \code{"crown"}, \code{"stem"}, 
+#' \code{"randomly"}, or any unambigous abbreviation of these. 
+#' This option will only have an effect if \code{phy} contains more than 
+#' one congeneric of \code{tip}.
+#' @param stem.edge A real number greater than 0 and smaller than 1, which 
+#' gives the fraction of the terminal branch length that will be assigned to 
+#' the branch subtending the newly created MRCA of \code{tip} and its single 
+#' congeneric species in \code{phy}. Will have no effect if \code{phy} 
+#' contains more than one congeneric of \code{tip}.
+#' @param quiet Logical, indicating if screen output should be 
+#' suppressed.
+#' @return An object of class \code{\link{phylo}}.
+#' @seealso \code{\link{dbReadTaxonomy}} for reading a taxonomy table 
+#' from the postgreSQL database.
+#' @importFrom ape extract.clade Ntip Nnode Nedge rotate is.ultrametric branching.times
+#' @importFrom ips descendants noi fixNodes tipHeights 
+#' @importFrom utils head
+#' @importFrom stats runif
+#' @export
+
+ 
 addSingleTip <- function(phy, tip, tip.rank = "spec", tax, 
                          insert = "crown", stem.edge = 0.5,
                          quiet = FALSE){

@@ -1,6 +1,8 @@
 ## This code is part of the megaptera package
 ## © C. Heibl 2014 (last update 2015-03-25)
 
+#' @export
+ 
 is.Linnean <- function(x, det = TRUE){
   id <- paste("(^[[:upper:]][[:lower:]]+)",  # genus
               "(_| )",

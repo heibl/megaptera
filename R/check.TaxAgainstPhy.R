@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-01-13)
+## © C. Heibl 2014 (last update 2017-03-24)
+
+#' @importFrom ape drop.tip is.monophyletic
 
 check.TaxAgainstPhy <- function(phy, tax, rank = NULL){
   

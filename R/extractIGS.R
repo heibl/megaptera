@@ -118,7 +118,7 @@ extractIGS <- function(xml, gi, locus){
     seq <- substr(seq, min(pos), max(pos))
     if ( pos[1] > pos[2] ) {
       seq <- unlist(strsplit(seq, ""))
-      seq <- rev(comp(seq))
+      seq <- rev(seqinr::comp(seq))
       seq <- paste(seq, collapse = "")
     }
     seq

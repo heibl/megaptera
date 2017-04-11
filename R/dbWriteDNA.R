@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-02-25)
+## © C. Heibl 2014 (last update 2016-11-07)
+
+#' @export
 
 dbWriteDNA <- function(conn, tab.name, dna, 
                        enforce.binomial = TRUE, status){
@@ -7,11 +9,11 @@ dbWriteDNA <- function(conn, tab.name, dna,
   if ( is.matrix(dna) ) dna <- as.list(dna)
   dna <- as.character(dna)
   len <- sapply(dna, length)
-  dna <- lapply(dna, c2s)
+  dna <- lapply(dna, seqinr::c2s)
   
   if ( missing(status) ) status <- "raw"  
   
-  txt <- splitGiTaxon(names(dna), enforce.binomial)
+  txt <- splitGiTaxon(names(dna), enforce.binomial, sep = " ")
   
   ## UPDATE or INSERT?
   ## -----------------

@@ -1,5 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-02-01)
+## © C. Heibl 2014 (last update 2016-11-03)
+
+#' @export
+#' @import DBI
 
 dbReadReference <- function(x, locus){
   
@@ -12,7 +15,7 @@ dbReadReference <- function(x, locus){
   }
   sql <- paste("SELECT taxon, reference", 
                "FROM reference",
-               "WHERE", sql.wrap(locus, term = "gene"))
+               "WHERE", wrapSQL(locus, "gene", "="))
   sql <- dbGetQuery(conn, sql)
   dbDisconnect(conn)
   if ( nrow(sql) > 0 ){

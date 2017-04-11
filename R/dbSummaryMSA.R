@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-08-01)
+## © C. Heibl 2016 (last update 2017-02-17)
+
+#' @export
 
 dbSummaryMSA <- function(x, masked = FALSE){
   
@@ -13,9 +15,7 @@ dbSummaryMSA <- function(x, masked = FALSE){
   
   engine <- function(msa, masked, model = "JC69"){
     
-    s <- dbReadDNA(x, msa, taxon = ".*", regex = TRUE,
-                   ignore.excluded = TRUE, masked = masked, 
-                   blocks = "ignore")
+    s <- dbReadDNA(x, msa, masked = masked)
     if ( is.null(s) ) return(NULL)
     p.uncorr <- dist.dna(s, model = "raw", pairwise.deletion = TRUE)
     p.corr <- dist.dna(s, model = model, pairwise.deletion = TRUE)

@@ -1,5 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-02-24)
+## © C. Heibl 2014 (last update 2017-02-20)
+
+#' @export
+#' @import DBI
 
 dbMaxGIPerSpec <- function(x, max.gi.per.spec){
   
@@ -7,7 +10,7 @@ dbMaxGIPerSpec <- function(x, max.gi.per.spec){
   ## -----------
   gene <- x@locus@sql
   acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
-  logfile <- paste(gene, "stepB.log", sep = "-")
+  logfile <- paste0("log/", gene, "-stepB.log")
   
   if ( missing(max.gi.per.spec) ) 
     max.gi.per.spec <- x@params@max.gi.per.spec
@@ -34,11 +37,11 @@ dbMaxGIPerSpec <- function(x, max.gi.per.spec){
            file = logfile)
       acc <- paste("UPDATE", acc.tab, 
                    "SET status='excluded (max.gi)'",
-                   "WHERE", sql.wrap(acc.exclude, term = "gi", BOOL = "OR"))
+                   "WHERE", wrapSQL(acc.exclude, "gi", "=", "OR"))
       dbSendQuery(conn, acc)
       acc <- paste("UPDATE", acc.tab, 
                    "SET status='raw'",
-                   "WHERE", sql.wrap(acc.include, term = "gi", BOOL = "OR"))
+                   "WHERE", wrapSQL(acc.include, "gi", "=", "OR"))
       dbSendQuery(conn, acc)
     }
   }

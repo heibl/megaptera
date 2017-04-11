@@ -1,12 +1,16 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-07-30)
+## © C. Heibl 2014 (last update 2017-01-25)
+
+#' @export
 
 extractLocus <- function(xml, seqid, locus, kind = "gene"){
+  
+  debug.level <- 0 ## has be implemented in megapteraPars
   
   ## prepare 'seqid': GI/GB
   ## ----------------------
   seqid <- as.character(seqid)
-  if ( length(grep("^[[:digit:]]", seqid)) > 0 ){
+  if (length(grep("^[[:digit:]]", seqid))){
     ## seqid: GI
     UID <- paste("gi", seqid, sep = "|")
     UID <- paste("GBSeq_other-seqids/GBSeqid='", UID, "'", sep = "")
@@ -17,7 +21,7 @@ extractLocus <- function(xml, seqid, locus, kind = "gene"){
   
   ## prepare locus information
   ## -------------------------
-  if ( inherits(locus, "locus") ){
+  if (inherits(locus, "locus")){
     loc <- locus@aliases
     GBFeature_key <- locus@kind
   } else {
@@ -25,9 +29,8 @@ extractLocus <- function(xml, seqid, locus, kind = "gene"){
     GBFeature_key <- kind
   }
   
-  GBlocus <- sql.wrap(loc, regex = FALSE, BOOL = "or", 
-                      term = "GBQualifier_value")
-  if ( GBFeature_key == "gene" ) GBFeature_key <- c(GBFeature_key, "CDS")
+  GBlocus <- wrapSQL(loc, "GBQualifier_value", "=", "or")
+  if (GBFeature_key == "gene") GBFeature_key <- c(GBFeature_key, "CDS")
   GBFeature_key <- wrapSQL(GBFeature_key, term = "GBFeature_key", 
                            operator = "=", boolean = "or")
   xpath <- paste("//GBSeq[", UID, "]",
@@ -51,7 +54,7 @@ extractLocus <- function(xml, seqid, locus, kind = "gene"){
   
   ## if extraction fails ...
   ## -----------------------
-  if (  nrow(fromto) == 0 ){
+  if (!nrow(fromto)){
     genes <- paste("//GBSeq[", UID, "]",
                    "//GBQualifier[GBQualifier_name='gene']/GBQualifier_value", 
                    sep = "")
@@ -60,10 +63,12 @@ extractLocus <- function(xml, seqid, locus, kind = "gene"){
                    "//GBQualifier[GBQualifier_name='note']/GBQualifier_value", 
                    sep = "")
     notes <- sort(unique(xpathSApply(xml, notes, xmlValue)))
-    save(seqid, locus, notes, 
-         file = paste("debugMe", seqid, "extractLocus.rda", 
-                      sep = "-"))
-    #     saveXML(xml, file = "debugMe-extractLocus.xml")
+    if (debug.level){
+      save(seqid, locus, notes, 
+           file = paste("debugMe", seqid, "extractLocus.rda", 
+                        sep = "-"))
+      #     saveXML(xml, file = "debugMe-extractLocus.xml")
+    }
     warning("failed to extract locus='", loc[1], 
             "' from seqid=", seqid, " (", organism, ")", 
             "\n\navailable genes: ", paste(genes, collapse = ", "), sep = "")
@@ -81,7 +86,7 @@ extractLocus <- function(xml, seqid, locus, kind = "gene"){
     seq <- substr(seq, min(pos), max(pos))
     if ( pos[1] > pos[2] ) {
       seq <- unlist(strsplit(seq, ""))
-      seq <- rev(comp(seq))
+      seq <- rev(seqinr::comp(seq))
       seq <- paste(seq, collapse = "")
     }
     seq

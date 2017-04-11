@@ -1,5 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2015 (last update 2016-02-22)
+## © C. Heibl 2015 (last update 2016-12-07)
+
+#' @importFrom DBI dbDisconnect dbSendQuery
+#' @export
 
 dbIncludeSpec <- function(x, spec){
   

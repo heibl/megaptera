@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-12-17)
+## © C. Heibl 2014 (last update 2016-11-15)
+
+#' @export
 
 ncbiTaxonomy <- function(taxon, kingdom, extend = FALSE, trim, 
                          megapteraProj){
@@ -10,7 +12,7 @@ ncbiTaxonomy <- function(taxon, kingdom, extend = FALSE, trim,
   species.list <- unique(is.Linnean(unlist(taxon)))
   if ( length(species.list) > 1 ) 
     stop("names of species and higher taxa", 
-         " must not be mixed")
+         " cannot not be mixed")
   
   ##
   if ( species.list ){

@@ -2,8 +2,6 @@
 
 % these function deserve proper documentation
 \alias{giConsensus}
-\alias{megaptera2Rmarkdown}
-\alias{plotPhyloWithClassification}
 \alias{stepBOLD}
 \alias{supermatrix.mrbayes}
 
@@ -50,7 +48,6 @@
 \alias{extractIGS}
 \alias{extractLocus}
 \alias{filter.alignment}
-\alias{findRoot} % ncbiGenome
 \alias{fixTaxonomy} % deserves explicit doc
 \alias{force.mp}
 \alias{fuzzy.match}
@@ -96,6 +93,7 @@
 \alias{whereToInsert}
 \alias{wrapSQL}
 \alias{write.dna.spectable}
+\alias{XML2acc}
 
 \title{Internal MEGAPTERA Functions}
 \description{Internal \pkg{megaptera} functions.}

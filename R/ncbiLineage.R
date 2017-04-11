@@ -1,5 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-09-08)
+## © C. Heibl 2014 (last update 2016-11-22)
+
+#' @export
+#' @import RCurl XML
 
 ncbiLineage <- function(taxon, kingdom, megapteraProj){
   
@@ -67,7 +70,10 @@ ncbiLineage <- function(taxon, kingdom, megapteraProj){
                   "&retmode=xml", 
                   "&retmax=", retmax, 
                   "&retstart=", retstart)
-    xml <- xmlParse(getURL(xml), getDTD = FALSE)
+    xml <- getURL(xml)
+    # if (debug.level > 0) 
+      write(xml, "ncbiLineage.xml")
+    xml <- xmlParse(xml, getDTD = FALSE)
     newXMLNamespace(xmlRoot(xml), "http://www.w3.org/XML/1998/namespace", 
                     prefix = "ncbi", set = TRUE)
     #     xml <- xmlRoot(xml)

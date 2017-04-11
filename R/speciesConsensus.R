@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-09-19)
+## © C. Heibl 2014 (last update 2017-03-28)
+
+#' @export
 
 speciesConsensus <- function(megProj, spec){
   
@@ -11,23 +13,20 @@ speciesConsensus <- function(megProj, spec){
   ## -----------
   gene <- megProj@locus@sql
   acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
-  spec.tab <- paste("spec", gsub("^_", "", gene), sep = "_")
   align.exe <- megProj@align.exe
   max.bp <- megProj@params@max.bp
   min.identity <- megProj@locus@min.identity
   min.coverage <- megProj@locus@min.coverage
-  logfile <- paste(gene, "stepF.log", sep = "-")
+  logfile <- paste0("log/", gene, "stepF.log")
   
   ## read species alignments
   ## -----------------------
   obj <- dbReadDNA(spec, x = megProj, tab.name = acc.tab, 
-                   regex = TRUE, 
                    max.bp = max.bp, 
                    min.identity = min.identity, 
                    min.coverage = min.coverage)
-  if ( !is.matrix(obj) ) obj <- mafft(obj, path = megProj@align.exe)
+  if (!is.matrix(obj)) obj <- mafft(obj, exec = megProj@align.exe)
 
-  
   ## species consensus sequences
   ## ---------------------------
   obj <- specCons(obj, log = logfile)

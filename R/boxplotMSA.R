@@ -1,5 +1,9 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-01-19)
+## © C. Heibl 2016 (last update 2017-02-24)
+
+#' @export
+#' @importFrom graphics boxplot
+#' @importFrom stats median
 
 boxplotMSA <- function(x){
   
@@ -7,8 +11,7 @@ boxplotMSA <- function(x){
   
   dbDistDNA <- function(msa, masked = TRUE, model = "JC69"){
     
-    s <- dbReadDNA(x, msa, taxon = ".*", regex = TRUE,
-                   ignore.excluded = TRUE, masked = masked)
+    s <- dbReadDNA(x, msa, taxon = ".*", masked = masked)
     if ( is.null(s) ) return(NULL)
     dist.dna(s, model = "raw", pairwise.deletion = TRUE)
   }

@@ -13,7 +13,7 @@ dbReadTaxonomy(megapteraProj, subset, tag)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{megapteraProj}{
-an object of class \code{\link{megapteraProj}}
+an object of class \code{\link{megapteraProj}}.
   }
   \item{taxonomy}{
 a data frame containing a taxonomic classification of the study species.
@@ -23,6 +23,9 @@ a character string used to tag the rows of \code{taxonomy} in the  postgreSQL ta
   }
  \item{subset}{
 a subset of species names (Latin binomials) to which the taxonomy should be limited. Can be a DNA alignment of class \code{DNAbin}, a phylogenetic tree of class \code{phylo}, the name of a \code{spec_*} database table (as created by \code{\link{stepF}}), or a character vector.
+  }
+  \item{root}{
+  a character string. By default (\code{"tol"}),  all higher ranks from the most recent common ancestor (MRCA) of the clade of interest down to the root are included in the taxonomic classification, whereas \code{"mrca"} means that only the MRCA will be included. Note that this option only makes sense in combination with \code{subset}.
   }
 }
 %\details{}

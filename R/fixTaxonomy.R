@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-12-09)
+## © C. Heibl 2014 (last update 2016-11-03)
+
+#' @export
 
 fixTaxonomy <- function(tax, auto = FALSE, ignore = c("synonym", "tag"),
                         quiet = TRUE){

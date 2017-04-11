@@ -1,10 +1,14 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-01-20)
+## © C. Heibl 2016 (last update 2016-12-06)
+
+#' @export
+#' @import DBI
+#' @importFrom graphics barplot
 
 checkBlocks <- function(x, plot = TRUE, col){
   
   msa.tab <- dbTableNames(x, x@taxon@tip.rank)
-
+  
   ## update spec_* table
   ## -------------------
   conn <- dbconnect(x)
@@ -33,7 +37,7 @@ checkBlocks <- function(x, plot = TRUE, col){
   if ( plot ) {
     if ( missing(col) ) col <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c")
     barplot(t(do.call(rbind, bb)), 
-                      horiz = TRUE, las = 1, col = col)
+            horiz = TRUE, las = 1, col = col)
   }
   b
 }

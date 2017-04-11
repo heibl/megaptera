@@ -7,9 +7,9 @@
 Read and write DNA Sequences from/to PostgreSQL Database.
 }
 \usage{
-dbReadDNA(x, tab.name, taxon, regex = FALSE, max.bp,
+dbReadDNA(x, tab.name, taxon, regex = TRUE, max.bp,
           min.identity, min.coverage, ignore.excluded = TRUE,
-          blocks = "split", masked = FALSE)
+          subtree = FALSE, blocks = "split", masked = FALSE)
 
 dbWriteDNA(conn, tab.name, dna, enforce.binomial = TRUE,
   status)
@@ -53,6 +53,9 @@ logical: if \code{FALSE}, \code{dbReadDNA} will also return sequences that are m
   }
   \item{blocks}{
 a character string indicating how to handle alignment blocks: \code{"split"} causes blocks to be returned as elements of a list. \code{"concatenate"} means, blocks will be concatendated and returned as a single alignment. In order to get a (potentially unaligned) list of sequences, choose \code{"ignore"}.
+  }
+  \item{subtree}{
+  logical.
   }
   \item{masked}{
 logical: if alignments have been masked in \code{\link{stepH}}, setting \code{masked=TRUE} will render only the unmasked alignment positions.

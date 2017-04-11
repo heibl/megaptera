@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-07-14)
+## © C. Heibl 2014 (last update 2017-03-22)
 
 compareToRef <- function(megProj, spec, reference){
   
@@ -9,16 +9,16 @@ compareToRef <- function(megProj, spec, reference){
   acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
   align.exe <- megProj@align.exe
   max.bp <- megProj@params@max.bp
-  logfile <- paste(gene, "stepE.log", sep = "-")
+  logfile <- paste0("log/", gene, "-stepE.log")
   
   conn <- dbconnect(megProj)
   
   cat("\n", spec[1])
   
   obj <- dbReadDNA(megProj, acc.tab, spec[1], FALSE, max.bp)
-  if ( is.list(obj) ) stop("sequences of ", spec[1], " not aligned")
+  if (is.list(obj)) stop("sequences of ", spec[1], " not aligned")
   
-  if ( length(spec) == 2 ){
+  if (length(spec) == 2){
     
     ## select appropriate reference sequences
     ## --------------------------------------
@@ -27,7 +27,7 @@ compareToRef <- function(megProj, spec, reference){
     ## then choose the least distant reference available
     if ( !br %in% rownames(reference) ){
       obj <- c(as.list(reference), as.list(obj))
-      obj <- mafft(obj, method = "auto", path = align.exe)
+      obj <- mafft(obj, method = "auto", exec = align.exe)
       d <- dist.dna(obj, model = "raw", pairwise.deletion = TRUE, 
                     as.matrix = TRUE)
       thisMean <- function(d, bn, sn){
@@ -51,18 +51,18 @@ compareToRef <- function(megProj, spec, reference){
   ## handle reverse complements
   ## --------------------------
   rc <- grep("^_R_", rownames(obj))
-  if ( length(rc) > 0 ){
+  if (length(rc)){
     spec.id <- grep(spec[1], rownames(obj))
     rownames(obj) <- gsub("^_R_", "", rownames(obj))
     ## realignment if only subset of sequences concerned
     if ( length(spec.id) > length(rc) ){
-      gt <- splitGiTaxon(rownames(obj)[rc])
+      gt <- splitGiTaxon(rownames(obj)[rc], sep = " ")
       rc <- paste("UPDATE", acc.tab,
                   "SET status = 'aligned-RC'",
                   "WHERE", sql.wrap(gt[, 1], term = "gi", BOOL = NULL),
                   "AND", sql.wrap(gt[, 2], term = "taxon", BOOL = NULL))
       dbSendQuery(conn, rc)
-      rc <- mafft(obj[spec.id, ], path = megProj@align.exe)
+      rc <- mafft(obj[spec.id, ], exec = megProj@align.exe)
       dbWriteDNA(conn, acc.tab, rc)
       
       ## all sequences concerned
@@ -73,11 +73,28 @@ compareToRef <- function(megProj, spec, reference){
     } 
   }
   
-  ## crop sequences
-  ## --------------
+  ## crop sequences + update database
+  ## --------------------------------
   n <- ncol(obj)
   obj <- cropToReference(obj)
-  if ( ncol(obj) < n ){
+  if (ncol(obj) < n){
+    
+    ## identify sequences that do not overlap with reference
+    ## and mark them as 'excluded (outside reference)'
+    id <- apply(obj, 1, 
+                function(x) ifelse(all(unique(x) %in% as.raw(c(240, 2, 4))), 
+                                   FALSE, TRUE))
+    id <- names(which(!id))
+    if ( length(id) > 0 ){
+      id <- data.frame(splitGiTaxon(id), sep = " ")
+      SQL <- paste("UPDATE", acc.tab, 
+                   "SET status = 'excluded (outside reference)'",
+                   "WHERE", wrapSQL(id$gi, "gi", "=", NULL), 
+                   "AND", wrapSQL(id$taxon, "taxon", "=", NULL))
+      lapply(SQL, dbSendQuery, conn = conn)
+      ## delete non-overlapping sequences from alignment
+      obj <- deleteEmptyCells(obj, quiet = TRUE)
+    }
     dbWriteDNA(conn, acc.tab, obj[-grep("REF", rownames(obj)), ],
                status = "aligned")
   }
@@ -115,18 +132,14 @@ compareToRef <- function(megProj, spec, reference){
   
   ## write results to database
   ## -------------------------
-  d <- data.frame(splitGiTaxon(names(d)), 
+  d <- data.frame(splitGiTaxon(names(d), sep = " "), 
                   identity = d,
                   coverage = cv)
   SQL <- paste("UPDATE", acc.tab, 
-               "SET", wrapSQL(d$identity, term = "identity", 
-                              operator = "=", boolean = NULL), 
-               ",", wrapSQL(d$coverage, term = "coverage", 
-                            operator = "=", boolean = NULL),
-               "WHERE", wrapSQL(d$gi, term = "gi", 
-                                operator = "=", boolean = NULL), 
-               "AND", wrapSQL(d$taxon, term = "taxon", 
-                              operator = "=", boolean = NULL))
+               "SET", wrapSQL(d$identity, "identity", "=", NULL), 
+               ",", wrapSQL(d$coverage, term = "coverage", "=", NULL),
+               "WHERE", wrapSQL(d$gi, term = "gi", "=", NULL), 
+               "AND", wrapSQL(d$taxon, "taxon", "=", NULL))
   lapply(SQL, dbSendQuery, conn = conn)
   dbDisconnect(conn)
 } 

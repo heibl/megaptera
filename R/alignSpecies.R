@@ -1,19 +1,20 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-03-02)
+## © C. Heibl 2014 (last update 2017-03-22)
+
+#' @import DBI
 
 alignSpecies <- function(megProj, spec){
   
   gene <- megProj@locus@sql
   acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
-  logfile <- paste(gene, "stepC.log", sep = "-")
+  logfile <- paste0("log/", gene, "-stepC.log")
   
   conn <- dbconnect(megProj)
-  seqs <- dbReadDNA(megProj, acc.tab, spec, 
-                    max.bp = 2 * megProj@params@max.bp, 
-                    ignore.excluded = TRUE)
+  seqs <- dbReadDNA(megProj, acc.tab, spec, regex = FALSE, 
+                    max.bp = 2 * megProj@params@max.bp)
   slog(paste("\n-- ", ifelse(is.list(seqs), length(seqs), nrow(seqs)), 
              " seqs. of ", spec,  sep = ""), file = logfile) 
-  seqs <- mafft(seqs, method = "auto", path = megProj@align.exe)
+  seqs <- mafft(seqs, method = "auto", exec = megProj@align.exe)
   
   
   ## Vitis vinifera + trnLF:

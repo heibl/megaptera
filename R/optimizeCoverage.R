@@ -1,5 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2015 (last update 2015-12-09)
+## © C. Heibl 2015 (last update 2016-12-06)
+
+#' @importFrom graphics hist
+#' @export
 
 optimizeCoverage <- function(x, discard = 0, quiet = FALSE, plot = FALSE){
   

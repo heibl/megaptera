@@ -1,20 +1,27 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-09-19)
+## © C. Heibl 2014 (last update 2016-12-07)
 
-checkSpecies <- function(megapteraProj, spec){
+#' @title Get Information about Species
+#' @description Returns information about the 'fate' of a single species along the pipeline.
+#' @param megProj An object of class \code{\link{megapteraProj}}.
+#' @param spec A character string giving the name of a species.
+#' @return A data frame, as a side effect a summary message is printed on the screen.
+#' @seealso \code{\link{checkMissingSpec}} to create a list of species that were missed/lost during consecutive steps of the pipeline.
+#' @import DBI
+#' @export
+
+checkSpecies <- function(megProj, spec){
   
-  spec <- gsub(" ", "_", spec)
-  conn <- dbconnect(megapteraProj)
   
-  ## taxonomy
-  ## --------
-  tax <- paste <- paste("SELECT * FROM  taxonomy", 
-                        "WHERE", wrapSQL(spec))
-  tax <- dbGetQuery(conn, tax)
+  conn <- dbconnect(megProj)
+  
+  ## A: TAXONOMY
+  ## -----------
+  tax <- dbReadTaxonomy(megProj)
   
   ## if not found, is it a synonym?
   ## ------------------------------
-  if ( nrow(tax) == 0 ){
+  if (!nrow(tax)){
     tax <- paste("SELECT spec FROM  taxonomy", 
                  "WHERE", wrapSQL(spec, "synonym"))
     tax <- dbGetQuery(conn, tax)$spec
@@ -31,18 +38,19 @@ checkSpecies <- function(megapteraProj, spec){
       tax <- dbGetQuery(conn, tax)
     }
   }
-  tax <- tax[1, tax[1, ] != "-", drop = TRUE]
-  tax <- data.frame(rank = names(tax), name = unlist(tax))
+  tax <- taxdumpLineage(tax, spec)
+  tax <- tax[, c("rank", "taxon")]
   tax <- format(tax, justify = "right")
-  tax <- paste(tax$rank, tax$name, sep = " : ")
+  tax <- paste(tax$rank, tax$taxon, sep = " : ")
   cat("***** TAXONOMY *****", paste("\n", tax, sep = ""))
   
-  ## sequences
-  ## ---------
+  ## B: SEQUENCES
+  ## ------------
+  # spec <- gsub(" ", "_", spec)
   cat("\n\n***** SEQUENCES *****")
-  tab <- dbReadLocus(megapteraProj)
-  tab <-tab[rownames(tab) == spec, ]
-  if ( nrow(tab) == 0 ){
+  tab <- dbReadLocus(megProj)
+  tab <- tab[rownames(tab) == spec, ]
+  if (!nrow(tab)){
     cat("\nno sequences of species '", spec, 
         "' in database\n", sep = "")
     dbDisconnect(conn)
@@ -53,7 +61,7 @@ checkSpecies <- function(megapteraProj, spec){
   ## ----------
   loci <- colnames(tab)[tab > 0]
   loci <- unique(gsub("(gb|sel)_", "", loci))
-  if ( length(loci) == 0 ){
+  if (!length(loci)){
     cat("\nno sequences of species '", spec, 
         "' in database\n", sep = "")
   } else {
@@ -61,17 +69,21 @@ checkSpecies <- function(megapteraProj, spec){
   }
   
   ACC <- data.frame()
-  for ( i in seq_along(loci) ){
+  for (i in seq_along(loci)){
     
-    tabb <- tab[, grep(loci[i], colnames(tab))]
+    tabb <- tab[, grep(loci[i], colnames(tab)), drop = FALSE]
     SQL <- paste("SELECT gi, status, genom, npos, identity, coverage",
                  "FROM", paste("acc", loci[i], sep = "_"),
                  "WHERE", wrapSQL(spec, term = "taxon"))
     acc <- dbGetQuery(conn, SQL)
     
-    
-    present <- grep("selected|masked", tabb[, 2])
-    present <- ifelse(length(present) > 0, "yes", "no")
+    if (ncol(tabb) == 1){
+      tabb <- data.frame(tabb, "not yet run", stringsAsFactors = FALSE)
+      present <- "no"
+    } else {
+      present <- grep("selected|masked", tabb[, 2])
+      present <- ifelse(length(present), "yes", "no")
+    }
     
     ## screen output
     ## -------------

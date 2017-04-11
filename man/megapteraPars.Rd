@@ -49,13 +49,18 @@ numeric, ranging between 0 and 1. To avoid long stretches of only a few sequence
   }
   \item{min.n.seq}{numeric, the minimum number of sequences required for an alignment block. Alignment blocks with less than \code{min.n.seq} are dropped from the output.
   }
+  \item{max.mad}{
+  numeric, giving the treshold value for the assessment of saturation: alignments with a median average distance (MAD) of \code{max.mad} or greater will be broken into blocks. The default value has been estimated with simulation by Smith et al. (2009).
+  }
   \item{gb1, gb2, gb3, gb4, gb5}{parameters for masking of alignment blocks with \code{\link{gblocks}}.
   }
 }
 }
 
 \value{a list of parameters described in the 'Parameters' section.}
-\author{Christoph Heibl}
+\references{
+Smith, S. A., J. M. Beaulieu, and M. J. Donoghue. 2009. Mega-phylogeny approach for comparative biology: an alternative to supertree and supermatrix approaches. \emph{BMC Evolutionary Biology} \bold{9}:37.
+}
 \seealso{
 \code{\link{megapteraProj}} for creating a \code{megaptera} project.
 }

@@ -1,5 +1,30 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-07-31)
+## © C. Heibl 2014 (last update 2017-02-22)
+
+#' @title Step B: Search and Download Sequences
+#' @description For any given project (see \code{\link{megapteraProj}}), 
+#' this step searches the Nucleotide database on GenBank, downloads all 
+#' sequences and stores them in a postgreSQL database table.
+#' @details All accessions are stored under their species name as appearing 
+#' in the \emph{organism} field at GenBank, but information about infrageneric 
+#' ranks is stripped off the taxon names before they are stored in the database.
+#' @param x An object of class \code{\link{megapteraProj}}
+#' @param update.seqs A character string determining the behaviour of 
+#' \code{stepB} when it is run repeatedly on the same locus/taxon 
+#' combination: \code{"no"} means that only sequences that have been made 
+#' available on GenBank since the last execution \code{stepB} will be 
+#' downloaded; \code{"all"} means the database table with all sequences 
+#' will be removed and all sequences will be downloaded de novo. Naturely, 
+#' this option has no effect if \code{stepB} is called for the first time.
+#' @return None. \code{stepB} is called for its side effects: (1) strings of 
+#' DNA sequences with attribute data are stored in a pgSQL database; (2) a log 
+#' file is written to the current working directory.
+#' @references \url{http://www.ncbi.nlm.nih.gov/books/NBK25501/}
+#' @seealso \code{\link{megapteraProj}}; \code{\link{stepA}} for the preceeding 
+#' and \code{\link{stepC}} for the subsequent step; \code{\link{stepBX}} for the 
+#' addition of external sequences to the database.
+#' @export
+#' @import DBI
 
 stepB <- function(x, update.seqs = "no"){
   
@@ -10,6 +35,9 @@ stepB <- function(x, update.seqs = "no"){
   if ( !inherits(x, "megapteraProj") )
     stop("'x' is not of class 'megapteraProj'")
   if ( x@locus@kind == "undefined" ) stop("undefined locus not allowed")
+  if ( !url.exists("https://eutils.ncbi.nlm.nih.gov") )
+    stop("internet connection required for stepB")
+  
   
   ## open database connection
   ## ------------------------
@@ -19,11 +47,12 @@ stepB <- function(x, update.seqs = "no"){
   ## -----------
   gene <- x@locus@sql
   acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
+  dbProgress(x, "step_b", "error")
   
   ## iniate logfile
   ## --------------
-  logfile <- paste(gene, "stepB.log", sep = "-")
-  if ( file.exists(logfile) ) unlink(logfile)
+  logfile <- paste0("log/", gene, "-stepB.log")
+  if (file.exists(logfile)) unlink(logfile)
   slog(paste("\nmegaptera", 
              packageDescription("megaptera")$Version),
        paste("\n", Sys.time(), sep = ""), 
@@ -32,14 +61,14 @@ stepB <- function(x, update.seqs = "no"){
   
   ## delete table (if it exists and is not to be updated)
   ## ----------------------------------------------------
-  if ( dbExistsTable(conn, acc.tab) & update.seqs == "all" ) {
+  if (dbExistsTable(conn, acc.tab) & update.seqs == "all") {
     dbRemoveTable(conn, acc.tab)
     slog("\n.. removing TABLE", acc.tab, "..", file = logfile)
   }
   
   ## create table (if it does not exist)
   ## -----------------------------------
-  if ( !dbExistsTable(conn, acc.tab) ) {
+  if (!dbExistsTable(conn, acc.tab)) {
     slog("\n.. creating TABLE", acc.tab, "..", file = logfile)
     SQL <- paste(acc.tab, "_pk", sep = "")
     SQL <- paste("CREATE TABLE", acc.tab, 
@@ -60,11 +89,11 @@ stepB <- function(x, update.seqs = "no"){
   ## ----------------------------------------------------
   slog("\n.. assembling taxon search list ..", file = logfile)
   ingroup <- x@taxon@ingroup
-  if ( unique(is.Linnean(unlist(ingroup))) & x@taxon@extend.ingroup ){
+  if (unique(is.Linnean(unlist(ingroup))) & x@taxon@extend.ingroup){
     ingroup <- unique(lapply(ingroup, strip.spec))
   }
   outgroup <- x@taxon@outgroup
-  if ( unique(is.Linnean(unlist(outgroup))) & x@taxon@extend.outgroup ){
+  if (unique(is.Linnean(unlist(outgroup))) & x@taxon@extend.outgroup){
     outgroup <- unique(lapply(outgroup, strip.spec))
   }
   search.tax <- c(ingroup, outgroup)
@@ -73,23 +102,7 @@ stepB <- function(x, update.seqs = "no"){
   ## -----------------------------
   lapply(search.tax, downloadSequences, x = x)
   
-  ## declare excluded taxa 
-  ## (same set of tokens in dbUpdateTaxonomy + stepB)
-  ## ------------------------------------------------
-  indet <- indet.strings()
-  if ( !x@taxon@hybrids ){
-    indet <- union(indet, "_x_|^x_")
-  }
-  indet <- paste(indet, collapse = "|")
-  indet <- paste("UPDATE", acc.tab, 
-                 "SET status = 'excluded (indet)'",
-                 "WHERE", wrapSQL(indet, term = "spec_ncbi", 
-                                  boolean = NULL))
-  dbSendQuery(conn, indet)
-  # singles quotes are escaped by single quotes in pgSQL!
-  dbSendQuery(conn, paste("UPDATE", acc.tab, 
-                          "SET status = 'excluded (indet)'",
-                          "WHERE spec_ncbi~''''"))
+  ## declare excluded taxa: has been removed upstream to XML2acc (2016-11-03)
   
   ## rename infraspecific taxa
   ## -------------------------
@@ -100,8 +113,8 @@ stepB <- function(x, update.seqs = "no"){
   rename <- data.frame(gb = rename,  
                        spec = as.Linnean(rename), 
                        stringsAsFactors = FALSE)
-  id <- (rename$gb != rename$spec)
-  if ( length(id) > 0 ){
+  id <- which(rename$gb != rename$spec)
+  if (length(id)){
     rename <- rename[id, ]
     rename$gb <- gsub("'", ".", rename$gb) ## Amylosporus_sp._'succulentus' # evil again!
     SQL <- paste("UPDATE", acc.tab, 
@@ -124,8 +137,8 @@ stepB <- function(x, update.seqs = "no"){
   dbMaxGIPerSpec(x)
   
   ## create and update relation <taxonomy>
-  dbUpdateTaxonomy(x) # handle species found in stepB 
-  # that are not included in taxonomy table
+  ## handle species found in stepB that are not included in taxonomy table
+  # dbUpdateTaxonomy(x) 
   
   # summary
   # -------
@@ -148,5 +161,6 @@ stepB <- function(x, update.seqs = "no"){
   
   slog("\n\nSTEP B finished", file = logfile)
   td <- Sys.time() - start
-  slog(" after", round(td, 2), attr(td, "units"), file = logfile)
+  slog(" after", round(td, 2), attr(td, "units"), "\n", file = logfile)
+  dbProgress(x, "step_b", "success")
 }

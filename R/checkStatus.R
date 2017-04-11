@@ -1,9 +1,12 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-10-20)
+## © C. Heibl 2016 (last update 2017-02-17)
+
+#' @export
+#' @import DBI
 
 checkStatus <- function(x, locus){
   
-  if ( missing(locus) ) locus <- x@locus@sql
+  if (missing(locus)) locus <- x@locus@sql
   
   conn <- dbconnect(x)
   tabs <- dbTableNames(x)
@@ -17,12 +20,19 @@ checkStatus <- function(x, locus){
   names(obj) <- LETTERS[1:9]
   
   ## stepA
-  if ( "taxonomy" %in% tabs ) obj["A"] <- TRUE
+  ## Criterion: a table names taxonomy exists
+  ## ----------------------------------------
+  if ("taxonomy" %in% tabs) obj["A"] <- TRUE
   
   ## stepB
-  if ( acc.tab %in% tabs ) obj["B"] <- TRUE
+  ## Criterion: a table of accessions exists
+  ## ---------------------------------------
+  if (acc.tab %in% tabs) obj["B"] <- TRUE
   
   ## stepC
+  ## Criterion: sequences of each species are
+  ## of the same length
+  ## ------------------
   cc <- paste("SELECT taxon AS spec,", 
               "count(taxon) AS n,",
               "min(char_length(dna)) = max(char_length(dna)) AS aligned",
@@ -30,11 +40,13 @@ checkStatus <- function(x, locus){
               "WHERE status !~ 'excluded'",
               "GROUP BY taxon") 
   cc <- dbGetQuery(conn, cc)
-  if ( all(cc$aligned) ) obj["C"] <- TRUE
+  if (all(cc$aligned)) obj["C"] <- TRUE
   
   ## stepD
+  ## Criterion: reference table exists
+  ## ---------------------------------
   dd <- dbReadReference(x, locus)
-  if ( is.logical(dd) ){
+  if (is.logical(dd)){
     dbDisconnect(conn)
     return(obj)
   } else {
@@ -42,16 +54,21 @@ checkStatus <- function(x, locus){
   }
   
   ## stepE
+  ## Citerion: the identity column in the
+  ## accession table is empty
+  ## ------------------------
   ee <- paste("SELECT count(taxon)",
               "FROM", acc.tab, 
               "WHERE status !~ 'excluded|too'",
               "AND npos <=", x@params@max.bp,
               "AND identity IS NULL")
   ee <- dbGetQuery(conn, ee)
-  if ( ee$count == 0 ) obj["E"] <- TRUE
+  if (!ee) obj["E"] <- TRUE
   
   ## stepF
-  if ( msa.tab %in% tabs ){
+  ## Citerion:
+  ## -
+  if (msa.tab %in% tabs){
     
     ## check if msa table is empty
     ff <- paste("SELECT count(dna) FROM", msa.tab)
@@ -69,9 +86,7 @@ checkStatus <- function(x, locus){
   }
   
   ## stepG
-  gg <- dbReadDNA(x, msa.tab, 
-                  taxon = ".+", regex = TRUE,
-                  blocks = "ignore")
+  gg <- dbReadDNA(x, msa.tab)
   if ( is.matrix(gg) ){
     obj["G"] <- TRUE
   } else {
@@ -84,13 +99,10 @@ checkStatus <- function(x, locus){
         "FROM", msa.tab, 
         "WHERE status ~ 'block'")
   hh <- dbGetQuery(conn, hh)
-  if ( hh$count > 0 ) obj["H"] <- TRUE
+  if (hh$count) obj["H"] <- TRUE
   
   ## stepI
-  ii <- dbReadDNA(x, msa.tab, 
-                  taxon = ".+", regex = TRUE,
-                  blocks = "ignore",
-                  masked = TRUE)
+  ii <- dbReadDNA(x, msa.tab, masked = TRUE)
   if ( !is.null(ii) ) obj["I"] <- TRUE
   
   dbDisconnect(conn)

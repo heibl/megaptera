@@ -1,5 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-08-01)
+## © C. Heibl 2014 (last update 2017-02-20)
+
+#' @export
+#' @import DBI
 
 stepG <- function(x){	
   
@@ -29,7 +32,7 @@ stepG <- function(x){
   
   ## iniate logfile
   ## --------------
-  logfile <- paste(gene, "stepG.log", sep = "-")
+  logfile <- paste0("log/", gene, "-stepG.log")
   if ( !quiet & file.exists(logfile) ) unlink(logfile)
   if ( !quiet )  slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
                       paste("\n", Sys.time(), sep = ""),
@@ -172,12 +175,11 @@ stepG <- function(x){
       seqs <- c(xx, s1)
       i <- i + 1
     } # end of WHILE-loop
-    if ( !quiet ) slog("\nLEVEL", i, file = logfile)
-    if ( length(seqs) > 2 )
+    if (!quiet) slog("\nLEVEL", i, file = logfile)
+    if (length(seqs) > 2)
       stop("uncomplete alignment in WHILE loop")
-    if ( length(seqs) == 2 )
-      seqs <- mafft.merge(seqs, 
-                          mafft.exe = align.exe)
+    if (length(seqs) == 2)
+      seqs <- mafft.merge(seqs, mafft.exe = align.exe)
     else seqs <- seqs[[1]]
   }
   

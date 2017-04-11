@@ -1,28 +1,18 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-03-25)
+## © C. Heibl 2014 (last update 2017-02-22)
 
 ## real names:
 ## Anigozanthos_humilis_x_Anigozanthos_manglesii
 ## 'Asterotremella_humicola'
+
+#' @export
+
 as.Linnean <- function(x){
   
   ## these strings characterize
   ## not fully identified sequences
   ## ------------------------------
-  indet <- c("_sp[.]?([_-]|$)", # Amanita_sp Amanita_sp. Amanita_sp_xxx Amanita_sp._xxx Amanita_sp-53
-                 "_cf[.]", 
-                 "_aff[.]", 
-                 "hybrid$", 
-                 "Group$",
-                 "cultivar$",
-                 "environmental$",
-                 "^fungal",
-                 "uncultured",
-                 "unknown",
-                 ".[[:upper:]]",
-                 "^[[:lower:]]")
-  indet <- paste(indet, collapse = "|")
-  
+  indet <- indet.strings(FALSE, TRUE)
   x[grep(indet, x)] <- NA                       
   
   id <- paste("(^[[:upper:]][[:lower:]]+)",  # genus
@@ -32,6 +22,6 @@ as.Linnean <- function(x){
               #               "([[_| ][:lower:]+-?[:lower:]+]?)", # subspecies|variety
                             "(.*)", "$", 
               sep = "") 
-  x <- gsub(id, "\\1_\\2", x)
+  x <- gsub(id, "\\1 \\2", x)
   x
 }

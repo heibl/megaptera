@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-07-08)
+## © C. Heibl 2014 (last update 2017-01-12)
+
+#' @export
 
 cropToReference <- function(x){
   

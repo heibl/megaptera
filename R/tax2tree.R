@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-01-08)
+## © C. Heibl 2014 (last update 2016-11-08)
+
+#' @export
 
 tax2tree <- function(tax, tip.rank = "spec", 
                      ignore = "synonym"){

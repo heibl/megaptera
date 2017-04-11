@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-08-01)
+## © C. Heibl 2014 (last update 2017-04-10)
+
+#' @export
 
 stepD <- function(x){
   
@@ -7,19 +9,34 @@ stepD <- function(x){
   
   ## CHECKS
   ## ------
-  if ( !inherits(x, "megapteraProj") )
+  if (!inherits(x, "megapteraProj"))
     stop("'x' is not of class 'megapteraProj'")
-  if ( x@locus@kind == "undefined" ) stop("undefined locus not allowed")
-  STATUS <- checkStatus(x)
-  if ( !all(STATUS[1:3]) ){
-    stop("step", names(STATUS)[min(which(!STATUS))] ,
-         " has not been run")
+  if (x@locus@kind == "undefined") stop("undefined locus not allowed")
+  
+  ## check if previous step has been run
+  ## -----------------------------------
+  status <- dbProgress(x)
+  if (status$step_c == "pending") {
+    stop("the previous step has not been called yet")
   }
+  if (status$step_c == "error") {
+    stop("the previous step has not been called yet")
+  }
+  if (status$step_c == "failure") {
+    slog("\nNo data from upstream available - quitting", file = "")
+    dbProgress(x, "step_d", "failure")
+    return()
+  }
+  if (status$step_c == "success") {
+    dbProgress(x, "step_d", "error")
+  }
+  
   
   ## PARAMETERS
   ## -----------
   gene <- x@locus@sql
   acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
+  tip.rank <- match.arg(x@taxon@tip.rank, c("species", "genus"))
   align.exe <- x@align.exe
   max.bp <- x@params@max.bp
   reference.max.dist <- x@params@reference.max.dist
@@ -27,8 +44,8 @@ stepD <- function(x){
   
   ## iniate logfile
   ## --------------
-  logfile <- paste(gene, "stepD.log", sep = "-")
-  if ( file.exists(logfile) ) unlink(logfile)
+  logfile <- paste0("log/", gene, "-stepD.log")
+  if (file.exists(logfile)) unlink(logfile)
   slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
        paste("\n", Sys.time(), sep = ""),
        "\nSTEP D: reference sequence\n", file = logfile)
@@ -39,22 +56,22 @@ stepD <- function(x){
   
   ## delete previous entries
   ## -----------------------
-  if ( dbExistsTable(conn, "reference") ){
+  if (dbExistsTable(conn, "reference")){
     SQL <- paste("DELETE FROM reference",
-                 "WHERE", sql.wrap(gene, term = 'gene'))
+                 "WHERE", wrapSQL(gene, "gene", "="))
     dbSendQuery(conn, SQL)
   }
   
   ## CASE 1: user-defined reference sequences
   ## ----------------------------------------
-  if ( inherits(x@locus, "locusRef") ){
-  
+  if (inherits(x@locus, "locusRef")){
+    
     slog("\n.. user-defined reference sequences ..", 
          file = logfile)
     ref <- x@locus@reference
     ref <- as.list(ref)
     if ( length(ref) > 1 ){
-      ref <- mafft(ref, path = x@align.exe) # realign in any case!
+      ref <- mafft(ref, exec = x@align.exe) # realign in any case!
       ref <- trimEnds(ref, .75 * nrow(ref)) ## try to make coverage comparable
     } else {
       ref <- as.matrix(ref)
@@ -71,87 +88,103 @@ stepD <- function(x){
     slog("\n.. minimum number of species required for reference calculation:", 
          min.seqs.reference, file = logfile)
     
-    ## set taxonomic rank for 
-    ## reference sequence calculation
-    ## ------------------------------
-    rr <- x@taxon@reference.rank
-    if ( rr == "auto" ){
-      tax <- dbReadTaxonomy(x)
-      species.list <- unique(is.Linnean(unlist(x@taxon@ingroup)))
-      if ( length(species.list) > 1 ) stop("names of species and higher taxa must not be mixed")
-      if ( species.list ){
-        rr <- apply(tax, 2, function(x) length(unique(x)))
-        rr <- head(rr, -1) ## delete synonyms column
-        rr <- names(rr)[max(which(rr == 1))]
-      } else {
-        rr <- apply(tax, 2, grep, pattern = paste("^", "$", 
-                                                  sep = unlist(x@taxon@ingroup)))
-        rr <- names(rr)[sapply(rr, length) > 0]
-      }
-    }
-    slog("\n.. calculate reference(s) for (sub-)groups at rank:", 
-         rr, file = logfile)
-    
     ## reset database if updating
     ## --------------------------
-    if ( x@update & dbExistsTable(conn, "reference") ) {
+    if (x@update & dbExistsTable(conn, "reference")) {
       SQL <- c(paste("UPDATE", acc.tab, 
                      "SET status='aligned' WHERE status~'reference'"),
                paste("DELETE FROM reference WHERE", 
-                     sql.wrap(gene, term = "gene")))
+                     wrapSQL(gene, "gene", "=")))
       lapply(SQL, dbSendQuery, conn = conn)
     }
     
-    ## species, for which we have more than 1 acc.
-    ## -------------------------------------------
-    tax <- paste("SELECT taxon AS spec, count(taxon),", rr,
-                 "FROM", acc.tab, 
-                 "JOIN taxonomy ON (taxon = spec)", 
-                 "WHERE status ~ 'aligned'",
-                 "GROUP BY taxon,", rr,
-                 "ORDER by taxon")
+    ## do we have any ingroup species?
+    ## -------------------------------
+    tax <- paste("SELECT taxon, count(taxon) AS n",
+                 "FROM", acc.tab,
+                 "WHERE status !~ 'excluded|too'",
+                 "AND", wrapSQL(x@params@max.bp, "npos", "<="),
+                 "GROUP BY taxon")
     tax <- dbGetQuery(conn, tax)
+    n_ingroup <- length(which(is.ingroup(x, tax$taxon)))
+    if (n_ingroup < 3){
+      slog("\nWARNING: less than 3 ingroup species available", file = logfile)
+      dbDisconnect(conn)
+      slog("\n\nSTEP D finished", file = logfile)
+      td <- Sys.time() - start
+      slog(" after", round(td, 2), attr(td, "units"), file = logfile)
+      dbProgress(x, "step_d", "failure")
+      return()
+    } 
     
-    if ( nrow(tax) == 0 ) {
+    ## which species have more than 1 accession?
+    ## -----------------------------------------
+    id <- tax$n > 1
+    if (!nrow(tax[id, ])) {
       slog("\nWARNING: no species with > 1 accession available", file = logfile)
       dbDisconnect(conn)
       slog("\n\nSTEP D finished", file = logfile)
       td <- Sys.time() - start
       slog(" after", round(td, 2), attr(td, "units"), file = logfile)
-      return(x)
+      dbProgress(x, "step_d", "failure")
+      return()
     } else {
-      slog("\n..", nrow(tax), "species have > 1 sequence", file = logfile)
+      slog("\n..", length(id), "species have > 1 sequence", file = logfile)
     }
     
-    ## reference.clades: updating or not ...
-    ## ------------------------------------
-    reference.clades <- unique(tax[[rr]])
-    if ( dbExistsTable(conn, "reference") ){
+    ## determine reference clades (refc)
+    ## ---------------------------------
+    rr <- x@taxon@reference.rank
+    if (rr == "auto"){
+      gt <- comprehensiveGuidetree(x, tip.rank = "species", subset = tax$taxon)
+      ref <- gt$edge[gt$edge[, 1] == (Ntip(gt) + 1), 2]
+      ref <- lapply(ref, descendants, phy = gt, labels = TRUE)
+      ref <- lapply(ref, gsub, pattern = "_", replace = " ")
+      names(ref) <- sapply(ref, taxdumpMRCA, x = x, tip.rank = "species")
+      ref <- data.frame(ref = rep(names(ref), sapply(ref, length)), 
+                         taxon = gsub("_", " ", unlist(ref)), stringsAsFactors = FALSE)
+      tax <- data.frame(ref, n = tax[match(ref$taxon, tax$taxon), "n"])
+      refc <- unique(tax$ref)
+    } else {
+      refc <- dbReadTaxonomy(x)
+      tax <- data.frame(ref = taxdumpHigherRank(refc, tax$taxon, rr),
+                        tax)
+      refc <- unique(tax$rr)
+    }
+    tax <- tax[tax$n > 1, ]
+  
+    ## reference clades (refc): updating or not
+    ## ----------------------------------------
+    if (dbExistsTable(conn, "reference")){
       already <- names(dbReadReference(x))
-      if ( !x@update & all(reference.clades %in% already) ){
+      if (!x@update & all(refc %in% already)){
         slog("\n.. reference sequences already calculated", 
              file = logfile)
         dbDisconnect(conn)
-        return(x)
+        dbProgress(x, "step_d", "success")
+        return()
       } else {
-        reference.clades <- setdiff(reference.clades, already)
+        refc <- setdiff(refc, already)
       }
     } else {
       already <- NULL
     }
     
     slog("\n.. calculating reference sequences for", 
-         length(reference.clades), "clades", 
-         file = logfile)
-    
-    ref <- vector(mode = "list", length = length(reference.clades))
-    names(ref) <- reference.clades
-    for ( i in reference.clades ) {
+         length(refc), "clades", file = logfile)
+    ref <- vector(mode = "list", length = length(refc))
+    names(ref) <- refc
+    for (i in refc) {
       
       slog("\n -", i, file = logfile)
       
-      spec <- tax[tax[[rr]] == i, "spec"]
-      ali <- lapply(spec, dbReadDNA, tab.name = acc.tab, x = x)
+      spec <- tax[tax$ref == i, "taxon"]
+      if (!length(spec)){
+        slog("\nCAUTION: reference clade extended", 
+             length(ali), file = logfile)
+        spec <- tax[, "taxon"]
+      }
+      ali <- lapply(spec, dbReadDNA, x = x, tab.name = acc.tab, regex = FALSE)
       names(ali) <- gsub(" ", "_", spec)
       slog("\n  > number of species with > 1 accession:", 
            length(ali), file = logfile)
@@ -161,9 +194,9 @@ stepD <- function(x){
       id <- data.frame(sapply(ali, getMaxDist))
       id <- split(rownames(id), f = id[, 1])
       d <- as.numeric(names(id))
-      for ( j in d ){
+      for (j in d){
         bt <- sort(unlist(id[d <= j]))
-        if ( length(bt) >= min.seqs.reference ) break
+        if (length(bt) >= min.seqs.reference) break
       }
       ali <- ali[bt]
       bp <- ifelse(j == 0, "bp", "bp or less")
@@ -173,14 +206,14 @@ stepD <- function(x){
       ## check if there are species that have not been used 
       ## to create reference. Only create reference if new species are available
       ## -----------------------------------------------------------------------
-      sql <- sql.wrap(names(ali), term = "taxon")
-      sql <- paste("(", sql, ")", sep = "")
+      sql <- wrapSQL(names(ali), "taxon", "=")
+      sql <- paste0("(", sql, ")")
       sql <- paste("status ~ 'reference' AND", sql)
       SQL <- paste("SELECT taxon, status FROM", acc.tab, "WHERE", sql)
       SQL <- unique(dbGetQuery(conn, SQL))
       
-      if ( length(grep("reference", SQL$status)) == length(ali) & 
-             i %in% already ){ # it is possible that status column contains
+      if (length(grep("reference", SQL$status)) == length(ali) & 
+           i %in% already){ # it is possible that status column contains
         # 'reference', but reference table has been
         # deleted since
         slog("\n- reference has already been calculated", file = logfile)
@@ -198,8 +231,8 @@ stepD <- function(x){
       
       ## Then align 
       ## ----------
-      if ( length(ali) > 1 ) {
-        ali <- mafft(ali, method = "auto", path = align.exe)
+      if (length(ali) > 1) {
+        ali <- mafft(ali, method = "auto", exec = align.exe)
       } else {
         ali <- as.matrix(ali)  
       }
@@ -209,14 +242,14 @@ stepD <- function(x){
       
       ## check distance matrix
       ## ---------------------
-      if ( nrow(ali) > 1 ){
+      if (nrow(ali) > 1 ){
         slog("\n  > check genetic distances ...", file = logfile)
         d <- dist.dna(ali, model = "raw", as.matrix = TRUE,
                       pairwise.deletion = TRUE)
         diag(d) <- NA
         e <- apply(d, 1, min, na.rm = TRUE)
         id <- names(e)[e < reference.max.dist]
-        if ( length(id) > 0 ){
+        if ( length(id)){
           slog("\n   ", length(id), "sequences with maximum distance of",
                reference.max.dist, file = logfile)
           ali <- ali[names(e)[e < reference.max.dist], ]
@@ -230,13 +263,12 @@ stepD <- function(x){
         id <- rownames(ali) ## only one species
       }
       
-      
       ## add 'reference' to status
       ## -------------------------
       id <- u[u[, "taxon"] %in% rownames(ali), "gi"] 
       SQL <- paste("UPDATE", acc.tab, 
                    "SET status='aligned-reference'",
-                   "WHERE", sql.wrap(id, term = "gi"))
+                   "WHERE", wrapSQL(id, "gi", "="))
       dbSendQuery(conn, SQL)
       
       ## create 'reference' sequence
@@ -248,8 +280,9 @@ stepD <- function(x){
     ## Align reference sequences ... 
     ## -----------------------------
     class(ref) <- "DNAbin"
-    if ( length(ref) > 1 ){
-      ref <- mafft(ref, path = align.exe)
+    names(ref) <- gsub(" ", "_", names(ref))
+    if (length(ref) > 1){
+      ref <- mafft(ref, exec = align.exe)
     } else {
       ref <- as.matrix(ref)
     }
@@ -264,5 +297,5 @@ stepD <- function(x){
   td <- Sys.time() - start
   slog(" after", round(td, 2), attr(td, "units"), 
        "\n", file = logfile)
-  invisible(x)
+  dbProgress(x, "step_d", "success")
 }

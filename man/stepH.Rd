@@ -7,7 +7,7 @@ Step H: Detect and Separate Unalignable Blocks
 Dependent on the substitution rate of the genomic region and the taxonomic depth of the study group, not always all accession can be aligned into a single alignment. \code{step H} will detect and separate such unalignable alignment blocks.
 }
 \usage{
-stepH(x, max.mad = 0.01)
+stepH(x, max.mad)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -15,7 +15,7 @@ stepH(x, max.mad = 0.01)
   an object of class \code{\link{megapteraProj}}.
   }
   \item{max.mad}{
-numerical, giving the treshold value for the assessment of saturation: alignments with a median average distance (MAD) of \code{max.mad} or greater will be broken into blocks. The default value has been estimated with simulation by Smith et al. (2009).
+numeric, giving the treshold value for the assessment of saturation: alignments with a median average distance (MAD) of \code{max.mad} or greater will be broken into blocks. The default value of 0.01 has been estimated with simulation by Smith et al. (2009).
   }
 }
 %\details{}

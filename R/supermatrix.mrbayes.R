@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-12-16)
+## © C. Heibl 2014 (last update 2016-02-17)
 
 supermatrix.mrbayes <- function(megapteraProj, min.n.seq, masked = TRUE, 
                         partition,
@@ -49,9 +49,7 @@ supermatrix.mrbayes <- function(megapteraProj, min.n.seq, masked = TRUE,
   ## select and read individual alignments
   ## -------------------------------------
   cat("\n.. reading", length(tabnames), "alignments ..")
-  x <- lapply(tabnames, dbReadDNA, 
-              conn = conn, taxon = ".*", regex = TRUE,
-              ignore.excluded = TRUE, masked = masked)
+  x <- lapply(tabnames, dbReadDNA, conn = conn, masked = masked)
   test <- sapply(x, function(a) ncol(a) == 2)
   if ( any(test) ){
     stop("no sequences found in '", tabnames[test], "' - have you run stepG and stepH?")

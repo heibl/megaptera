@@ -1,35 +1,9 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-08-16)
+## © C. Heibl 2014 (last update 2016-12-06)
 
-setClass("taxon", 
-         representation = list(
-           ingroup = "list",
-           extend.ingroup = "logical",
-           outgroup = "list",
-           extend.outgroup = "logical",
-           kingdom = "character",
-           hybrids = "logical",
-           tip.rank = "character",
-           reference.rank = "character")
-)
-setOldClass("phylo")
-setClass(Class = "taxonGuidetree", 
-         representation = list(
-           guide.tree = "phylo"),
-         contains = "taxon"
-)
-
-setClass("megapteraProj", 
-         representation = list(
-           db = "dbPars",
-           taxon = "taxon",
-           locus = "locus",
-           align.exe = "character", 
-           merge.exe = "character", 
-           mask.exe = "character",
-           params = "megapteraPars",
-           update = "logical")
-)
+#' @include megapteraProj-class.R
+#' @importFrom methods new
+#' @export
 
 "megapteraProj" <- function(db, taxon, 
                             locus = locus(), 
@@ -88,10 +62,3 @@ setMethod("show",
             cat("\nmasking        :", object@mask.exe)
           }
 )
-
-setLocus <- function(x, locus){
-#   stopifnot(inherits(x, "megapteraProj"))
-#   stopifnot(inherits(locus, "locus"))
-  x@locus <- locus
-  x
-}

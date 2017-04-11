@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-01-15)
+## © C. Heibl 2014 (last update 2017-01-12)
+
+#' @export
 
 coverage <- function(DNAbin, what = "species"){
   

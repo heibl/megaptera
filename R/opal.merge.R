@@ -1,22 +1,27 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-08-11)
+## © C. Heibl 2016 (last update 2017-02-01)
 
-opal.merge <- function(subMSA, merge.exe){
+#' @export
+
+opal.merge <- function(subMSA, merge.exe, mem = "16G"){
   
   ## write imput files, then clear from memory
-  fns <- c("in.fas", "in2.fas", "out.fas")
+  fns <- tempfile(pattern = c("in", "in2", "out"), fileext = ".fas")
   write.fas(subMSA[[1]], fns[1])
   write.fas(subMSA[[2]], fns[2])
   remove(subMSA) ## save memory
   
   ## execute opal
   system2(command = merge.exe, 
-          args = c("--in in.fas",
-                   "--in2 in2.fas",
-                   "--out out.fas"))
-
+          args = c(paste("--mem", mem), 
+                   paste("--in", fns[1]),
+                   paste("--in2", fns[2]),
+                   paste("--out", fns[3])
+                   )
+          )
+  
   ## retrieve output, then remove files
-  obj <- read.fas("out.fas")
+  obj <- read.fas(fns[3])
   file.remove(fns)
   obj
 }

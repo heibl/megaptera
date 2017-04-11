@@ -1,39 +1,56 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-09-15)
+## © C. Heibl 2016 (last update 2017-02-22)
 
 ## to do:
 ## must be adapted for plants e.g. lines 15, 104
 ## extend outgroup to genus if it is a single species
 
+#'@title Find Organelle Genomes on NCBI GenBank
+#'@description Finds the most representative organelle genomes of a given taxon 
+#'  for use as reference sequences.
+#'@param x An object of class \code{\link{megapteraProj}}.
+#'@param organelle A character string, either \code{"mitochondrion"}, 
+#'  \code{"chloroplast"}, or any unambiguous abreviation of these.
+#'@param n Numeric, the maximum number of genomes that will be chosen. Depending
+#'  on the classification of the taxon as returned by \code{\link{stepA}}, the 
+#'  actual number of genomes returned can be less than \code{n}.
+#'@details \code{ncbiGenome} uses a four-step algorithm to produce a 
+#'  taxonomically balanced sample of reference organelle genomes: \enumerate{ 
+#'  \item Determine the root taxon for both ingroup and outgroup. \item Find all
+#'  organelle genomes present on NCBI GenBank for this taxa. \item Using the 
+#'  taxonomic classifiaction, find the \code{n - x} basal lineages of the entire
+#'  set of genomes; thereby \code{x} is often greater than 0 depending on the 
+#'  branching pattern (topology) encoded by the classifiaction. \item For each 
+#'  lineage, randomly choose one organelle genome and return the results as data
+#'  frame (see \code{Value} section). }
+#'@return a data frame with three columns: \item{taxon}{scientific name as Latin
+#'  binomial} \item{gb}{UID: GenBank number} \item{gi}{alternative UID (GIs will
+#'  no longer be supported after august 2016!)}
+#'@references NCBI Orgenelle Genome Resources: 
+#'  \url{http://www.ncbi.nlm.nih.gov/genome/organelle/}
+#'@seealso \code{\link{locusRef}} to set reference sequences.
+#'@export
+#'@import XML
+
 ncbiGenome <- function(x, organelle, n = 5){
+  
+  ## CHECKS
+  ## ------
+  if (!url.exists("https://eutils.ncbi.nlm.nih.gov"))
+    stop("internet connection required for ncbiGenome")
   
   ## set organelle
   ## -------------
+  fn <- ifelse(dir.exists("results"), "log/ncbiGenome.log", "")
   organelle <- match.arg(organelle, c("mitochondrion", "chloroplast"))
-  slog("\n.. organelle     :", organelle)
+  slog("\n.. organelle     :", organelle, file = fn)
   ## tag can either be 'mitochondrion' or 'mitochondrial DNA'
   organelle <- gsub("drion", "dri*", organelle)
   
-  ## set ingroup root
-  ## ----------------
-  if ( length(x@taxon@ingroup) == 1 ){
-    ingroup.root <- unlist(x@taxon@ingroup)
-  } else {
-    ingroup.root <- dbReadTaxonomy(x, tag = "ingroup")
-    ingroup.root <- findRoot(ingroup.root)
-  }
-  slog("\n.. ingroup root  :", ingroup.root)
-  
-  ## set outgroup root
-  ## -----------------
-  if ( length(x@taxon@outgroup) == 1 ){
-    outgroup.root <- unlist(x@taxon@outgroup)
-  } else {
-    outgroup.root <- dbReadTaxonomy(x, tag = "outgroup")
-    outgroup.root <- findRoot(outgroup.root)
-  }
-  slog("\n.. outgroup root :", outgroup.root)
-  outgroup.root <- gsub(" ", "+", outgroup.root)
+  ## find common root of ingroup and outgroup
+  ## ----------------------------------------
+  common.root <- findRoot(x, "both")
+  slog("\n.. common root   :", head(common.root$taxon, 1), file = fn)
   
   ## query ENTREZ and save history on server
   ## ---------------------------------------
@@ -44,10 +61,7 @@ ncbiGenome <- function(x, organelle, n = 5){
                 "&usehistory=y",
                 "&retmax=9999",
                 "&db=nucleotide",
-                "&term=(", ingroup.root, 
-                "[Organism]+AND+", organelle,
-                "[Title]+AND+complete+genome[Title])",
-                "+OR+(", outgroup.root, 
+                "&term=(", head(common.root$taxon, 1), 
                 "[Organism]+AND+", organelle,
                 "[Title]+AND+complete+genome[Title])"
   )
@@ -55,28 +69,28 @@ ncbiGenome <- function(x, organelle, n = 5){
   
   ## get and parse results via eFetch from history server
   ## ----------------------------------------------------
-  xml <- robustXMLparse(xml, logfile = "")
+  xml <- robustXMLparse(xml, logfile = fn)
   webEnv <- xpathSApply(xml, fun = xmlToList,
                         path = "//eSearchResult/WebEnv")
   queryKey <- xpathSApply(xml, fun = xmlToList,
                           path = "//eSearchResult/QueryKey")
   nn <- as.numeric(xpathSApply(xml, fun = xmlValue,
                                path = "//eSearchResult/Count"))
-  if ( nn == 0 ){
+  if (!nn){
     stop("no ", organelle, " genomes available for ", x@taxon@ingroup)
   }
   
   ## loop over sliding window
   ## ------------------------
-  retmax = 50
+  retmax <- 50
   sw <- seq(from = 0, to = nn, by = retmax)
   sw <- data.frame(from = sw, to = c(sw[-1] - 1, nn))
-  slog("\n.. posting", nn, "UIDs on Entrez History Server ..")
+  slog("\n.. posting", nn, "UIDs on Entrez History Server ..", file = fn)
   b <- ifelse(nrow(sw) == 1, "batch", "batches")
-  slog("\n.. retrieving full records in", nrow(sw), b, "..\n")
+  slog("\n.. retrieving full records in", nrow(sw), b, "..\n", file = fn)
   
   y <- data.frame()
-  for ( i in 1:nrow(sw) ) {
+  for (i in 1:nrow(sw)) {
     
     ## get XML with full records
     ## -------------------------
@@ -91,7 +105,7 @@ ncbiGenome <- function(x, organelle, n = 5){
     ## parse XML: this step is error-prone and therefore
     ## embedded into try()
     ## -------------------
-    xml <- robustXMLparse(xml)
+    xml <- robustXMLparse(xml, logfile = fn)
     # saveXML(xml, "aaa.xml"); system("open -t aaa.xml")
     if ( is.null(xml) ) next
     
@@ -111,7 +125,7 @@ ncbiGenome <- function(x, organelle, n = 5){
   ## false decision: "Eucryptorrhynchus chinensis voucher ECHIN20150110"
   ## ----------------------------
   indet <- grep(paste(indet.strings(), collapse = "|"), y$taxon)
-  if ( length(indet) > 0 ){
+  if (length(indet)){
     y <- y[-indet, ]
   }
   y$taxon <- strip.infraspec(y$taxon)
@@ -122,29 +136,31 @@ ncbiGenome <- function(x, organelle, n = 5){
   ## of genomes in case the number of available
   ## genomes exceeds n (the number of desired genomes)
   ## -------------------------------------------------
-  if ( nrow(y) > n ){
-    tr <- ncbiTaxonomy(as.list(y$taxon), 
-                       kingdom = x@taxon@kingdom,
-                       megapteraProj = x)
-    tr <- tax2tree(tr)
-    tr <- compute.brlen(tr)
-    # tr <- cophenetic.phylo(tr)
-    branching.order <- names(sort(branching.times(tr), decreasing = TRUE))
-    branching.order <- as.numeric(branching.order)
-    dd <- lapply(branching.order, descendants, phy = tr, type = "d")
-    nl <- sapply(dd, length)
-    nl[-1] <- nl[-1] - 1
-    nl <- data.frame(node = branching.order,
-                     number.lineages = cumsum(nl))
-    id <- which(nl$number.lineages <= n)
-    dd <- setdiff(unlist(dd[id]), nl$node[id])
+  if (nrow(y) > n){
     
-    ## select species
-    ## --------------
-    spec <- lapply(dd, descendants, phy = tr, type = "t", 
-                   labels = TRUE, ignore.tip = TRUE)
-    spec <- sapply(spec, sample, size = 1)
-    y <- y[y$taxon %in% spec, ]
+    y <- y[sample(1:nrow(y), n), ]
+    # tr <- ncbiTaxonomy(as.list(y$taxon), 
+    #                    kingdom = x@taxon@kingdom,
+    #                    megapteraProj = x)
+    # tr <- tax2tree(tr)
+    # tr <- compute.brlen(tr)
+    # # tr <- cophenetic.phylo(tr)
+    # branching.order <- names(sort(branching.times(tr), decreasing = TRUE))
+    # branching.order <- as.numeric(branching.order)
+    # dd <- lapply(branching.order, descendants, phy = tr, type = "d")
+    # nl <- sapply(dd, length)
+    # nl[-1] <- nl[-1] - 1
+    # nl <- data.frame(node = branching.order,
+    #                  number.lineages = cumsum(nl))
+    # id <- which(nl$number.lineages <= n)
+    # dd <- setdiff(unlist(dd[id]), nl$node[id])
+    # 
+    # ## select species
+    # ## --------------
+    # spec <- lapply(dd, descendants, phy = tr, type = "t", 
+    #                labels = TRUE, ignore.tip = TRUE)
+    # spec <- sapply(spec, sample, size = 1)
+    # y <- y[y$taxon %in% spec, ]
   }
   y
 }

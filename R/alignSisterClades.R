@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2015-02-02)
+## © C. Heibl 2014 (last update 2016-11-09)
+
+#' @export
 
 alignSisterClades <- function(tp, seqs, megProj, thread = -1){
    

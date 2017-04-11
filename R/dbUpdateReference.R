@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-02-25)
+## © C. Heibl 2014 (last update 2017-04-10)
+
+#' @export
 
 dbUpdateReference <- function(conn, gene, ref){
   
@@ -7,7 +9,7 @@ dbUpdateReference <- function(conn, gene, ref){
     stop("object 'ref' is not of class 'DNAbin'")
   if ( !is.matrix(ref) ) 
     stop("object 'ref' is not of matrix")
-  ref <- lapply(as.character(as.list(ref)), c2s)
+  ref <- lapply(as.character(as.list(ref)), seqinr::c2s)
   
   ## create table
   ## ------------

@@ -1,6 +1,8 @@
 ## This code is part of the megaptera package
 ## © C. Heibl 2014 (last update 2016-01-09)
 
+#' @export
+
 slog <- function(..., file = "megaptera.log"){
   
   x <- c(...)

@@ -1,7 +1,14 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2015 (last update 2015-12-23)
+## © C. Heibl 2015 (last update 2017-01-25)
+
+#' @export
+#' @import DBI
 
 dbTableNames <- function(x, tabs = "all"){
+  
+  ## coerce full latin ranks to short form
+  if (tabs == "species") tabs <- "spec"
+  if (tabs == "genus") tabs <- "gen"
 
   conn <- dbconnect(x)
   tabnames <- paste("SELECT table_name",
@@ -14,7 +21,7 @@ dbTableNames <- function(x, tabs = "all"){
   ## select tables:
   tab.set <- c("all", "acc", x@taxon@tip.rank)
   tabs <- match.arg(tabs, tab.set)
-  if ( !"all" %in% tabs ) {
+  if (!"all" %in% tabs) {
     tabs  <- paste("^", tabs, "_", sep = "")
     tabnames <- tabnames[grep(tabs, tabnames)]
   }

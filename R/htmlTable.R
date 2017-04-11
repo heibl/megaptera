@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-02-15)
+## © C. Heibl 2016 (last update 2016-11-03)
+
+#' @export
 
 htmlTable <- function(tab) {
   

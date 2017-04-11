@@ -1,5 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2015 (last update: 2015-12-01)
+## © C. Heibl 2015 (last update: 2016-12-07)
+
+#' @importFrom DBI dbDisconnect dbGetQuery dbSendQuery
+#' @export
 
 dbDeleteSpec <- function(x, spec){
   
@@ -34,4 +37,5 @@ dbDeleteSpec <- function(x, spec){
                  "WHERE", wrapSQL(spec, "spec", operator = "="))
     lapply(SQL, dbSendQuery, conn = conn)
   }
+  dbDisconnect(conn)
 }
