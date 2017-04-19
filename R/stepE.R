@@ -132,14 +132,15 @@ stepE <- function(x){
     ## get a list of species to work on ...
     ## ------------------------------------
     slog("\n.. reading species names: ", file = logfile)
-    tax <- dbReadTaxonomy(x)
-    tax <- paste("SELECT DISTINCT taxon",
-                 "FROM", acc.tab, 
-                 "WHERE status !~ 'excluded|too'", 
-                 "AND identity IS NULL",
-                 "AND npos <=", x@params@max.bp,
-                 "ORDER BY taxon")
+    tax <- paste("SELECT DISTINCT a.taxon, r.reference",
+                 "FROM", acc.tab, "AS a",
+                 "JOIN reference_clade AS r USING (taxon)",
+                 "WHERE a.status !~ 'excluded|too'", 
+                 "AND a.identity IS NULL",
+                 "AND a.npos <=", x@params@max.bp,
+                 "ORDER BY a.taxon")
     tax <- dbGetQuery(conn, tax)
+    tax$reference <- gsub(" ", "_", tax$reference) ## DNAbin-compatible
     if (!nrow(tax)) {
       slog("\n.. database is up to date -- nothing to do", file = logfile)
       dbDisconnect(conn)
@@ -150,25 +151,6 @@ stepE <- function(x){
       dbProgress(x, "step_e", "success")
       return(x)
     }
-    
-    ## ... and find their reference clade
-    ## ---------------------------------
-    rr <- x@taxon@reference.rank
-    if (rr == "auto"){
-      gt <- comprehensiveGuidetree(x, tip.rank = "species", subset = tax$taxon)
-      refc <- gt$edge[gt$edge[, 1] == (Ntip(gt) + 1), 2]
-      refc <- lapply(refc, descendants, phy = gt, labels = TRUE)
-      names(refc) <- sapply(refc, taxdumpMRCA, x = x, tip.rank = "species")
-      tax <- data.frame(ref = rep(names(refc), sapply(refc, length)), 
-                        taxon = gsub("_", " ", unlist(refc)),
-                        stringsAsFactors = FALSE)
-      refc <- names(refc)
-    } else {
-      refc <- dbReadTaxonomy(x)
-      tax <- data.frame(ref = taxdumpHigherRank(refc, tax$taxon, rr),
-                        tax)
-      refc <- unique(tax$rr)
-    }
     slog(nrow(tax), "found ...", file = logfile)
   
     ## Some reference taxa might not have their own reference,
@@ -176,14 +158,14 @@ stepE <- function(x){
     ## Here we use a hack ignoring that we do not know, which 
     ## reference is closest if there are more than 1 reference
     ## -------------------------------------------------------
-    miss.ref <- which(!tax$ref %in% rownames(reference))
+    miss.ref <- which(!tax$reference %in% rownames(reference))
     if (length(miss.ref)){
-      tax$ref[miss.ref] <- rownames(reference)[1]
+      tax$reference[miss.ref] <- rownames(reference)[1]
     }
     
     ## convert data frame to list
     ## -------------------------
-    tax <- paste(tax$taxon, tax$ref, sep = "Zzz")
+    tax <- paste(tax$taxon, tax$reference, sep = "Zzz")
     tax <- strsplit(tax, "Zzz")
     
     ## select the 'best' sequences

@@ -2,13 +2,15 @@
 # TASK        : download NCBI taxdump database from FTP server
 #               and create ncbitaxonomy database in PostgreSQL
 # AUTHOR      : Christoph Heibl
-# LAST CHANGE : 2017-02-16
+# LAST CHANGE : 2017-04-19
 ##############################################################
 library(RPostgreSQL)
 setwd("/Users/heibl/Documents/r/phylogeny")
 
 ## download and decompress taxdump
 ## -------------------------------
+unlink("taxdump.tar.gz")
+unlink("taxdump", recursive = TRUE)
 system("curl -OL ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz", 
        ignore.stderr = TRUE, wait = TRUE)
 untar("taxdump.tar.gz", exdir = "taxdump")

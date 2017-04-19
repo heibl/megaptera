@@ -98,8 +98,8 @@ stepD <- function(x){
       lapply(SQL, dbSendQuery, conn = conn)
     }
     
-    ## do we have any ingroup species?
-    ## -------------------------------
+    ## do we have any ingroup taxa?
+    ## ----------------------------
     tax <- paste("SELECT taxon, count(taxon) AS n",
                  "FROM", acc.tab,
                  "WHERE status !~ 'excluded|too'",
@@ -151,6 +151,10 @@ stepD <- function(x){
                         tax)
       refc <- unique(tax$rr)
     }
+    dbUpdateReference_Clade(x, tax) ## write to database
+    
+    ## select taxa with more than 1 accession
+    ## --------------------------------------
     tax <- tax[tax$n > 1, ]
   
     ## reference clades (refc): updating or not

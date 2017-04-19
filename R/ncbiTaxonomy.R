@@ -1,200 +1,121 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-11-15)
+## © C. Heibl 2014 (last update 2017-04-19)
 
+#' @title NCBI Taxonomy Database
+#' @description Retrieve taxonomic classifications from the taxonomy database at
+#'   the National Center for Biotechnology Information (NCBI).
+#' @param x Database connection parameters, either as objdect of class 
+#'   \code{\link{dbPars}} or \code{\link{megapteraProj}}.
+#' @details The NCBI taxonomy database will be downloaded via FTP in "taxdump" 
+#'   format, unpacked, and translated into a data frame object. In a second 
+#'   step, the data frame table will be stored in a postgreSQL database called 
+#'   \code{"ncbitaxonomy"}.
+#' @return \code{ncbiTaxonomy} is called for its side effect (see Details).
+#' @references Taxonomy Database website:
+#'   \url{http://www.ncbi.nlm.nih.gov/taxonomy}
+#' @references Federhen, Scott. 2012. The NCBI taxonomy database. \emph{Nucleic
+#'   Acids Research} \bold{40}: DI36-DI43.
+#' @seealso \code{\link{stepA}} for extracting the taxonomic information 
+#'   relevant for a given \bold{megaptera} project.
+#'   \code{\link{dbUpdateTaxonomy}} and \code{\link{dbReadTaxonomy}} for storing
+#'   and retrieving taxonomic information in a \bold{megaptera} project
+#'   database.
+#' @importFrom DBI dbDisconnect dbRemoveTable dbSendQuery dbWriteTable
 #' @export
 
-ncbiTaxonomy <- function(taxon, kingdom, extend = FALSE, trim, 
-                         megapteraProj){
+ncbiTaxonomy <- function(x){
   
- kingdom <- match.arg(kingdom, c("Fungi", "Metazoa", "Viridiplantae"))
-  
-  taxon.untouched <- taxon
-  species.list <- unique(is.Linnean(unlist(taxon)))
-  if ( length(species.list) > 1 ) 
-    stop("names of species and higher taxa", 
-         " cannot not be mixed")
-  
-  ##
-  if ( species.list ){
-    accepted <- sapply(taxon, head, 1) # get first element
-    syno <- unlist(sapply(taxon, tail, -1))
-    accepted2syno <- taxon[sapply(taxon, length) > 1] 
-    acceptedsyno <- union(accepted, syno)
-    acceptedsyno <- data.frame(
-      genus = strip.spec(acceptedsyno), 
-      species = acceptedsyno,
-      stringsAsFactors = FALSE)
-    taxon <- unique(acceptedsyno$genus)
-    taxon <- sort(taxon) ## makes debugging easier
-  }
-  
-  ## download in batches of 50
-  ## -------------------------
-  id <- seq(from = 1, to = length(taxon), by = 50)
-  id <- data.frame(from = id, to = c(id[-1] - 1, length(taxon)))
-  z <- list()
-  for ( i in 1:nrow(id) ){
-    j <- seq(from = id$from[i], to = id$to[i])
-    zz <- ncbiLineage(taxon = taxon[j],
-                      kingdom = kingdom,
-                      megapteraProj = megapteraProj)
-    if ( length(zz) == 0 ){
-      write(taxon[j], file = "ncbiTaxonomy-missing.txt", 
-            append = TRUE)
-    } else {
-      z <- c(z, zz)
-    }
-  }
-  
-  ## returned list is empty
-  if ( length(z) == 0 ) {
-    return(NULL)
-  }
-  
-  ## delete ranks that are incertae sedis
-  ## ------------------------------------
-  dis <- function(z){
-    id <- grep("incertae sedis", z$name)
-    if ( length(id) > 0 ){
-      z <- z[-id, ]
-    }
-    z
-  }
-  z <- lapply(z, dis) 
-  
-  ## check ranks and add columns if necessary
-  ## ----------------------------------------
-  ranks <- sortRanks(z)
-  z <- lapply(z, addRanks, ranks)
-  z <- lapply(z, function(z) z$name)
-  z <- do.call(rbind, z)
-  colnames(z) <- ranks
-  z <- data.frame(z, stringsAsFactors = FALSE)
-  
-  ## intersect genus-level taxonomy with species list
-  ## (necessary, because taxonomic classification was searched
-  ## via generic names)
+  ## check input object
   ## ------------------
-  if ( species.list ){
-    if ( extend ){
-      acceptedsyno <- rbind(acceptedsyno,
-                            z[, c("genus", "species")])
-      acceptedsyno <- unique(acceptedsyno)
-    }
-    z <- unique(z[, 1:which(names(z) == "genus")])
-    z <- data.frame(z[match(acceptedsyno$genus, z$genus), ], 
-                    species = acceptedsyno$species,
-                    syno = acceptedsyno$species %in% syno,
-                    synonym = "-",
-                    stringsAsFactors = FALSE)
-    
-    ## handle synonyms
-    ## ---------------
-    if ( length(accepted2syno) > 0 ){
-      ## do accepted species with synonyms ahve a taxonomy?
-      a <- sapply(accepted2syno, head, 1)
-      a <- z[!is.na(z$genus) & z$species %in% a, "species"]
-      ## if so, append their synonyms
-      if ( length(a) > 0 ){
-        as <- function(w) c(head(w, 1), paste(tail(w, -1), collapse = "|"))
-        as <- do.call(rbind, lapply(accepted2syno, as))
-        z$synonym[match(as[, 1], z$species)] <- as[, 2]
-      }
-     
-      ## do synonyms have a taxonomy?
-      s <- unlist(sapply(accepted2syno, tail, -1))
-      s <- z[!is.na(z$genus) & z$species %in% s, "species"]
-      ## if so: implement
-      if ( length(s) > 0){
-        stop("implement me!")
-      }
-    }
-    
-    ## identify species that are not listed in the NCBI
-    ## taxonomy and check if information is available
-    ## for their synonym
-    ## ----------------------------------------------
-    no.info.accepted <- is.na(z$genus) & !z$syno
-    if ( any(no.info.accepted) ){
-      no.info.accepted <- sort(z$species[no.info.accepted])
-      info.syno <- z$species[!is.na(z$genus) & z$syno]
-      ## niaws: which accepted species that were not found
-      ## have synonyms
-      niaws <- sapply(no.info.accepted, grep, x = accepted2syno)
-      niaws <- unlist(niaws)
-      if ( length(niaws) > 1 ){
-        for ( i in niaws ){
-          # s: informative(!) synonyms
-          s <- intersect(info.syno,
-                         tail(accepted2syno[[i]], -1))
-          # a: corresonding accepted name without info
-          a <- head(accepted2syno[[i]], 1)
-          z <- z[!z$species %in% a, ]
-          j <- z$species %in% s
-          if ( any(j) ){
-            z$genus[j] <- strip.spec(a)
-            z$species[j] <- a
-            z$syno[j] <- FALSE
-            z$synonym[j] <- paste(s, collapse = "|")
-          } # end of IF-clause
-        } # end of FOR-loop
-      } # end of IF-clause
-    }
-    
-    ##  delete synonyms and column 'syno'
-    z <- z[!z$syno, names(z) != "syno"]
-    ## delete species without taxonomy
-    z <- z[!is.na(z$genus), ]
-
-    
-    ## identify species that are not listed in the NCBI
-    ## taxonomy, write them to file and issue warning
-    ## ----------------------------------------------
-    no.info <- setdiff(sapply(taxon.untouched, head, n = 1),
-                       z$species)
-    if ( length(no.info) > 0 ){
-      write(sort(no.info), 
-            file = "ncbiTaxonomy-missing.txt")
-      warning("no classification found for ", 
-              length(no.info), " species:\n ", 
-              paste(sort(no.info), collapse = "\n "),
-              "\n\n(this list is written to file 'ncbiTaxonomy-missing.txt')", 
-              sep = " ", .call = FALSE)
-    }
+  if (!inherits(x, c("dbPars", "megapteraProj"))){
+    stop("x is not of classes 'dbPars' or 'megapteraProj'")
   }
-  cat("\n.. number of species found:", nrow(z), "..")
-  
-  ## delete internal, noninformative "no rank"-columns
-  ## -------------------------------------------------
-  id <- apply(z, 2, unique)
-  id <- which(id == "-")
-  if ( length(id) > 0 ){
-    z <- z[, -id]
+  if (inherits(x, "megapteraProj")){
+    x <- x@db
   }
   
-  ## trimming taxonomy to required lower ranks
-  ## -----------------------------------------
-  if ( !missing(trim) ){
-    trim <- match.arg(trim, c("auto", colnames(z)))
-    if ( trim == "auto" ){
-      id <- max(which(sapply(apply(z, 2, unique), length) == 1))
-    }
-    if ( trim %in% colnames(z) ){
-      id <- which(colnames(z) %in% trim)
-    }
-    z <- z[, id:ncol(z)]
-  } 
-  
-  ## enforce binomials; sometimes authorities
-  ## and years are added to species names
-  ## e.g. 'Gaussia princeps H.Wendl. 1865'
-  ## -------------------------------------
-  z$species <- strip.infraspec(z$species)
-  
-  ## order taxonomy
-  ## --------------
-  for ( i in rev(colnames(z)) ){
-    z <- z[order(z[, i]), ]
+  ## check if database exists ...
+  ## ----------------------------
+  conn <- dbConnect(RPostgreSQL::PostgreSQL(),
+                    host = x@host,
+                    port = x@port,
+                    user = x@user,
+                    password = x@password)
+  sql <- paste("SELECT 1 FROM pg_database WHERE",
+               sql.wrap("ncbitaxonomy", term = "datname"))
+  if ( nrow(dbGetQuery(conn, sql)) == 1 ){
+    cat("\ndatabase 'ncbitaxonomy' exists ans will be updated")  
+  } else {
+    ## .. and create if it does not exist
+    ## ----------------------------------
+    cat("\ndatabase 'ncbitaxonomy' created") 
+    sql <- paste("CREATE DATABASE ncbitaxonomy",
+                 "WITH ENCODING='UTF8'",
+                 "CONNECTION LIMIT=-1;")
+    dbSendQuery(conn, sql)
   }
-  z
+  dbDisconnect(conn)
+  
+  ## connect to 'ncbitaxonomy'
+  ## -------------------------
+  conn <- dbConnect(RPostgreSQL::PostgreSQL(),
+                    host = x@host,
+                    port = x@port,
+                    user = x@user,
+                    password = x@password,
+                    dbname = "ncbitaxonomy")
+  
+  ## download and decompress taxdump
+  ## -------------------------------
+  unlink("taxdump.tar.gz")
+  unlink("taxdump", recursive = TRUE)
+  system("curl -OL ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz", 
+         ignore.stderr = TRUE, wait = TRUE)
+  untar("taxdump.tar.gz", exdir = "taxdump")
+  
+  ## 1. nodes: the hierarchical structure of the classification
+  ## ----------------------------------------------------------
+  nodes <- read.table("taxdump/nodes.dmp", sep = "|", strip.white = TRUE, stringsAsFactors = FALSE)
+  names(nodes) <- c("id", "parent_id", "rank", "embl_code", "division_id",
+                    "inherited_div_flag", "genetic_code_id", "inherited_gc_flag",
+                    "mitochondrial_genetic_code_id", "inherited_MGC_flag", "GenBank_hidden_flag",
+                    "hidden_subtree_root_flag", "comments")
+  nodes <- nodes[, 1:3]
+  
+  dbRemoveTable(conn, "nodes")
+  SQL <- paste("CREATE TABLE public.nodes(",
+               "id integer NOT NULL,",
+               "parent_id integer,",
+               "rank text,",
+               "CONSTRAINT nodes_pkey PRIMARY KEY (id))")
+  dbSendQuery(conn, SQL)
+  dbWriteTable(conn, "nodes", nodes, append = TRUE, row.names = FALSE)
+  remove(nodes)
+  
+  ## 2. names: taxon names
+  ## ---------------------
+  # taxnames <- read.table("taxdump/names.dmp", sep = "|", strip.white = TRUE, stringsAsFactors = FALSE)
+  taxnames <- scan("taxdump/names.dmp", sep = "\n", what = "c", strip.white = TRUE)
+  taxnames <- lapply(taxnames, function(z) unlist(strsplit(z, "\t[|]\t|\t[|]")))
+  id <- sapply(taxnames, length)
+  if (all(id == 4)) taxnames <- do.call(rbind, taxnames)
+  taxnames <- as.data.frame(taxnames, stringsAsFactors = FALSE)
+  names(taxnames) <- c("id", "taxon", "unique_name", "name_class")
+  
+  dbRemoveTable(conn, "names")
+  SQL <- paste("CREATE TABLE public.names(",
+               "id integer NOT NULL,",
+               "taxon text NOT NULL,",
+               "unique_name text NOT NULL,",
+               "name_class text NOT NULL,",
+               "CONSTRAINT names_pkey PRIMARY KEY (id, taxon, unique_name, name_class))")
+  dbSendQuery(conn, SQL)
+  dbWriteTable(conn, "names", taxnames, append = TRUE, row.names = FALSE)
+  remove(taxnames)
+  
+  ## disconnect and eliminate traces
+  ## -------------------------------
+  dbDisconnect(conn)
+  unlink("taxdump.tar.gz")
+  unlink("taxdump", recursive = TRUE)
 }
