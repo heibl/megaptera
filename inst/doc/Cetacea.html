@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="Christoph Heibl" />
+
+<meta name="date" content="2017-05-04" />
+
+<title>Getting Started with MEGAPTERA</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Getting Started with MEGAPTERA</h1>
+<h4 class="author"><em>Christoph Heibl</em></h4>
+<h4 class="date"><em>2017-05-04</em></h4>
+
+
+
+<p>To show how to use the <code>megaptera</code> package, we are going to construct a phylogenetic dataset of the mammal order Cetacea (whales and dolphins). With 80-90 extant species, Cetacea present an ideal group for demonstration purposes. And maybe a motivating one, as I hope that many users will share my fascination for this mysterious creatures. Last not least the monotypic genus of humpback whales served as an eponym of this package.</p>
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>This package provides tools for the semi-automated generation of large DNA sequences datasets from internet-accessible depositories, currently the Nucleotide database on GenBank (<a href="http://www.ncbi.nlm.nih.gov/nuccore" class="uri">http://www.ncbi.nlm.nih.gov/nuccore</a>) and BOLD SYSTEMS. It uses a number of successive steps to query, download, check, sort and assemble DNA sequences. The minimum input of information required by the algorithm is the name of a DNA sequence marker (e.g.~rbcL, trnS, cytB, …) and one or more taxon names. First, a taxonomic classification for the taxa of interest is retrieved from the Taxonomy database on GenBank. The taxonomy will be used for reference sequence calculation and profile alignment. In the second step, GenBank is searched for all available sequences of a marker for the given set of species. The sequences are downloaded and, if more than one accession is available per species, species alignments are build. In a fourth step, these species alignments are searched for those alignments that contain totally identical ‘zero-distance’ sequences and a consensus sequence, hereafter termed ‘reference sequence’, is build from the zero-distance alignments. The algorithm considers the reference sequence as some sort of ‘idealized’ sequence of the genetic marker, to which, in a fifth step, all sequences are compared and their inclusion into the final alignment is decided upon. Knowing that there is no guarantee that all sequence information stored in the database is correct and lacking a priori measures to tell the right from the wrong sequences, the rationale behind this process is that we might be especially confident in the correctness of a sequence, if it is shared by all conspecifics in that database and our confidence might be the greater the more sequences are available for this comparison. Next, all included sequences are aligned and the pairwise-distances of the sequences are calculated. If the maximum genetic distance exceeds a certain threshold, the alignment is iteratively broken into smaller alignment blocks until the condition of the maximum distance threshold is satisfied. The resulting blocks are cleaned and concatenated into the given marker’s alignment. Several such alignments can then be concatenated into a supermatrix or analyzed separately with supertree methods.</p>
+</div>
+<div id="required-software" class="section level2">
+<h2>Required software</h2>
+<p><code>megaptera</code> is exclusively written in <code>R</code> and makes extensive use of the existing capabilities of <code>R</code> to deal with phylogenetic data provided by the packages <code>ape</code>, <code>seqinr</code>, and <code>ips</code>.</p>
+<p>For sequence alignment and for alignment masking, <code>megaptera</code> uses external software packages, which are usually much faster than pure R code, and we profit in using stable and millionfold-tested software package. Currently, there is only one option for both tasks: sequence alignment is done with <code>mafft</code><a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> <span class="citation">(Katoh et al., 2002, 2005; Katoh &amp; Standley, 2013)</span> and the masking of doubtful alignment position with <code>gblocks</code><a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a> <span class="citation">(Castresana, 2000; Talavera &amp; Castresana, 2007)</span>, but further programs might be included in the future. See the respective websites for installation.</p>
+<p>Data management relies on <code>postgreSQL</code>, a popular open relational database, for which an excellent interface with <code>R</code> is available (packages <code>DBI</code> and <code>RPostgreSQL</code>). See the <code>postgreSQL</code> website<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a> for installation and and a basic introduction to SQL. Using a relational database system to store taxonomies, molecular sequences and their metadata might at first seem unnecessarily complicated for users who are used to handling sequence data files in formats like NEXUS, PHYLIP, or FASTA, but the benefits are clear: A database is much easier to maintain and evolve in a consistent fashion due to the powerful standard query language (SQL). In addition, database operations are usually much quicker compared to file-based input/output, a difference that is increasingly important when it comes to build larger and larger datasets.</p>
+</div>
+<div id="define-a-database-connection" class="section level2">
+<h2>Define a database connection</h2>
+<p>As all data storage in <code>megaptera</code> relies on a SQL database, we first have to define a database connection. This is done by creating an object of class <code>dbPars</code>. See <code>?dbPars</code> for the arguments and their defaults. Having in mind our goal to create a phylogeny of whales and dolphins, we choose to name our database <code>&quot;cetacea&quot;</code>. If you decided to use a password when setting up PostgreSQL, you will also have to specify the <code>password</code> argument.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">db &lt;-<span class="st"> </span><span class="kw">dbPars</span>(<span class="dt">dbname =</span> <span class="st">&quot;cetacea&quot;</span>)</code></pre></div>
+</div>
+<div id="download-the-ncbi-taxonomy" class="section level2">
+<h2>Download the NCBI Taxonomy</h2>
+<p>The next step is to download the current snapshot of the Taxonomy database on GenBank via FTP and store it in our postgreSQL database under the name <code>ncbitaxonomy</code>. This is convieniently done by calling <code>ncbiTaxonomy</code> giving our database connection as an argument.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">ncbiTaxonomy</span>(db)</code></pre></div>
+<p>You only have to use <code>ncbiTaxonomy</code> once even if you work on several megaptera projects. Then for any specific megaptera project a subset of this taxonomy will be extracted (by <code>stepA</code>) and used for reference sequence calculation and profile alignment downstream the pipeline. It is still a good idea, though, to rerun <code>ncbiTaxonomy</code> after a certain time to make sure your taxonomic classification stays up to date and you do not miss any organims that have newly entered the NCBI databases.</p>
+</div>
+<div id="define-taxa-loci-and-pipeline-parameters" class="section level2">
+<h2>Define taxa, loci, and pipeline parameters</h2>
+</div>
+<div id="references" class="section level1 unnumbered">
+<h1>References</h1>
+<div id="refs" class="references">
+<div id="ref-castresana2000">
+<p>Castresana, J. (2000) Selection of conserved blocks from multiple alignments for their use in phylogenetic analysis. <em>Mol. Biol. Evol.</em>, <strong>17</strong>, 540–552. </p>
+</div>
+<div id="ref-katohstandley2013">
+<p>Katoh, K. &amp; Standley, D.M. (2013) MAFFT multiple sequence alignment software version 7: Improvements in performance and usability multiple sequence alignment software version 7: Improvements in performance and usability. <em>Molecular Biology and Evolution</em>, <strong>30</strong>, 772–780. </p>
+</div>
+<div id="ref-katohmiyata2005">
+<p>Katoh, K., Kuma, K., Toh, H., &amp; Miyata, T. (2005) MAFFT version 5: Improvement in accuracy of multiple sequence alignment. <em>Nucleic Acids Research</em>, <strong>33</strong>, 511–518. </p>
+</div>
+<div id="ref-katohmiyata2002">
+<p>Katoh, K., Misawa, K., Kuma, K.-i., &amp; Miyata, T. (2002) MAFFT: A novel method for rapid multiple sequence alignment based on fast Fourier transform. <em>Nucleid Acids Research</em>, <strong>30</strong>, 3059–3066. </p>
+</div>
+<div id="ref-talaveracastresana2007">
+<p>Talavera, G. &amp; Castresana, J. (2007) Improvement of phylogenies after removing divergent and ambiguously aligned blocks from protein sequence alignments. <em>Syst. Biol.</em>, <strong>56</strong>, 564–577. </p>
+</div>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a href="http://align.bmr.kyushu-u.ac.jp/mafft/software/" class="uri">http://align.bmr.kyushu-u.ac.jp/mafft/software/</a><a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p><a href="http://molevol.cmima.csic.es/castresana/Gblocks.html" class="uri">http://molevol.cmima.csic.es/castresana/Gblocks.html</a><a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p><a href="http://www.postgresql.org" class="uri">http://www.postgresql.org</a><a href="#fnref3">↩</a></p></li>
+</ol>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
