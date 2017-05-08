@@ -1,17 +1,17 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-04-19)
+## © C. Heibl 2014 (last update 2017-04-20)
 
 #' @title NCBI Taxonomy Database
-#' @description Retrieve taxonomic classifications from the taxonomy database at
+#' @description Retrieve taxonomic classification from the taxonomy database at
 #'   the National Center for Biotechnology Information (NCBI).
-#' @param x Database connection parameters, either as objdect of class 
+#' @param x Database connection parameters, either as object of class 
 #'   \code{\link{dbPars}} or \code{\link{megapteraProj}}.
 #' @details The NCBI taxonomy database will be downloaded via FTP in "taxdump" 
 #'   format, unpacked, and translated into a data frame object. In a second 
 #'   step, the data frame table will be stored in a postgreSQL database called 
 #'   \code{"ncbitaxonomy"}.
 #' @return \code{ncbiTaxonomy} is called for its side effect (see Details).
-#' @references Taxonomy Database website:
+#' @references NCBI Taxonomy Database website:
 #'   \url{http://www.ncbi.nlm.nih.gov/taxonomy}
 #' @references Federhen, Scott. 2012. The NCBI taxonomy database. \emph{Nucleic
 #'   Acids Research} \bold{40}: DI36-DI43.

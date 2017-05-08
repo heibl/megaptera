@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-02-22)
+## © C. Heibl 2014 (last update 2017-05-08)
 
 #' @export
 #' @import RCurl RPostgreSQL
@@ -32,7 +32,7 @@ stepA <- function(x){
   
   ## get global NCBI taxonomy
   conn <- dbConnect(PostgreSQL(), dbname = "ncbitaxonomy", host = "localhost", 
-                    port = 5432, user = "postgres", password = "oxalis")
+                    port = 5432, user = "postgres", password = x@db@password)
   SQL <- paste("SELECT *",
                "FROM nodes",
                "JOIN names USING (id)",

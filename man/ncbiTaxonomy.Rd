@@ -7,14 +7,14 @@
 ncbiTaxonomy(x)
 }
 \arguments{
-\item{x}{Database connection parameters, either as objdect of class 
+\item{x}{Database connection parameters, either as object of class 
 \code{\link{dbPars}} or \code{\link{megapteraProj}}.}
 }
 \value{
 \code{ncbiTaxonomy} is called for its side effect (see Details).
 }
 \description{
-Retrieve taxonomic classifications from the taxonomy database at
+Retrieve taxonomic classification from the taxonomy database at
   the National Center for Biotechnology Information (NCBI).
 }
 \details{
@@ -24,7 +24,7 @@ The NCBI taxonomy database will be downloaded via FTP in "taxdump"
   \code{"ncbitaxonomy"}.
 }
 \references{
-Taxonomy Database website:
+NCBI Taxonomy Database website:
   \url{http://www.ncbi.nlm.nih.gov/taxonomy}
 
 Federhen, Scott. 2012. The NCBI taxonomy database. \emph{Nucleic

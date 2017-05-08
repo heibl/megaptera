@@ -15,14 +15,18 @@
 \author{Christoph Heibl}
 \date{\today}
 
+\usepackage{Sweave}
 \begin{document}
+\input{Getting-started-concordance}
 
-<<setup, include=FALSE>>=
-library(knitr)
-opts_chunk$set(eval=FALSE,cache=TRUE,concordance=TRUE)
-library(megaptera)
-data(input)
-@
+\begin{Schunk}
+\begin{Sinput}
+> library(knitr)
+> opts_chunk$set(eval=FALSE,cache=TRUE,concordance=TRUE)
+> library(megaptera)
+> data(input)
+\end{Sinput}
+\end{Schunk}
 
 \maketitle
 \tableofcontents
@@ -38,7 +42,7 @@ This package facilitates the automated construction of large DNA sequences datas
 For sequence alignment and for alignment masking, \textsc{megaptera} uses external software packages, which are usually much faster than pure R code, and we profit in using stable and millionfold-tested software package.
 Currently, there is only one option for both tasks: sequence alignment is done with \textsc{mafft}\footnote{\href{http://align.bmr.kyushu-u.ac.jp/mafft/software/}{http://align.bmr.kyushu-u.ac.jp/mafft/software/}} \citep{katohmiyata2002,katohmiyata2005,katohstandley2013} and the masking of doubtful alignment position with \textsc{gblocks}\footnote{\href{http://molevol.cmima.csic.es/castresana/Gblocks.html}{http://molevol.cmima.csic.es/castresana/Gblocks.html}} \citep{castresana2000,talaveracastresana2007}, but further programs might be included in the future. See the respective websites for installation.
 
-Data management relies on \textsc{postgreSQL}, a popular open relational database, for which an excellent interface with \textsc{r} is available (packages \textsc{DBI} and \textsc{RPostgreSQL}). See the \textsc{postgreSQL} website\footnote{\href{http://www.postgresql.org}{http://www.postgresql.org}} for installation and and a basic introduction to SQL. 
+Data management relies on \textsc{postgreSQL}, a popular open relational database, for which an excellent interface with \textsc{r} is available (packages \textsc{DBI} and \textsc{RPostgreSQL}). See the \textsc{postgreSQL} website\footnote{\href{http://www.postgresql.org}{http://www.postgresql.org}} for installation and and a basic introduction to SQL. Using a relational database system to store taxonomies, sequences of different genetic markers and their interrelation might at first seem unnecessarily complicated for users who are used to handling sequence data files in formats like NEXUS, PHYLIP, or FASTA, but the benefits are clear: A database is much easier to maintain and evolve in a consistent fashion due to the powerful standard query language (SQL). In addition, database operations are usually much quicker compared to file-based input/output, a difference that is increasingly important when it comes to build larger and larger datasets.
 
 %% Preparing the input data
 \section{Preparing the pipeline}
@@ -56,16 +60,28 @@ First, we create a database called \texttt{cetacea} to hold all sequences togeth
 
 In addition to creating the database, the call to \texttt{dbPars} will produce an object of class \texttt{dbPars} (here assigned the name \texttt{conn}), which holds the connection parameters.
 
-<<create-database, eval=FALSE, tidy=FALSE>>=
-library(megaptera)
-conn <- dbPars(dbname = "Cetacea", password = "oxalis")
-@
+\begin{Schunk}
+\begin{Sinput}
+> library(megaptera)
+> conn <- dbPars(dbname = "Cetacea", password = "oxalis")
+\end{Sinput}
+\end{Schunk}
 
 The class \texttt{dbPars} has a print method that let's us check the parameters that we just have set:
 
-<<create-database2, eval=TRUE, tidy=FALSE>>=
-show(conn)
-@
+\begin{Schunk}
+\begin{Sinput}
+> show(conn)
+\end{Sinput}
+\begin{Soutput}
+PostgreSQL connection parameters: 
+     host = localhost 
+     port = 5432 
+   dbname = cetacea 
+     user = postgres 
+ password = oxalis
+\end{Soutput}
+\end{Schunk}
 
 Note that \texttt{dbname} was coerced to lower case, because SQL is not case sensitive. This also applies to all table and attribute (= column) names.
 
@@ -74,15 +90,27 @@ Note that \texttt{dbname} was coerced to lower case, because SQL is not case sen
 
 Whereas evolutionary biologists are normally interested in the phylogenetic history of a clade, community ecologists need phylogenies of the members of a community, i.e. only a subset of of a inclusive clade's phylogeny. To account for both needs, \textsc{megaptera} accepts taxonomic information as a species list or as the name of one or more (higher) taxa (e.g. Cetacea, Asteraceae, Russula). Ingroup and outgroup is given separately and we have to specify the kingdom our taxa belong to. This is neccesary to differenciate between   homonyms allowed by the taxonomic codices (e.g. \textit{Prunella} ist both a genus of birds and of plants).
 
-<<taxonomy, eval=TRUE, size="small", tidy=FALSE>>=
-tax <- taxon(ingroup = "Cetacea", 
-             outgroup = c("Hippopotamus amphibius", 
-                          "Sus scrofa", 
-                          "Bos taurus"),
-             kingdom = "Metazoa")
-
-tax
-@
+\begin{Schunk}
+\begin{Sinput}
+> tax <- taxon(ingroup = "Cetacea", 
++              outgroup = c("Hippopotamus amphibius", 
++                           "Sus scrofa", 
++                           "Bos taurus"),
++              kingdom = "Metazoa")
+> tax
+\end{Sinput}
+\begin{Soutput}
+--- megaptera taxon class ---
+tip rank    : species
+ingroup     : Cetacea
+is extended : no
+outgroup    : Hippopotamus amphibius, Sus scrofa , ... [ 3 ]
+is extended : no
+in kingdom  : Metazoa
+hybrids     : excluded
+guide tree  : taxonomy-based
+\end{Soutput}
+\end{Schunk}
 
 %Currently, \textsc{megaptera} is designed such that is uses species (i.e., Linnean binomials) as operational taxonomic units (OTU). That means all subspecies and varieties will be pooled into one OTU, which will be represented by a single consensus sequence in the final alignment. This makes the implicit assumption that species as defined by their names at NCBI are monophyletic.  
 
@@ -90,12 +118,14 @@ The classification of the input taxa are taken as a surrogate of their evolution
 
 For demostration we will download the classification of the order Cetacea and store it in our database. In order to do so, we need to create a \texttt{megapteraProj} object to bundle database parameters and taxonomic data. Please ignore the \texttt{locus} argument for the moment, we will come back to it in section \ref{subsec:loci}.
 
-<<stepA, eval=FALSE>>=
-x <- megapteraProj(db = conn,
-                   taxon = tax,
-                   locus = locus())
-stepA(x)
-@
+\begin{Schunk}
+\begin{Sinput}
+> x <- megapteraProj(db = conn,
++                    taxon = tax,
++                    locus = locus())
+> stepA(x)
+\end{Sinput}
+\end{Schunk}
 
 
 %% GENETIC MARKERS
@@ -107,186 +137,3 @@ The order of aliases has no effect on the results of the search, but you might p
 
 Let's choose five loci that are widely used in vertebrate phylogenetics.
 
-<<loci, eval=FALSE, tidy=FALSE, tidy.opts=list(width.cutoff=40)>>=
-loci <- list(locus("cytB", "Cytb"),
-             locus("cox1", "COI"),
-             locus("16S"),
-             locus("RAG1"),
-             locus("RAG2")
-)
-@
-
-If we use the print method of the class \texttt{locus} on the first element of the list of loci, we can see that a whole bunch of parameters have been set, which are explained below.
-
-<<loci2, eval=TRUE>>=
-loci[[1]]
-@
-
-[Add description of parameters\dots]
-
-\subsection{Pipeline parameters}\label{subsec:pars}
-
-As a last requirement \textsc{megaptera} pipeline itself has a number of parameters that can be set with \texttt{megapteraPars}; see \texttt{help("megapteraPars-class")} for a detailed description of each parameter.
-
-<<parameters, eval=TRUE>>=
-pars <- megapteraPars()
-pars
-@
-
-\subsection{Collect input data}
-Now we can bundle all input data in one single object of class \texttt{"megapteraProj"}. The arguments \texttt{db}, \texttt{taxon}, and \texttt{pars} are given objects of classes \texttt{"dbPars"}, \texttt{"taxon"}, and \texttt{"megapteraPars"}, respectively. Note that we leave argument \texttt{locus} undefined; this argument will be set later on (\ref{sec:pipe}). The input data will be completed by giving the paths to the alignment and masking programs .  
-
-% "/Applications/mafft-mac/mafft.bat"
-<<prepare-input, eval=TRUE, tidy=FALSE>>=
-x <- megapteraProj(db = conn,
-                   taxon = tax,
-                   locus = locus(),
-                   align.exe = "/usr/local/bin/mafft", 
-                   mask.exe = "/Applications/Gblocks_0.91b")
-x
-@
-
-%% RUNNING THE PIPELINE
-\section{Running the pipeline}\label{sec:pipe}
-
-Finally we are ready for running the pipeline. The eight steps of the pipeline will be run separately for each locus by looping over the list of loci defined in \ref{subsec:loci}. In each iteration, \texttt{setLocus} is used to set the \texttt{locus} argument accordingly.   
-
-<<pipeline, eval=FALSE>>=
-for ( i in loci) {
-  x <- setLocus(x, i)
-  stepA(x)
-  stepB(x)
-  stepC(x)
-  stepD(x)
-  stepE(x)
-  stepF(x)
-  stepG(x)
-  stepH(x)
-}
-@
-
-% \subsection{Download taxonomy (Step A)}
-% 
-% In step A we will download ...
-% 
-% <<download-taxonomy, cache=TRUE>>=
-% stepA(x)
-% @
-% 
-% \subsection{Download sequences (Step B)}
-% 
-% In step B we will download all available sequences from the Nucleotide repository at NCBI. These will be stored in a database table called \texttt{acc\_<locus>}, in our example \texttt{acc\_cytb}. The argument \texttt{field} controls in which NCBI search fields the algorithm will look for any of the locus aliases defined previously with \texttt{locus}; we suggest not to change this default. The argument \texttt{update} has two more options, \texttt{"all"} and \texttt{"not.yet.found"}, which sould be self-explanatory.
-% 
-% <<download-sequences, eval=FALSE>>=
-% stepB(x)
-% @
-% 
-% \subsection{Align conspecific sequences (Step C)}
-% 
-% <<align-conspecific-sequences, eval=FALSE>>=
-% stepC(x)
-% @
-% \subsection{Construct reference sequences (Step D)}
-% 
-% <<reference-sequences, eval=FALSE>>=
-% stepD(x)
-% @
-% \subsection{Sequence identity (Steps E and F)}
-% 
-% <<sequences-identity, eval=FALSE>>=
-% stepE(x)
-% stepF(x)
-% @
-% \subsection{Sequence alignment (Steps G and H)}
-% 
-% <<sequence-alignment, eval=FALSE>>=
-% 
-% stepG(x, nob = FALSE)
-% stepH(x, clean = TRUE)
-% @
-% 
-% \subsection{Exporting individual aligned loci} 
-% 
-% The aligned sequences are stored in the database table \texttt{spec\_cytb}. We can easliy import them into the currend R session setting the \texttt{ignore.excluded = TRUE}.  
-% 
-% <<readDNA, eval=FALSE, tidy=FALSE>>=
-% conn <- dbConnect(PostgreSQL(), user = "postgres", 
-%                   host = "localhost", port = 5433, 
-%                   dbname = "cetacea", password = "oxalis")
-% cytb <- dbReadDNA(conn, tab.name = "spec_cytb", ignore.excluded = TRUE)
-% cytb
-% @
-% 
-% We will use the alignment to
-% 
-% <<raxml, eval=FALSE>>=
-% conn <- dbConnect(PostgreSQL(), user = "postgres", 
-%                   host = "localhost", port = 5433, 
-%                   dbname = "cetacea", password = "oxalis")
-% 
-% ## prepare vector of outgroup species
-% outgroup <- dbReadTaxonomy(conn)
-% outgroup <- outgroup$spec[outgroup$ord == "-"]
-% outgroup <- intersect(outgroup, rownames(cytb))
-% 
-% tr <- raxml(cytb, f = "a", N = "autoMRE", p = 1234, x = 1234,
-%             outgroup = outgroup,
-%             file = "cetacea", exec = "/Applications/RAxML-8.0.3")
-% @
-% 
-% 
-% <<guide-tree, eval=FALSE, fig.height=12>>=
-% conn <- dbConnect(PostgreSQL(), user = "postgres", 
-%                   host = "localhost", port = 5433, 
-%                   dbname = "cetacea", password = "oxalis")
-% 
-% tax <- dbReadTaxonomy(conn)
-% gt <- fleshoutGuidetree(tr$bestTree, tax)
-% plot(gt, no.margin = TRUE)
-% @
-% 
-% \subsection{Add a second locus}
-% 
-% <<prepare-input-16S, eval=FALSE, tidy=FALSE>>=
-% db <- sdb(host = "localhost", port = "5433", dbname = "cetacea",
-%           user = "postgres", password = "oxalis")
-% x <- megapteraProj(db = db,
-%                    gene = locus("16S"), 
-%                    gt = gt,
-%                    reference.rank = "ord",
-%                    align.exe = "/usr/local/bin/mafft", 
-%                    #                    align.exe = "/Applications/mafft-mac/mafft.bat",
-%                    gblocks.exe = "/Applications/Gblocks_0.91b")
-% stepA(x, update = "not.yet.searched", field = c("title", "gene"))
-% stepB(x)
-% stepC(x, update = FALSE)
-% stepD(x, update = FALSE)
-% stepE(x, update = FALSE)
-% stepF(x, update = FALSE, nob = FALSE)
-% stepG(x, clean = FALSE)
-% @
-% 
-
-\section{Concatenation of loci}
-
-<<concatenation, eval=FALSE, tidy=FALSE>>=
-conn <- dbConnect(PostgreSQL(), port = 5432, user = "postgres",
-                  dbname = "cetacea", password = "oxalis")
-o <- c("ord", "-")
-s <- c("ord", "Cetacea")
-check.Markers(conn, outgroup = o, subset = s)
-sm <- supermatrix(conn, outgroup = o, subset = s)
-dbDisconnect(conn)
-sm
-@
-
-% \section{Getting help}
-
-\renewcommand{\bibname}{References}
-\renewcommand\bibsection{\section{\bibname}}
-\bibliographystyle{jbiogeo2}
-{\setlength{\baselineskip}{0.8\baselineskip}
-\bibliography{biology}\par} 
-
-
-\end{document}

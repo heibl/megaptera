@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-03-22)
+## © C. Heibl 2014 (last update 2017-04-20)
 
 compareToRef <- function(megProj, spec, reference){
   
@@ -45,7 +45,7 @@ compareToRef <- function(megProj, spec, reference){
   
   # profile alignment is far quicker
   obj <- mafft.merge(list(reference, obj), 
-                     mafft.exe = megProj@align.exe,
+                     exec = megProj@align.exe,
                      thread = 1)
   
   ## handle reverse complements
