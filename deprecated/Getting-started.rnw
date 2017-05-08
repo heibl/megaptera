@@ -1,3 +1,7 @@
+% 1. Add explanation of locus parameters
+% 2. Add explanation of megapteraPars parameters
+% 3. Revise the description of supermatrix
+
 \documentclass{article}
 \usepackage{color}
 \definecolor{grey}{rgb}{0.3, 0.3, 0.3}
@@ -12,6 +16,7 @@
 \date{\today}
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 <<setup, include=FALSE>>=
 library(knitr)
@@ -34,7 +39,7 @@ This package facilitates the automated construction of large DNA sequences datas
 For sequence alignment and for alignment masking, \textsc{megaptera} uses external software packages, which are usually much faster than pure R code, and we profit in using stable and millionfold-tested software package.
 Currently, there is only one option for both tasks: sequence alignment is done with \textsc{mafft}\footnote{\href{http://align.bmr.kyushu-u.ac.jp/mafft/software/}{http://align.bmr.kyushu-u.ac.jp/mafft/software/}} \citep{katohmiyata2002,katohmiyata2005,katohstandley2013} and the masking of doubtful alignment position with \textsc{gblocks}\footnote{\href{http://molevol.cmima.csic.es/castresana/Gblocks.html}{http://molevol.cmima.csic.es/castresana/Gblocks.html}} \citep{castresana2000,talaveracastresana2007}, but further programs might be included in the future. See the respective websites for installation.
 
-Data management relies on \textsc{postgreSQL}, a popular open relational database, for which an excellent interface with \textsc{r} is available (packages \textsc{DBI} and \textsc{RPostgreSQL}). See the \textsc{postgreSQL} website\footnote{\href{http://www.postgresql.org}{http://www.postgresql.org}} for installation and and a basic introduction to SQL. 
+Data management relies on \textsc{postgreSQL}, a popular open relational database, for which an excellent interface with \textsc{r} is available (packages \textsc{DBI} and \textsc{RPostgreSQL}). See the \textsc{postgreSQL} website\footnote{\href{http://www.postgresql.org}{http://www.postgresql.org}} for installation and and a basic introduction to SQL. Using a relational database system to store taxonomies, sequences of different genetic markers and their interrelation might at first seem unnecessarily complicated for users who are used to handling sequence data files in formats like NEXUS, PHYLIP, or FASTA, but the benefits are clear: A database is much easier to maintain and evolve in a consistent fashion due to the powerful standard query language (SQL). In addition, database operations are usually much quicker compared to file-based input/output, a difference that is increasingly important when it comes to build larger and larger datasets.
 
 %% Preparing the input data
 \section{Preparing the pipeline}
@@ -48,22 +53,27 @@ To show how to use the \textsc{megaptera} package, we are going to construct a p
 %% DATABASE CREATION
 \subsection{Set up the database}\label{subsec:database}
 
-First we create a database called \texttt{cetacea} to hold all sequences together with taxonomic data; the corresponding function is \texttt{dbPars()}. In principle, you can do this and all subsequent SQL operations with PostgreSQL's genuine front-end \textsc{pgAdmin3}\footnote{\href{http://www.postgresql.org/ftp/pgadmin3/}{http://www.postgresql.org/ftp/pgadmin3/}}, but I recommend to use \textsc{megaptera}'s functions to assure the integrity of your data. Besides the name of the database (\texttt{dbname}), the drivers accepts four parameters: \texttt{host}, \texttt{port}, \texttt{user}, and (optional) \texttt{password}. With a standard installation of postgreSQL you should be fine leaving these parameters at their default values.\footnote{If you encounter any problems, have a look at \texttt{?dbConnect} and the postgreSQL documentation.}
+First, we create a database called \texttt{cetacea} to hold all sequences together with the taxonomic data; the corresponding function is \texttt{dbPars()}. In principle, you can do this and all subsequent SQL operations with PostgreSQL's genuine front-end \textsc{pgAdmin3}\footnote{\href{http://www.postgresql.org/ftp/pgadmin3/}{http://www.postgresql.org/ftp/pgadmin3/}}, but I recommend to use \textsc{megaptera}'s functions to assure the integrity of your data. Besides the name of the database (\texttt{dbname}), the PostgreSQL driver accepts four parameters: \texttt{host}, \texttt{port}, \texttt{user}, and (optional) \texttt{password}. With a standard installation of postgreSQL you should be fine leaving these parameters at their default values (except for the password, of course).\footnote{If you encounter any problems, have a look at \texttt{?dbConnect} and the postgreSQL documentation.} 
+
+In addition to creating the database, the call to \texttt{dbPars} will produce an object of class \texttt{dbPars} (here assigned the name \texttt{conn}), which holds the connection parameters.
 
 <<create-database, eval=FALSE, tidy=FALSE>>=
 library(megaptera)
 conn <- dbPars(dbname = "Cetacea", password = "oxalis")
 @
 
-Note that \texttt{dbname} was coerced to lower case, because SQL is not case sensitive and the same applies to all table and attribute (column) names.
+The class \texttt{dbPars} has a print method that let's us check the parameters that we just have set:
 
 <<create-database2, eval=TRUE, tidy=FALSE>>=
 show(conn)
 @
+
+Note that \texttt{dbname} was coerced to lower case, because SQL is not case sensitive. This also applies to all table and attribute (= column) names.
+
 %% TAXONOMY
 \subsection{Taxonomic information}\label{subsec:taxonomy}
 
-Whereas evolutionary biologists are normally interested in the phylogenetic history of a clade, community ecologists need phylogenies of the members of a community, i.e. only a subset of of a clade's phylogeny. To account for both needs, \textsc{megaptera} accepts taxonomic information as a species list or as the name of one or more (higher) taxa (e.g. Cetacea, Asteraceae, Russula). Ingroup and outgroup is given separately and we have to specify the kingdom our taxa belong to. This is neccesary to differenciate between   homonyms allowed by the taxonomic codices (e.g. \textit{Prunella} ist both a genus of birds and of plants).
+Whereas evolutionary biologists are normally interested in the phylogenetic history of a clade, community ecologists need phylogenies of the members of a community, i.e. only a subset of of a inclusive clade's phylogeny. To account for both needs, \textsc{megaptera} accepts taxonomic information as a species list or as the name of one or more (higher) taxa (e.g. Cetacea, Asteraceae, Russula). Ingroup and outgroup is given separately and we have to specify the kingdom our taxa belong to. This is neccesary to differenciate between   homonyms allowed by the taxonomic codices (e.g. \textit{Prunella} ist both a genus of birds and of plants).
 
 <<taxonomy, eval=TRUE, size="small", tidy=FALSE>>=
 tax <- taxon(ingroup = "Cetacea", 
@@ -77,26 +87,28 @@ tax
 
 %Currently, \textsc{megaptera} is designed such that is uses species (i.e., Linnean binomials) as operational taxonomic units (OTU). That means all subspecies and varieties will be pooled into one OTU, which will be represented by a single consensus sequence in the final alignment. This makes the implicit assumption that species as defined by their names at NCBI are monophyletic.  
 
-For running the pipeline the taxonomic classification will be stored in a database table called \texttt{taxonomy}. You can create this table yourself or you can use \texttt{dbUpdateTaxonomy}, which his recommended, because the function takes care of standardizing the names of ranks and will append taxa if \texttt{taxonomy} already exists. In the case that you do not have a full taxonomy of your study group at hand, but only a species list without higher taxonomic ranks, you can use the function \texttt{ncbiTaxonomy} to retrieve the relevant information from the taxonomy database provided by NCBI. The same function is useful if you are interested in all members of a certain higher taxon. For demostration we will download the classification of the order Cetacea and store it in the database.
+The classification of the input taxa are taken as a surrogate of their evolutionary history, which will be used at several steps during the pipeline. The taxonomic classification is internally stored in a database table called \texttt{taxonomy}. You can create this table yourself if you have a classification at hand (only recommended for advanced users) or you can use the function \texttt{stepA}, which downloads the corresponding NCBI taxonomy. 
+
+For demostration we will download the classification of the order Cetacea and store it in our database. In order to do so, we need to create a \texttt{megapteraProj} object to bundle database parameters and taxonomic data. Please ignore the \texttt{locus} argument for the moment, we will come back to it in section \ref{subsec:loci}.
+
+<<stepA, eval=FALSE>>=
+x <- megapteraProj(db = conn,
+                   taxon = tax,
+                   locus = locus())
+stepA(x)
+@
+
 
 %% GENETIC MARKERS
 \subsection{Genetic markers (loci)}\label{subsec:loci}
 
-\textsc{megaptera} is not a super-matrix approach \emph{sensu} \citet{smithdonoghue2009}, where sequences are sorted by $N \times N$ comparisons into orthologous groups, but instead requieres the specification of genetic marker regions (here after called `loci'). Unfortunately there is no strict definition of how loci should be called (and in which fields they should be searched for, section \ref{sec:pipe}) at NCBI. The widely used large unit of ribosomal DNA, e.g., has been referred to by 28S, 26S, or 25S according to its different molecular weight in different lineages. Thus, \textsc{megaptera} offers (and you should use it) the possibility to define aliases of locus names.
+\textsc{megaptera} is not a super-matrix approach sensu \citet{smithdonoghue2009}, where sequences are sorted by $N \times N$ comparisons into orthologous groups, but instead requieres the specification of genetic marker regions (hereafter called `loci'). Unfortunately there is no strict definition of how loci should be called (and in which fields they should be searched for, section \ref{sec:pipe}) at NCBI. The widely used large unit of ribosomal DNA, e.g., has been referred to by 28S, 26S, or 25S according to its different molecular weight in different lineages. Thus, \textsc{megaptera} offers (and you should use it) the possibility to define aliases of locus names.
 
-% <<genes1, tidy.opts=list(width.cutoff=40)>>=
-% l <- locus("large subunit ribosomal RNA gene", "28S", "26S", "25S")
-% @
-
-The order of aliases has no effect, but you might prefer a short one as the first argument is taken to derive several internally used labels for database tables and columns.
-
-% <<genes2, tidy=TRUE, tidy.opts=list(width.cutoff=40)>>=
-% l <- locus("28S", "26S", "25S", "large subunit ribosomal RNA gene")
-% @
+The order of aliases has no effect on the results of the search, but you might prefer to begin the list with a short one as the first argument is taken to derive several internally used labels for database tables and columns.
 
 Let's choose five loci that are widely used in vertebrate phylogenetics.
 
-<<loci, eval=TRUE, tidy=FALSE, tidy.opts=list(width.cutoff=40)>>=
+<<loci, eval=FALSE, tidy=FALSE, tidy.opts=list(width.cutoff=40)>>=
 loci <- list(locus("cytB", "Cytb"),
              locus("cox1", "COI"),
              locus("16S"),
@@ -105,10 +117,17 @@ loci <- list(locus("cytB", "Cytb"),
 )
 @
 
+If we use the print method of the class \texttt{locus} on the first element of the list of loci, we can see that a whole bunch of parameters have been set, which are explained below.
+
+<<loci2, eval=TRUE>>=
+loci[[1]]
+@
+
+[Add description of parameters\dots]
 
 \subsection{Pipeline parameters}\label{subsec:pars}
 
-The pipeline requires a set of parameters that can be set with \texttt{megapteraPars}; see \texttt{help("megapteraPars-class")} for a detailed description of each parameter.
+As a last requirement \textsc{megaptera} pipeline itself has a number of parameters that can be set with \texttt{megapteraPars}; see \texttt{help("megapteraPars-class")} for a detailed description of each parameter.
 
 <<parameters, eval=TRUE>>=
 pars <- megapteraPars()

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-02-20)
+## © C. Heibl 2014 (last update 2017-04-20)
 
 #' @export
 #' @import DBI
@@ -179,7 +179,7 @@ stepG <- function(x){
     if (length(seqs) > 2)
       stop("uncomplete alignment in WHILE loop")
     if (length(seqs) == 2)
-      seqs <- mafft.merge(seqs, mafft.exe = align.exe)
+      seqs <- mafft.merge(seqs, exec = align.exe)
     else seqs <- seqs[[1]]
   }
   
