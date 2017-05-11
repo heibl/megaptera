@@ -78,6 +78,7 @@ stepC <- function(x){
   ## no sequences in table: inform and quit
   ## --------------------------------------
   if (!nrow(tax)) {
+    dbProgress(x, "step_c", "failure")
     dbDisconnect(conn)
     slog("no sequences - try to rerun stepB", file = logfile)
     slog("\n\nSTEP C finished", file = logfile)

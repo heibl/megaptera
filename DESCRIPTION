@@ -35,7 +35,7 @@ LazyData: true
 VignetteBuilder: knitr
 Packaged: Thu Oct 20 19:35:17 2016
 RoxygenNote: 6.0.1
-Collate:
+Collate: 
     'EFetchXML.R'
     'MAD.R'
     'NCBI.wrap.R'
@@ -177,7 +177,6 @@ Collate:
     'taxonGuidetree.R'
     'taxonomy2html.R'
     'term.R'
-    'transitivityMerge.R'
     'valid.NCBI.taxon.R'
     'whereToInsert.R'
     'wrapSQL.R'

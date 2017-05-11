@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-03-22)
+## © C. Heibl 2016 (last update 2017-05-10)
 
 #' @title RMarkdown Report
 #' @description Creates a status report for a megaptera Project using RMarkdown.
@@ -16,8 +16,8 @@ megaptera2Rmarkdown <- function(x, file){
     file <- paste("report", file, sep = "/")
   }
   
-  ## prepare string for output
-  ## -------------------------
+  ## Prepare some strings for output
+  ## -------------------------------
   tip_rank <- ifelse(x@taxon@tip.rank == "genus", "genera", "species")
   Tip_rank <- ifelse(x@taxon@tip.rank == "genus", "Genera", "Species")
   
@@ -221,16 +221,21 @@ megaptera2Rmarkdown <- function(x, file){
   loci_genbank[loci_genbank > 1] <- 1
   loci_genbank <- rowSums(loci_genbank)
   taxa_not_found <- names(loci_genbank)[loci_genbank == 0]
+  n_taxa_not_found <- length(taxa_not_found)
+  n_taxa_found <- nrow(ll) - n_taxa_not_found
   if (length(taxa_not_found)){
-    taxa_not_found <- c(
+    taxaNotFound <- c(
       paste("##", Tip_rank ,"without any sequences"),
-      paste0("- *", taxa_not_found, "*")
-    )
+      paste0(n_taxa_not_found, " ", tip_rank, " (of ", nrow(ll), " available = ",
+             round(100 * n_taxa_not_found/nrow(ll), 2), "%) have no sequences."))
+    if (n_taxa_not_found <= 100){ 
+      taxaNotFound <- c(taxaNotFound, paste0("- *", taxa_not_found, "*"))
+    } 
   } else {
-    taxa_not_found <- NULL
+    taxaNotFound <- NULL
   }
   z <- c(z, "# DNA sequence retrieval",
-         taxa_not_found, "",
+         taxaNotFound, "",
          paste("## Number of", tip_rank, "per locus"),
          "```{r, echo=FALSE, message=FALSE}",
          "gb <- checkSpecLocus(x, 'gb')",
@@ -248,12 +253,18 @@ megaptera2Rmarkdown <- function(x, file){
   loci_selected <- apply(loci_selected, c(1, 2), as.numeric) ## coerce to numeric!
   loci_selected <- rowSums(loci_selected)
   taxa_not_selected <- names(loci_selected)[loci_selected == 0]
+  taxa_not_selected <- setdiff(taxa_not_selected, taxa_not_found)
+  n_taxa_not_selected <- length(taxa_not_selected)
   if (length(taxa_not_selected)){
-    taxa_not_selected <- c(
+    taxaNotSelected <- c(
       paste("##", Tip_rank, "not selected for alignment"),
-      paste0("- *", taxa_not_selected, "*"), "")
+      paste0(n_taxa_not_selected, " ", tip_rank, " (of ", n_taxa_found, " retrieved = ",
+             round(100* n_taxa_not_selected/n_taxa_found, 2), "%) have not been selected."))
+    if (n_taxa_not_selected <= 100){
+      taxaNotSelected <- c(taxaNotSelected, paste0("- *", taxa_not_selected, "*"))
+    }
   } else {
-    taxa_not_selected <- NULL
+    taxaNotSelected <- NULL
   }
   tab <- checkSpecLocus(x, "sel", plot = FALSE)
   tab <- cbind(rownames(tab$specPerMarker), tab$specPerMarker)
@@ -263,7 +274,7 @@ megaptera2Rmarkdown <- function(x, file){
   
   z <- c(z, 
          "# Sequence selection and alignment",
-         taxa_not_selected,
+         taxaNotSelected, " ",
          paste("## Number of selected", tip_rank, "per locus"),
          "```{r, echo=FALSE, message=FALSE}",
          "sel <- checkSpecLocus(x, 'sel')",
