@@ -35,10 +35,6 @@ dbMaxGIPerSpec <- function(x, max.gi.per.spec){
       slog("\n -", i, "(", length(acc.exclude), "sequences excluded )",
            file = logfile)
       acc <- paste("UPDATE", acc.tab, 
-                   "SET status='excluded (max.gi)'",
-                   "WHERE", wrapSQL(acc.exclude, "gi", "=", "OR"))
-      dbSendQuery(conn, acc)
-      acc <- paste("UPDATE", acc.tab, 
                    "SET status='raw'",
                    "WHERE", wrapSQL(acc.include, "gi", "=", "OR"))
       lapply(acc, dbSendQuery, conn = conn)
