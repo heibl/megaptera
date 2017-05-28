@@ -48,6 +48,21 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
   ## subsetting taxonomy ..
   ## ----------------------
   if (!missing(subset)){
+    if (is.character(subset)) {
+      ## .. based on MAS table or ..
+      ## ---------------------------
+      if (length(grep("^[genus]|[species]_", subset))){
+        tip.rank <- gsub("_.+$", "", subset)
+        subset <- paste("SELECT taxon", 
+                        "FROM", subset, 
+                        "WHERE status !~ 'excluded'")
+        subset <- dbGetQuery(conn, subset)[, "taxon"]
+      } else {
+        ## .. based on a vector of species names
+        ## -------------------------------------
+        subset <- subset
+      }
+    } 
     ## .. based on sequence names or ..
     ## --------------------------------
     if (inherits(subset, "DNAbin")){
@@ -59,20 +74,7 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
     if (inherits(subset, "phylo")){
       subset <-  subset$tip.label
     }
-    ## .. based on MAS table or ..
-    ## ---------------------------
-    if (is.character(subset) & length(grep("^[genus]|[species]_", subset))){
-      tip.rank <- gsub("_.+$", "", subset)
-      subset <- paste("SELECT taxon", 
-                      "FROM", subset, 
-                      "WHERE status !~ 'excluded'")
-      subset <- dbGetQuery(conn, subset)[, "taxon"]
-    }
-    ## .. based on a vector of species names
-    ## -------------------------------------
-    if (is.character(subset) & !length(grep("^[genus]|[species]_", subset))){
-      subset <- subset
-    }
+    
     
     ## do the actual subsetting
     ## ------------------------

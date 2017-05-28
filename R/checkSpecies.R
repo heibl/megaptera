@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-12-07)
+## © C. Heibl 2014 (last update 2017-05-28)
 
 #' @title Get Information about Species
 #' @description Returns information about the 'fate' of a single species along the pipeline.
@@ -26,7 +26,7 @@ checkSpecies <- function(megProj, spec){
                  "WHERE", wrapSQL(spec, "synonym"))
     tax <- dbGetQuery(conn, tax)$spec
     
-    if ( length(tax) == 0 ){
+    if (!length(tax)){
       cat("\n'", spec, "' not present in 'taxonomy' table\n", sep = "")
       dbDisconnect(conn)
       return()
@@ -39,10 +39,15 @@ checkSpecies <- function(megProj, spec){
     }
   }
   tax <- taxdumpLineage(tax, spec)
-  tax <- tax[, c("rank", "taxon")]
-  tax <- format(tax, justify = "right")
-  tax <- paste(tax$rank, tax$taxon, sep = " : ")
-  cat("***** TAXONOMY *****", paste("\n", tax, sep = ""))
+  if (is.null(tax)){
+    cat("\n'", spec, "' not present in 'taxonomy' table\n", sep = "")
+  } else {
+    tax <- tax[, c("rank", "taxon")]
+    tax <- format(tax, justify = "right")
+    tax <- paste(tax$rank, tax$taxon, sep = " : ")
+    cat("***** TAXONOMY *****", paste0("\n", tax))
+  }
+  
   
   ## B: SEQUENCES
   ## ------------
