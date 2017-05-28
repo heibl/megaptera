@@ -1,6 +1,20 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-03-24)
+## © C. Heibl 2017 (last update 2017-05-28)
 
+#' @title Utilities for NCBI Taxdump
+#' @description Get all children of certain rank for a given taxon.
+#' @param x Either an object of class \code{\link{megapteraProj}} or a data
+#'   frame as returned by \code{\link{dbReadTaxonomy}}.
+#' @param taxon A character string giving the name of the taxon.
+#' @param tip.rank A character string giving the name a rank. This rank will be 
+#'   treated as tip rank, i.e. all taxa of lower rank will be dicarded.
+#' @param indet A vector of character strings containing regular expressions 
+#'   (see Examples).
+#' @return A data frame.
+#' @seealso \code{\link{taxdumpLineage}}, \code{\link{taxdumpMRCA}}, \code{\link{taxdump2phylo}}.
+#' @examples 
+#' # The set of default regular expressions used to identify nonvalid species binomials
+#' indet.strings()
 #' @export
 
 taxdumpDaughters <- function(x, taxon, tip.rank, indet = indet.strings()){
@@ -39,17 +53,7 @@ taxdumpDaughters <- function(x, taxon, tip.rank, indet = indet.strings()){
   x <- x[x$id %in% id, c(2, 1, 4, 3)]
   rownames(x) <- NULL
   
-  ## remove *species* that do not correspond to structurally
-  ## valid Latin binomials according to 'indet'
-  ## ------------------------------------------
-  notvalid <- grep(indet.strings(collapse = TRUE), x$taxon)
-  notvalid <- intersect(notvalid, which(x$rank == "species"))
-  if (length(notvalid) > 0){
-    # message(length(notvalid), " taxa removed")
-    x <- x[-notvalid, ]
-  }
-  
-  ## remove rows of rank below 'tip.rank'
+  ## Remove rows of rank below 'tip.rank'
   ## ------------------------------------
   id <- vector()
   this.id <- x[x$rank == tip.rank, "id"]
@@ -61,5 +65,35 @@ taxdumpDaughters <- function(x, taxon, tip.rank, indet = indet.strings()){
   }
   x <- x[!x$id %in% id, ]
   
+  ## Remove *lineages* that do not terminate in structurally
+  ## valid Latin binomials according to 'indet'
+  ## ------------------------------------------
+  notvalid <- grep(indet.strings(collapse = TRUE), x$taxon)
+  notvalid <- intersect(notvalid, which(x$rank == "species"))
+  if (length(notvalid)){
+    
+    notvalid <- sort(x$id[notvalid])
+    for (i in notvalid){
+      x <- taxdumpDropTip(x, i)
+    }
+    
+    ## Might need this bit in the future if
+    ## the above code turns out to be to slow
+    ## --------------------------------------
+    # pid <- x$parent_id[notvalid]
+    # pid <- table(pid)
+    # z <- table(x$parent_id)
+    # z <- z[names(z) %in% names(pid)]
+    # d <- z - pid
+    # entire_genus <- d[d == 0]
+    # pp_genus <- names(d)[d > 0]
+    # 
+    # notvalid <- intersect(notvalid, which(x$parent_id %in% pp_genus))
+    # x <- x[-notvalid]
+    # 
+    # notvalid <- grep(indet.strings(collapse = TRUE), x$taxon)
+    # notvalid <- intersect(notvalid, which(x$rank == "species"))
+  
+  }
   x
 }

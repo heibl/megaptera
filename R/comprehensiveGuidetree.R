@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-04-07)
+## © C. Heibl 2014 (last update 2017-05-28)
 
 #' @title Comprehensive Guide Tree
 #' @description Creates a complete (or comprehensive) guide tree for the
@@ -26,6 +26,10 @@
 #' @export
 
 comprehensiveGuidetree <- function(megProj, tip.rank, subset){
+  
+  ## Default tip rank is the project's tip rank
+  ## ------------------------------------------
+  if (missing(tip.rank)) tip.rank <- megProj@taxon@tip.rank
   
   ## read taxonomy table
   ## -------------------
@@ -99,11 +103,15 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
     cond1 <- any(tax[tax$rank == tip.rank, "taxon"] %in% og)
     cond2 <- !all(og %in% gt$tip.label)
     if (cond1 & cond2){
-      og_phylo <- taxdumpSubset(tax, og)
-      og_phylo <- taxdump2phylo(og_phylo, tip.rank)
       tt <- read.tree(text = "(outgroup, ingroup);")
-      tt <- bind.tree(tt, og_phylo, which(tt$tip.label == "outgroup"))
       gt <- bind.tree(tt, gt, which(tt$tip.label == "ingroup"))
+      if (length(og) == 1){
+        gt$tip.label[gt$tip.label == "outgroup"] <- og
+      } else {
+        og_phylo <- taxdumpSubset(tax, og)
+        og_phylo <- taxdump2phylo(og_phylo, tip.rank)
+        tt <- bind.tree(tt, og_phylo, which(tt$tip.label == "outgroup"))
+      }
     }
     
   } else {

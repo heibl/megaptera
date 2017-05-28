@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-05-08)
+## © C. Heibl 2014 (last update 2017-05-28)
 
 #' @export
 #' @import RCurl RPostgreSQL
@@ -12,8 +12,6 @@ stepA <- function(x){
   ## ------
   if (!inherits(x, "megapteraProj"))
     stop("'x' is not of class 'megapteraProj'")
-  if (!url.exists("https://eutils.ncbi.nlm.nih.gov"))
-    stop("internet connection required for stepA")
   
   ## iniate logfile
   ## --------------

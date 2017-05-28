@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-02-22)
+## © C. Heibl 2014 (last update 2017-05-26)
 
 #' @export
 #' @import DBI
@@ -24,6 +24,12 @@ dbReadDNA <- function(x, tab.name, taxon, regex = TRUE,
     taxon <- gsub("'", ".", taxon) # e.g.Acorus_sp._'Mt._Emei'
     taxon <- paste("^", taxon, "$", sep = "")
   }
+  
+  ## default: return taxon species.* or genus.* table
+  if (missing(tab.name)) tab.name <- paste(x@taxon@tip.rank, x@locus@sql, sep = "_")
+  if (tab.name == "acc") tab.name <- paste("acc", x@locus@sql, sep = "_")
+  if (tab.name == x@taxon@tip.rank) tab.name <- paste(x@taxon@tip.rank, x@locus@sql, sep = "_")
+  
   
   ## field names in <tab.name>
   ## -------------------------

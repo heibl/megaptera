@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-03-27)
+## © C. Heibl 2017 (last update 2017-05-28)
 
 #' @export
 
@@ -8,7 +8,6 @@ taxdump2phylo <- function(x, tip.rank){
   tip.rank <- match.arg(tip.rank, c("species", "genus"))
   
   x <- unique(x)
-  # x <- x[x$taxon != "root", ]
   
   phy <- list()
   
