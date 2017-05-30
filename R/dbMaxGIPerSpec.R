@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-05-17)
+## © C. Heibl 2014 (last update 2017-05-30)
 
 #' @export
 #' @import DBI
@@ -34,10 +34,14 @@ dbMaxGIPerSpec <- function(x, max.gi.per.spec){
       acc.include <- setdiff(acc$gi, acc.exclude)
       slog("\n -", i, "(", length(acc.exclude), "sequences excluded )",
            file = logfile)
-      acc <- paste("UPDATE", acc.tab, 
-                   "SET status='raw'",
-                   "WHERE", wrapSQL(acc.include, "gi", "=", "OR"))
-      lapply(acc, dbSendQuery, conn = conn)
+      acc.include <- paste("UPDATE", acc.tab,
+                           "SET status='raw'",
+                           "WHERE", wrapSQL(acc.include, "gi", "=", "OR"))
+      lapply(acc.include, dbSendQuery, conn = conn)
+      acc.exclude <- paste("UPDATE", acc.tab,
+                           "SET status='excluded (max.gi)'",
+                           "WHERE", wrapSQL(acc.exclude, "gi", "=", "OR"))
+      lapply(acc.exclude, dbSendQuery, conn = conn)
     }
   }
   dbDisconnect(conn)

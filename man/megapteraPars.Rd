@@ -26,7 +26,7 @@ character: if \code{TRUE}, several steps in the pipeline will be run in parallel
 \emph{currently unused}.
   }
   \item{max.gi.per.spec}{
-numeric, giving the maximum number of sequences that will be used per species. Can be used to avoid model organism (e.g., rice, \emph{Drosophila}, ...) cluttering up the pipeline with thousands of sequences (default: 100).
+numeric, giving the maximum number of sequences that will be used per species. Can be used to avoid model organism (e.g., rice, \emph{Drosophila}, ...) cluttering up the pipeline with thousands of sequences (default: 10).
   }
   \item{retmax}{numeric, giving the batch size when downloading sequences from the Entrez History server (default: 500).
   }

@@ -132,7 +132,7 @@
 	\item[\texttt{`raw'}] is the default status for every downloaded sequence.
 	\item[\texttt{`excluded (indet)'}] is set by \texttt{stepB}.
 	\item[\texttt{`excluded (too long)'}] is set by \texttt{stepB} or \texttt{stepF}.
-	\item[\texttt{`excluded (max.gi)'}] is set by \texttt{stepB}.
+	\item[\texttt{`excluded (max.gi)'}] is set by \texttt{stepB}, \texttt{stepBX},  or \texttt{dbMaxGIPerSpecies}. This tag is used to exclude sequences if more than \texttt{max.gi.per.spec} (default: 10; \texttt{?megaperaPars}) are present in the table.
 	\item[\texttt{`excluded (unclassified)'}]  is set by \texttt{dbUpdateTaxonomy}. For species names that are present in any one \texttt{acc\_*} table but not in the \texttt{taxonomy} table, this function tries to derive their taxonomic classification using congenerics. If this is not possible, a species (and all its sequences) are tagged as unclassified and excluded from downstream steps of the pipeline.
 	\item[\texttt{`single'}] is set by \texttt{stepC} and marks all species that are represented with only one sequence, not requiring alignment.
 	\item[\texttt{`aligned'}] is set by \texttt{stepC} for all aligned species.

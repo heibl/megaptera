@@ -23,7 +23,7 @@ character: if \code{TRUE}, several steps in the pipeline will be run in parallel
   \item{update.seqs}{\emph{currently unused}.}
   \item{retmax}{numeric, giving the batch size when downloading sequences from the Entrez History server (default: 500).
 }
-  \item{max.gi.per.spec}{numeric, giving the maximum number of sequences that will be used per species. Can be used to avoid model organism (e.g., rice, \emph{Drosophila}, ...) cluttering up the pipeline with thousands of sequences (default: 100).
+  \item{max.gi.per.spec}{numeric, giving the maximum number of sequences that will be used per species. Can be used to avoid model organism (e.g., rice, \emph{Drosophila}, ...) cluttering up the pipeline with thousands of sequences (default: 10).
 }
   \item{max.bp}{
 numeric, the maximal length of DNA sequences in base pairs to be included in the alignment. The upper limit is determined by the alignment program and the specific alignment and can only be determined by trial-and-error (default: 5000).
