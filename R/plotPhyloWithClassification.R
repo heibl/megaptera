@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2015 (last update 2017-02-20)
+## © C. Heibl 2015 (last update 2017-06-07)
 
 #' @title Plot Phylogentic Tree with Clade Highlighting
 #' @description Plots a phylogenetic tree together with color highlighting of
@@ -7,16 +7,16 @@
 #' @param x An object of class \code{\link{megapteraProj}}.
 #' @param phy An object of class \code{\link{phylo}}.
 #' @param og A vector of mode \code{"character"}.
-#' @param surrogate.tips
-#' @param min.support
+#' @param surrogate.tips A vector of mode \code{"character"}.
+#' @param min.support An integer ...
 #' @param collapse.unsupported Logical
 #' @param ignore.tag \emph{Currently unused.}
-#' @param edges
-#' @param higher.rank
-#' @param pdf.height
-#' @param pdf.with
-#' @param title
-#' @param file
+#' @param edges A vector of mode \code{"character"}.
+#' @param higher.rank A vector of mode \code{"character"}.
+#' @param pdf.height An integer ...
+#' @param pdf.with An integer ...
+#' @param title A vector of mode \code{"character"}.
+#' @param file A vector of mode \code{"character"}.
 #' @importFrom grDevices dev.off pdf
 #' @export
 

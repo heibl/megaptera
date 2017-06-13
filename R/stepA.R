@@ -1,6 +1,18 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-05-28)
+## © C. Heibl 2014 (last update 2017-06-12)
 
+#' @title Step A: Creating a Project Taxonomy
+#' @description Creates a project taxonomy from the NCBI taxonomy (see 
+#'   \code{\link{ncbiTaxonomy}}).
+#' @param x An object of class \code{\link{megapteraProj}}.
+#' @return None. \code{stepA} is called for its side effects: (1) a taxonomic 
+#'   classifiaction is stored in the pgSQL database; (2) a log file is written 
+#'   to the \code{log} directory of the project directory.
+#' @note Any subsequent call to \code{stepA} will overwrite the existing
+#'   \code{taxonomy} table. As a consequence, \code{stepB} and following steps
+#'   will have to be rerun also.
+#' @seealso \code{\link{megapteraProj}} for bundling the project's input 
+#'   information; \code{\link{stepB}} for the next step in the pipeline.
 #' @export
 #' @import RCurl RPostgreSQL
 
@@ -19,13 +31,14 @@ stepA <- function(x){
   if (file.exists(logfile)) unlink(logfile)
   slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
        paste("\n", Sys.time(), sep = ""), 
-       "\nSTEP A: searching and downloading taxonomy from GenBank\n",
+       "\nSTEP A: creating a project taxonomy from NCBI taxonomy\n",
        file = logfile)
   
   if (file.exists("ncbiTaxonomy-missing.txt")) unlink("ncbiTaxonomy-missing.txt")
   
   conn <- dbconnect(x)
-  notable <- !dbExistsTable(conn, "taxonomy")
+  if (dbExistsTable(conn, "taxonomy"))
+    slog("Existing taxonomy will be overwritten.", file = logfile)
   dbDisconnect(conn)
   
   ## get global NCBI taxonomy
@@ -87,7 +100,6 @@ stepA <- function(x){
   dbWriteTable(conn, "taxonomy", tax, row.names = FALSE)
   dbSendQuery(conn, "ALTER TABLE taxonomy ADD PRIMARY KEY (id)")
   dbDisconnect(conn)
-  # gt <- taxdump2phylo(tax)
   
   slog("\n\nSTEP A finished", file = logfile)
   td <- Sys.time() - start

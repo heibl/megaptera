@@ -19,9 +19,9 @@ Retrieve taxonomic classification from the taxonomy database at
 }
 \details{
 The NCBI taxonomy database will be downloaded via FTP in "taxdump" 
-  format, unpacked, and translated into a data frame object. In a second 
-  step, the data frame table will be stored in a postgreSQL database called 
-  \code{"ncbitaxonomy"}.
+  format, unpacked, and translated into data frames. In a second 
+  step, the data frames will be stored in a postgreSQL database called 
+  \code{"ncbitaxonomy"}. Any existing data will be overwritten in the process.
 }
 \references{
 NCBI Taxonomy Database website:

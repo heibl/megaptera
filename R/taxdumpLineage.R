@@ -1,6 +1,11 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-03-24)
+## © C. Heibl 2017 (last update 2017-06-08)
 
+#' @title Utilities for NCBI Taxdump
+#' @description Get all higher ranks including a given taxon.
+#' @param x Either an object of class \code{\link{megapteraProj}} or a data
+#'   frame as returned by \code{\link{dbReadTaxonomy}}.
+#' @param taxon A character string giving the name of the taxon.
 #' @export
 
 taxdumpLineage <- function(x, taxon){

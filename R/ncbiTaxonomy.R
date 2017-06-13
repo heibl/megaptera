@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-04-20)
+## © C. Heibl 2014 (last update 2017-06-07)
 
 #' @title NCBI Taxonomy Database
 #' @description Retrieve taxonomic classification from the taxonomy database at
@@ -7,9 +7,9 @@
 #' @param x Database connection parameters, either as object of class 
 #'   \code{\link{dbPars}} or \code{\link{megapteraProj}}.
 #' @details The NCBI taxonomy database will be downloaded via FTP in "taxdump" 
-#'   format, unpacked, and translated into a data frame object. In a second 
-#'   step, the data frame table will be stored in a postgreSQL database called 
-#'   \code{"ncbitaxonomy"}.
+#'   format, unpacked, and translated into data frames. In a second 
+#'   step, the data frames will be stored in a postgreSQL database called 
+#'   \code{"ncbitaxonomy"}. Any existing data will be overwritten in the process.
 #' @return \code{ncbiTaxonomy} is called for its side effect (see Details).
 #' @references NCBI Taxonomy Database website:
 #'   \url{http://www.ncbi.nlm.nih.gov/taxonomy}
@@ -42,9 +42,9 @@ ncbiTaxonomy <- function(x){
                     user = x@user,
                     password = x@password)
   sql <- paste("SELECT 1 FROM pg_database WHERE",
-               sql.wrap("ncbitaxonomy", term = "datname"))
-  if ( nrow(dbGetQuery(conn, sql)) == 1 ){
-    cat("\ndatabase 'ncbitaxonomy' exists ans will be updated")  
+               wrapSQL("ncbitaxonomy", "datname", "="))
+  if (nrow(dbGetQuery(conn, sql)) == 1){
+    cat("\ndatabase 'ncbitaxonomy' exists and will be updated")  
   } else {
     ## .. and create if it does not exist
     ## ----------------------------------

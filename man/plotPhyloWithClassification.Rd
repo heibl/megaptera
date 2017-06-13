@@ -15,9 +15,25 @@ plotPhyloWithClassification(x, phy, og, surrogate.tips, min.support,
 
 \item{og}{A vector of mode \code{"character"}.}
 
+\item{surrogate.tips}{A vector of mode \code{"character"}.}
+
+\item{min.support}{An integer ...}
+
 \item{collapse.unsupported}{Logical}
 
 \item{ignore.tag}{\emph{Currently unused.}}
+
+\item{edges}{A vector of mode \code{"character"}.}
+
+\item{higher.rank}{A vector of mode \code{"character"}.}
+
+\item{pdf.height}{An integer ...}
+
+\item{title}{A vector of mode \code{"character"}.}
+
+\item{file}{A vector of mode \code{"character"}.}
+
+\item{pdf.with}{An integer ...}
 }
 \description{
 Plots a phylogenetic tree together with color highlighting of

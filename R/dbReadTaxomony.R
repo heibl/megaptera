@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-04-07)
+## © C. Heibl 2017 (last update 2017-06-12)
 
 #' @export
 #' @import DBI
@@ -75,6 +75,11 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
       subset <-  subset$tip.label
     }
     
+    ## tip rank is genus, but subset species-level
+    ## -------------------------------------------
+    if (tip.rank == "genus" & all(is.Linnean(subset))){
+      subset <- unique(strip.spec(subset))
+    }
     
     ## do the actual subsetting
     ## ------------------------

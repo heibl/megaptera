@@ -1,11 +1,11 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-03-28)
+## © C. Heibl 2016 (last update 2017-05-26)
 
 #' @export
 #' @import DBI snow snowfall
 #' @importFrom snow setDefaultClusterOptions
 
-stepPASTA <- function(x, k = 200){	
+stepPOLENTA <- function(x, k = 200){	
   
   start <- Sys.time()
   quiet = FALSE
@@ -42,16 +42,15 @@ stepPASTA <- function(x, k = 200){
   tip.rank <- match.arg(x@taxon@tip.rank, c("species", "genus"))
   msa.tab <- paste(x@taxon@tip.rank, gsub("^_", "", gene), sep = "_")
   min.n.seq <- x@params@min.n.seq
-  align.exe <- x@align.exe
   
   ## iniate logfile
   ## --------------
   logfile <- paste0("log/", gene, "-stepPASTA.log")
   if (!quiet & file.exists(logfile)) unlink(logfile)
   if (!quiet)  slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
-                      paste("\n", Sys.time(), sep = ""),
-                      "\nSTEP G: PASTA alignment\n", 
-                      paste("\n.. locus:", x@locus@sql), file = logfile)
+                    paste("\n", Sys.time(), sep = ""),
+                    "\nSTEP G: PASTA alignment\n", 
+                    paste("\n.. locus:", x@locus@sql), file = logfile)
   
   ## open database connection
   conn <- dbconnect(x)
@@ -100,151 +99,26 @@ stepPASTA <- function(x, k = 200){
   
   ## read taxonomy and create guide tree
   ## -----------------------------------
+  slog("Creating comprehensive guide tree\n", file = logfile)
   gt <- comprehensiveGuidetree(x, tip.rank = tip.rank, subset = msa.tab)
-  guidetree <- gt
   
-  ## less then k species will be aligned with MAFFT-LINSI
-  ## ----------------------------------------------------
-  if (Ntip(gt) <= k){
-    slog("\n..", Ntip(gt), "species will be aligned with MAFFT L-INS-i", 
-         file = logfile)
-    seqs <- dbReadDNA(x, msa.tab)
-    if (is.matrix(seqs)) seqs <- del.gaps(seqs)
-    seqs <- mafft(seqs, method = "localpair", gt = gt, exec = align.exe)
-    
-  ## more than k species will be aligned with PASTA
-  ## ----------------------------------------------
-  } else {
-    
-    gt <- decomposePhylo(gt)
-    subtree <- sort(unique(gt$subtree.set$subtree))
-    
-    ## alignment of subsets -- either sequential or parallel
-    ## -----------------------------------------------------
-    SQL <- paste("SELECT status = 'subtree-aligned' AS status FROM", msa.tab)
-    if (!all(dbGetQuery(conn, SQL)$status)){
-      
-      slog("\n.. aligning", length(subtree),
-           "subtrees ..", file = logfile)
-      cpus <- x@params@cpus
-      if (Ntip(gt$guidetree) < cpus | !x@params@parallel){
-        lapply(subtree, alignSubtree, 
-               megProj = x, taxon = gt$subtree.set)
-        cluster.open <- FALSE
-      } else {
-        slog("\n", file = logfile)
-        sfInit(parallel = TRUE, cpus = cpus, 
-               type = x@params@cluster.type)
-        sfLibrary("megaptera", character.only = TRUE)
-        sfExport("gt", "x")
-        sfLapply(subtree, alignSubtree, megProj = x, taxon = gt$subtree.set)
-        sfStop()
-        cluster.open <- TRUE
-      }
-    } else {
-      cluster.open <- FALSE
-    }
-    
-    ## Step 2: calculate minimum spanning tree
-    ## ---------------------------------------
-    gt <- phylo2mst(gt$guidetree)
-    
-    ## Step 3: merge "Type 1 sub-alignments"
-    ## -------------------------------------
-    
-    ## get names of neighboring pairs:
-    gt[upper.tri(gt)] <- 0
-    id <- which(gt == 1, arr.ind = TRUE)
-    np <- data.frame(a = rownames(gt)[id[, 1]],
-                     b = colnames(gt)[id[, 2]])
-    np <- np[order(np$a), ]
-    np <- apply(np, 1, as.list)
-    np <- lapply(np, unlist)
-    
-    ## merge pairs of MSAs
-    if (!cluster.open){
-      slog(" serially", file = logfile)
-      seqs <- lapply(np, mergeSubMSA2, megProj = x)
-    } else {
-      if (length(np) > 1){
-        slog(" in parallel on", min(nrow(np), x@params@cpus), 
-             "nodes", file = logfile)
-        sfInit(parallel = TRUE, cpus = x@params@cpus, 
-               type = x@params@cluster.type)
-        sfLibrary("megaptera", character.only = TRUE)
-        sfExport(list = c("x", "np"), debug = TRUE)
-        # sfExport("np") # x already exported
-        seqs <- sfLapply(np, mergeSubMSA2, megProj = x)
-        sfStop()
-      } else {
-        slog(" serially", file = logfile)
-        seqs <- sapply(np, mergeSubMSA2, x = x)
-      }
-    }
-    
-    ## Step 4: TRANSIVITY MERGE
-    ## ------------------------
-    
-    ## A: parallel:
-    
-    sfInit(parallel = TRUE, cpus = x@params@cpus,
-           type = x@params@cluster.type)
-    sfLibrary("megaptera", character.only = TRUE)
-    
-    ## alignments as list of indices
-    seqs <- lapply(seqs, DNAbin2index)
-    
-    repeat{
-      ## create list of overlapping pairs
-      op <- overlappingPairs2(seqs)
-      
-      ## transitivity merger
-      sfExport("op", "seqs")
-      seqs2 <- sfLapply(op, transitivityMerge, obj = seqs)
-      seqs <- seqs2
-      # seqs2 <- lapply(op, transitivityMerge, obj = seqs)
-      if ( length(seqs) == 1 ) break
-    }
-    
-    sfStop()
-    
-    ## B: serially
-    ## -----------
-    ## alignments as list of indices
-    # seqs <- lapply(seqs, DNAbin2index)
-    # 
-    # ## very rough loop!
-    # repeat {
-    #   s <- names(seqs[[1]])
-    #   s <- sapply(seqs, 
-    #               function(z, s) length(intersect(names(z), s)) > 0, 
-    #               s = s)
-    #   s <- which(s)[1:2]
-    #   
-    #   seqs <- c(seqs, list(transitivityMerge(obj = seqs, s)))
-    #   seqs <- seqs[-s]
-    #   cat("\nnumber of subMSAs:", length(seqs))
-    #   if ( length(seqs) == 1 ) break
-    # }
-    seqs <- seqs[[1]]
-    
-    dna <- dbReadDNA(x, msa.tab) 
-    dna <- del.miss(dna)
-    
-    seqs <- index2DNAbin(dna, seqs)
-  }
-
+  ## PASTA
+  ## -----
+  slog("Doing PASTA alignment\n", file = logfile)
+  seqs <- pasta(seqs, k = k, gt = gt, parallel = x@params@parallel,
+                exec = x@align.exe, ncore = x@params@cpus)
+  
   
   ## prune ends of alignment from 'thin tails'
   ## -----------------------------------------
   seqs <- trimEnds(seqs, min(nrow(seqs), min.n.seq))
   seqs <- deleteEmptyCells(seqs, quiet = TRUE)
-
+  
   ## sort alignment taxonomically
   ## ----------------------------
   if (nrow(seqs)){
     # rownames(seqs) <- gsub("_R_", "", rownames(seqs))
-    gt <- ladderize(guidetree)
+    gt <- ladderize(gt)
     gt <- drop.tip(gt, setdiff(gt$tip.label, rownames(seqs)))
     seqs <- seqs[match(gt$tip.label, rownames(seqs)), ]
   }
@@ -259,16 +133,16 @@ stepPASTA <- function(x, k = 200){
   write.phy(seqs, paste0("msa/", gene, ".phy"))
   rownames(seqs) <- gsub("-", "_", rownames(seqs))
   write.nex(seqs, paste0("msa/", gene, ".nex"))
-
+  
   ## calculate mean absolute deviation (MAD)
   ## see Smith, Beaulieau, Donoghue (2009)
   this.mad <- round(MAD(seqs), 5)
   slog("\n.. mean absolute deviation:",
        this.mad, "..", file = logfile)
-
+  
   ## summary
   ## -------
-  if ( !quiet ) {
+  if (!quiet) {
     slog(
       paste("\n\n--- final alignment of", gene, "---"),
       paste("\nnumber of sequences     :", nrow(seqs)),

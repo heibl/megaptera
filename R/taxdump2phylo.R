@@ -1,6 +1,17 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-05-28)
+## © C. Heibl 2017 (last update 2017-06-12)
 
+#' @title Utilities for NCBI Taxdump
+#' @description Convert a taxonomy table in parent-child format into an object 
+#'   of class \code{\link{phylo}}.
+#' @param x A data frame representing a taxonomy in parent-child format as 
+#'   returned by \code{\link{dbReadTaxonomy}}.
+#' @param tip.rank A character string giving the name a rank. This rank will be
+#'   treated as tip rank, i.e. all taxa of lower rank will be dicarded.
+#' @return An object of class \code{\link{phylo}}.
+#' @seealso \code{\link{dbReadTaxonomy}}, 
+#'   \code{\link{taxdumpDaughters}},\code{\link{taxdumpLineage}}, 
+#'   \code{\link{taxdumpSubset}}, \code{\link{taxdumpAddNode}}.
 #' @export
 
 taxdump2phylo <- function(x, tip.rank){
@@ -35,6 +46,7 @@ taxdump2phylo <- function(x, tip.rank){
   phy$edge[root.id, 1] <- current.node
 
   ## set internal nodes
+  ## ------------------
   while (any(phy$edge[, 2] > current.node)){
   # while (current.node < 6238){
     n <- phy$edge[phy$edge[, 2] > current.node, 2][1]

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (2015-12-18)
+## © C. Heibl 2014 (2017-06-08)
 
 #' @title Add Tips to a Phylogenetic Tree
 #' @description Add tips (species) to a phylogenetic tree according 
