@@ -1,0 +1,20 @@
+citHeader("To cite megaptera in publications use:")
+
+citEntry(
+  entry = "InProceedings",
+  title = "The megaptera package: Large phylogenetic datasets in R",
+  author = as.person("Christoph Heibl"),
+  booktitle = "Modern Phylogenetic Comparative Methods and their application in evolutionary biology",
+  year = 2014, ## 11.-15.11.2014
+  
+  textVersion = paste(
+    "Christoph Heibl (2014).",
+    "The megaptera package: Large phylogenetic datasets in R.",
+    "Modern Phylogenetic Comparative Methods and their application in evolutionary biology.",
+    "Seville, Spain. November 2014, 11-15th."
+    )
+)
+
+## Alternative titles:
+## megaptera: Semi-automatic assembly of large phylogenetic datasets in R.
+## Semi-automatic assembly of large phylogenetic datasets in R with the megaptera package.

@@ -1,6 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-04-11)
+## © C. Heibl 2014 (last update 2017-07-17)
 
+#' @importFrom snow setDefaultClusterOptions
 #' @export
 
 stepE <- function(x){
