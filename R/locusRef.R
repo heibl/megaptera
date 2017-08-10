@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-12-06)
+## © C. Heibl 2014 (last update 2017-08-08)
 
 #' @include locusRef-class.R
 #' @importFrom methods new
@@ -76,10 +76,11 @@
   ## if GIs are given download  and
   ## assemble reference sequences
   ## ----------------------------
-  if ( !inherits(reference, "DNAbin") ){
-    cat("\n.. extracting reference sequence ..")
+  if (!inherits(reference, "DNAbin")){
+    cat("\n.. downloading and extracting reference sequence using GIs..")
+    if (!is.vector(reference)) stop("'reference' must be an object of class 'DNAbin' or a vector of integers")
     xml <- EFetchXML(reference)
-    if ( kind == "igs" ){
+    if (kind == "igs"){
       reference <- lapply(reference, extractIGS, 
                           xml = xml, locus = list(adj.gene1, adj.gene2))
     } else {
@@ -88,8 +89,8 @@
     }
     names(reference) <- sapply(reference, names)
     failures <- sapply(reference, is.na)
-    if ( all(failures) ) stop("reference sequences could not be extracted")
-    if ( any (failures) ){
+    if (all(failures)) stop("reference sequences could not be extracted")
+    if (any(failures)){
       reference <- reference[!failures]
       cat("\n.. success:", length(which(!failures)), "- failure:", length(which(failures)), "..")
     }

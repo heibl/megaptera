@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-06-13)
+## © C. Heibl 2014 (last update 2017-08-10)
 
 #' @title Comprehensive Guide Tree
 #' @description Creates a complete (or comprehensive) guide tree for the
@@ -38,6 +38,15 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
   } else {
     tax <- dbReadTaxonomy(megProj, tip.rank = tip.rank, subset = subset, root = "mrca")
   }
+  
+  ## collapse incertae sedis nodes
+  ## -----------------------------
+  incsed <- grep("incertae sedis", tax$taxon)
+  for (i in incsed){
+    tax$parent_id[tax$parent_id == tax$id[i]] <- tax$parent_id[i]
+  }
+  tax <- tax[-incsed, ]
+  
   
   if (inherits(megProj@taxon, "taxonGuidetree")){
     

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-01-12)
+## © C. Heibl 2014 (last update 2017-08-07)
 
 #' @title Truncation of Species Names
 #' @description Delete infraspecific names and epithets form species names.
@@ -26,7 +26,17 @@ strip.infraspec <- function(x){
   
   if (is.factor(x)) x <- levels(x)[x]
   x <- gsub("_x_", "_x-", x) # handle times symbol in hybrids 1
-  sepchar <- ifelse(length(grep("_", x)) != 0, "_", " ")
+  ## determine separating character
+  ## ------------------------------
+  empty <- length(grep(" ", x))
+  underscore <- length(grep("_", x))
+  if (empty & !underscore) sepchar <- " "
+  if (!empty & underscore) sepchar <- "_"
+  if (empty & underscore) {
+    xx <- strsplit(x, " ")
+    xx <- sapply(xx, function(z) z[1])
+    sepchar <- ifelse(length(grep("_", xx)), "_", " ")
+  }
   x <- strsplit(x, sepchar)
   x <- sapply(x, function(x, sc) paste(x[1:2], collapse = sc), sc = sepchar)
   x <- gsub("_x-", "_x_", x) # handle times symbol in hybrids 2

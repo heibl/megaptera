@@ -26,7 +26,8 @@ Depends:
 Suggests:
     viper,
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat
 Encoding: UTF-8
 Description: Given a set of taxa and marker, the goal is build a complete and
     correct sequence alignment for phylogenetic analysis.
@@ -78,6 +79,7 @@ Collate:
     'dbReadReference.R'
     'dbReadTaxomony.R'
     'dbSummaryMSA.R'
+    'dbSummaryTaxonomy.R'
     'dbTableNames.R'
     'dbUpdateReference.R'
     'dbUpdateReference_Clade.R'

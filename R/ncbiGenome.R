@@ -1,8 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-02-22)
+## © C. Heibl 2016 (last update 2017-08-07)
 
 ## to do:
-## must be adapted for plants e.g. lines 15, 104
 ## extend outgroup to genus if it is a single species
 
 #'@title Find Organelle Genomes on NCBI GenBank
@@ -30,6 +29,7 @@
 #'  \url{http://www.ncbi.nlm.nih.gov/genome/organelle/}
 #'@seealso \code{\link{locusRef}} to set reference sequences.
 #'@export
+#'@importFrom RCurl url.exists
 #'@import XML
 
 ncbiGenome <- function(x, organelle, n = 5){
@@ -107,7 +107,7 @@ ncbiGenome <- function(x, organelle, n = 5){
     ## -------------------
     xml <- robustXMLparse(xml, logfile = fn)
     # saveXML(xml, "aaa.xml"); system("open -t aaa.xml")
-    if ( is.null(xml) ) next
+    if (is.null(xml)) next
     
     gb <- xpathApply(xml, "//Item[@Name = 'Caption']", xmlToList)
     gb <- sapply(gb, function(x) x$text)

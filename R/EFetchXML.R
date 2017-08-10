@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-09-15)
+## © C. Heibl 2014 (last update 2017-08-08)
+
+#' @export
 
 EFetchXML <- function (gi, debug = FALSE){
   
@@ -15,14 +17,14 @@ EFetchXML <- function (gi, debug = FALSE){
                       getDTD = FALSE, 
                       useInternalNodes = TRUE)
   
-  if ( debug ){
+  if (debug){
     saveXML(xml, "test2.xml"); system("open -t test2.xml")
   }
     
   ## return NA if download failed
   ## ----------------------------
   err <- xpathSApply(xml, "/GBSet/Error", xmlValue)
-  if ( length(err) > 0 ){
+  if (length(err)){
     warning(err)
     return(NA)
   } 
