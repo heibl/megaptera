@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-03-29)
+## © C. Heibl 2014 (last update 2017-10-11)
 
 #' @title Barplot of Species Numbers per Locus
 #' @description Produce a barplot showing the number of species found for each 
@@ -112,7 +112,7 @@ checkSpecLocus <- function(megProj, stage = "sel",
     ## plot total number of species as line
     ## makes sense only for more than one locus
     ## ----------------------------------------
-    if (ncol(xx)){
+    if (ncol(xx) > 1){
       xyt <- data.frame(total, total, df.bar, df.bar)
       xyt[, 3] <- xyt[, 3] - 0.5 * (df.bar[2] - df.bar[1])
       xyt[, 4] <- xyt[, 4] + 0.5 * (df.bar[2] - df.bar[1])

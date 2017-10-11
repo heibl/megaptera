@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-05-10)
+## © C. Heibl 2016 (last update 2017-10-11)
 
 #' @title RMarkdown Report
 #' @description Creates a status report for a megaptera Project using RMarkdown.
@@ -141,58 +141,49 @@ megaptera2Rmarkdown <- function(x, file){
   
   ## 3: TAXONOMY
   ## ------------------
-  ingroup.queried <- x@taxon@ingroup
-  
   tax <- dbReadTaxonomy(x)
-  ## the following code does not work with a parent-child table
-  ## adapt or omit!
-  # if (x@taxon@tip.rank == "gen"){
-  #   id <- which(names(tax) == "gen")
-  #   tax <- unique(tax[, 1:id])
-  # } else {
-  #   tax$spec <- gsub("_", " ", tax$spec)
-  # }
-  # taxonomy2html(tax)
-  # ingroup.queried <- x@taxon@ingroup
-  # if (spec.list){
-  #   ingroup.queried <- sapply(ingroup.queried, head, n = 1)
-  #   ingroup.received  <- tax$spec[grep("^ingroup", tax$tag)]
-  #   extended.ingroup.received <- tax$spec[grep("extended ingroup", tax$tag)]
-  #   ingroup.missing <- setdiff(ingroup.queried, ingroup.received)
-  #   ingroup.false <- setdiff(ingroup.received, ingroup.queried)
-  #   if ( length(ingroup.false) > 0 ){
-  #     ingroup.false <- paste("- **WARNING**: *", ingroup.false, 
-  #                            "* falsely as ingroup classified", sep = "")
-  #   } else {
-  #     ingroup.false <- ""
-  #   }
-  #   tax.coverage <- c(
-  #     "Query of the NCBI Taxonomy Database gave these results:", "",
-  #     paste("- **", length(ingroup.received), "** out of ", 
-  #           length(ingroup.queried), " ingroup species (", 
-  #           round(length(ingroup.received) / length(ingroup.queried) * 100, 2),
-  #           "%) were found", sep = ""),
-  #     paste("- **", length(ingroup.missing), "** ingroup species (", 
-  #           round(length(ingroup.missing) / length(ingroup.queried) * 100, 2),
-  #           "%) were missing", sep = ""),
-  #     paste("- **", length(extended.ingroup.received), 
-  #           "** congenerics of the ingroup species were included in the extended ingroup", 
-  #           sep = ""),
-  #     ingroup.false)
-  #   
-  # } else {
-  #   tax.coverage <- c(
-  #     "Query of the NCBI Taxonomy Database gave these results:", "",
-  #     paste("- **", length(grep("ingroup", tax$tag)), 
-  #           "** ingroup species", sep = ""),
-  #     paste("- **", length(grep("outgroup", tax$tag)), 
-  #           "** outgroup species", sep = "")
-  #   )
-  # }
+  
+  if (spec.list){
+    ingroup_queried <- sapply(x@taxon@ingroup, head, n = 1)
+    ingroup_received  <- intersect(ingroup_queried, tax$taxon)
+    n_ingroup_received <- length(ingroup_received)
+    ingroup_missing <- setdiff(ingroup_queried, ingroup_received)
+    n_ingroup_missing <- length(ingroup_missing)
+    ingroup_false <- setdiff(ingroup_received, ingroup_queried)
+    
+    tax.coverage <- c(
+      "Query of the NCBI Taxonomy Database gave these results:", "",
+      paste0("**", n_ingroup_received, "** ingroup species (of ",
+            length(ingroup_queried), " = ",
+            round(n_ingroup_received / length(ingroup_queried) * 100, 2),
+            "%) could be retrieved"))
+    if (n_ingroup_received <= 100) tax.coverage <- c(tax.coverage, "", paste0("- *", ingroup_queried, "*"))
+    if (n_ingroup_missing){
+      tax.coverage <- c(tax.coverage, "",
+                        paste0("**", n_ingroup_missing, "** ingroup species (",
+                        round(n_ingroup_missing / length(ingroup_queried) * 100, 2),
+                             "%) were missing"))
+      if (n_ingroup_missing <= 100) tax.coverage <- c(tax.coverage, "", paste0("- *", ingroup_missing, "*"))
+      
+    }
+    if (length(ingroup_false)){
+      tax.coverage <- c(tax.coverage, "",
+                        paste0("- **WARNING**: *", ingroup_false, "* falsely as ingroup classified"))
+    }
+  } else {
+    # tax.coverage <- c(
+    #   "Query of the NCBI Taxonomy Database gave these results:", "",
+    #   paste("- **", length(grep("ingroup", tax$tag)),
+    #         "** ingroup species", sep = ""),
+    #   paste("- **", length(grep("outgroup", tax$tag)),
+    #         "** outgroup species", sep = "")
+    # )
+    tax.coverage <- "Implement me!"
+  }
   ## guide tree
   ## ----------
-  # z <- c(z, "# Taxonomy",
-  #        tax.coverage, "",
+  z <- c(z, "# Taxonomy",
+         tax.coverage,
   #        "<a href='taxonomy.html'>view taxonomy table</a>",
   #        "",
   #        #          "```{r, echo=FALSE, message=FALSE}",
@@ -205,7 +196,7 @@ megaptera2Rmarkdown <- function(x, file){
   #        #          "gt <- ladderize(gt)",
   #        #          "plot(gt, type = 'clado')",
   #        # "```", 
-  #        "")
+        "")
   
   ## stop here if no sequences have been downloaded so far
   ## -----------------------------------------------------
@@ -248,14 +239,14 @@ megaptera2Rmarkdown <- function(x, file){
     write(z, file = file)
     return()  
   }
-  loci_selected <- ll[, grep("sel_", names(ll))]
+  loci_selected <- ll[, grep("sel_", names(ll)), drop = FALSE]
   loci_selected[loci_selected != "0"] <- 1
   loci_selected <- apply(loci_selected, c(1, 2), as.numeric) ## coerce to numeric!
   loci_selected <- rowSums(loci_selected)
   taxa_not_selected <- names(loci_selected)[loci_selected == 0]
   taxa_not_selected <- setdiff(taxa_not_selected, taxa_not_found)
   n_taxa_not_selected <- length(taxa_not_selected)
-  if (length(taxa_not_selected)){
+  if (n_taxa_not_selected){
     taxaNotSelected <- c(
       paste("##", Tip_rank, "not selected for alignment"),
       paste0(n_taxa_not_selected, " ", tip_rank, " (of ", n_taxa_found, " retrieved = ",
