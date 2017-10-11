@@ -1,7 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-01-25)
+## © C. Heibl 2017 (last update 2017-10-11)
 
-#' @title Lineage down to the Root
+#' @title Lineage Down to the Root
 #' @description Finds the lineage from one taxon, or the most recent common
 #'   ancestor of several taxa, down to the root of the Tree of Life.
 #' @param x An object of class \code{\link{megapteraProj}}.

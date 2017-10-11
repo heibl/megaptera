@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-08-07)
+## © C. Heibl 2016 (last update 2017-10-11)
 
 ## to do:
 ## extend outgroup to genus if it is a single species
@@ -37,7 +37,7 @@ ncbiGenome <- function(x, organelle, n = 5){
   ## CHECKS
   ## ------
   if (!url.exists("https://eutils.ncbi.nlm.nih.gov"))
-    stop("internet connection required for ncbiGenome")
+    stop("internet coection required for ncbiGenome")
   
   ## set organelle
   ## -------------
@@ -50,42 +50,56 @@ ncbiGenome <- function(x, organelle, n = 5){
   ## find common root of ingroup and outgroup
   ## ----------------------------------------
   common.root <- findRoot(x, "both")
-  slog("\n.. common root   :", head(common.root$taxon, 1), file = fn)
+  # common.root <- head(common.root$taxon, 1)
   
-  ## query ENTREZ and save history on server
-  ## ---------------------------------------
-  xml <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/", 
-                "eutils/esearch.fcgi?",
-                "tool=megaptera",
-                "&email=heibsta@gmx.net",
-                "&usehistory=y",
-                "&retmax=9999",
-                "&db=nucleotide",
-                "&term=(", head(common.root$taxon, 1), 
-                "[Organism]+AND+", organelle,
-                "[Title]+AND+complete+genome[Title])"
-  )
-  # cat(xml)
+  core <- function(this.root, organelle, fn){
+    ## query ENTREZ and save history on server
+    ## ---------------------------------------
+    xml <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/", 
+                  "eutils/esearch.fcgi?",
+                  "tool=megaptera",
+                  "&email=heibsta@gmx.net",
+                  "&usehistory=y",
+                  "&retmax=9999",
+                  "&db=nucleotide",
+                  "&term=(", this.root, 
+                  "[Organism]+AND+", organelle,
+                  "[Title]+AND+complete+genome[Title])"
+    )
+    # cat(xml)
+    
+    ## get and parse results via eFetch from history server
+    ## ----------------------------------------------------
+    xml <- robustXMLparse(xml, logfile = fn)
+    webEnv <- xpathSApply(xml, fun = xmlToList,
+                          path = "//eSearchResult/WebEnv")
+    queryKey <- xpathSApply(xml, fun = xmlToList,
+                            path = "//eSearchResult/QueryKey")
+    nn <- as.numeric(xpathSApply(xml, fun = xmlValue,
+                                 path = "//eSearchResult/Count"))
+    list(webEnv = webEnv, queryKey = queryKey, nn = nn)
+  }
   
-  ## get and parse results via eFetch from history server
-  ## ----------------------------------------------------
-  xml <- robustXMLparse(xml, logfile = fn)
-  webEnv <- xpathSApply(xml, fun = xmlToList,
-                        path = "//eSearchResult/WebEnv")
-  queryKey <- xpathSApply(xml, fun = xmlToList,
-                          path = "//eSearchResult/QueryKey")
-  nn <- as.numeric(xpathSApply(xml, fun = xmlValue,
-                               path = "//eSearchResult/Count"))
-  if (!nn){
-    stop("no ", organelle, " genomes available for ", x@taxon@ingroup)
+  ## search iteratively beginning from the MRCA down to the root-of-life
+  ## -------------------------------------------------------------------
+  for (i in nrow(common.root):1){
+    
+    this.root <- common.root$taxon[i] ## slugs (2017-10-11)
+    slog("\n.. common root   :", this.root, file = fn) 
+    out <- core(this.root, organelle, fn)
+    if (!out$nn){
+      slog(" - no genomes available")
+    } else {
+      break
+    }
   }
   
   ## loop over sliding window
   ## ------------------------
   retmax <- 50
-  sw <- seq(from = 0, to = nn, by = retmax)
-  sw <- data.frame(from = sw, to = c(sw[-1] - 1, nn))
-  slog("\n.. posting", nn, "UIDs on Entrez History Server ..", file = fn)
+  sw <- seq(from = 0, to = out$nn, by = retmax)
+  sw <- data.frame(from = sw, to = c(sw[-1] - 1, out$nn))
+  slog("\n.. posting", out$nn, "UIDs on Entrez History Server ..", file = fn)
   b <- ifelse(nrow(sw) == 1, "batch", "batches")
   slog("\n.. retrieving full records in", nrow(sw), b, "..\n", file = fn)
   
@@ -96,8 +110,8 @@ ncbiGenome <- function(x, organelle, n = 5){
     ## -------------------------
     xml <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/", 
                   "esummary.fcgi?tool=megaptera&email=heibsta@gmx.net",
-                  "&db=nucleotide&query_key=", queryKey, 
-                  "&WebEnv=", webEnv,
+                  "&db=nucleotide&query_key=", out$queryKey, 
+                  "&WebEnv=", out$webEnv,
                   "&retmode=xml",
                   "&retstart=", sw$from[i], 
                   "&retmax=", retmax)
