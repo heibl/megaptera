@@ -1,31 +1,39 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-06-07)
+## © C. Heibl 2014 (last update 2017-11-29)
 
-#' @export
-#' @import DBI
+#' @rdname dbDNA
+#' @importFrom ape as.DNAbin cbind.DNAbin
+#' @importFrom DBI dbDisconnect dbGetQuery
 #' @importFrom seqinr s2c
+#' @export
 
 dbReadDNA <- function(x, tab.name, taxon, regex = TRUE, 
                       max.bp, min.identity, min.coverage,
                       ignore.excluded = TRUE, subtree = FALSE,
                       blocks = "ignore", masked = FALSE){
   
+  ## Check and prepare input data
+  ## ----------------------------
+  if (!inherits(x, "megapteraProj")) stop("'x' is not of class 'megapteraProj'")
+  if (x@locus@kind == "undefined" & missing(tab.name)) stop("locus undefined; use setLocus() to define a locus")
+  
   if (missing(taxon)) taxon <- ".+"
   otaxon <- taxon
   dna <- ifelse(masked, "masked", "dna")
   blocks <- match.arg(blocks, c("ignore", "split", "concatenate"))
   
-  ## esacape metacharacters in taxon names
+  ## Escape metacharacters in taxon names
   ## -------------------------------------
   if (!regex){
-    # taxon <- gsub(" ", "_", taxon)
+    taxon <- gsub("_", " ", taxon)
     taxon <- gsub("[.]$", "[.]", taxon)
     taxon <- gsub("([(]|[+]|[)])", "[\\1]", taxon)
     taxon <- gsub("'", ".", taxon) # e.g.Acorus_sp._'Mt._Emei'
-    taxon <- paste("^", taxon, "$", sep = "")
+    taxon <- paste0("^", taxon, "$")
+    taxon <- paste(taxon, collapse = "|")
   }
   
-  ## default: return taxon species.* or genus.* table
+  ## Default: return taxon species.* or genus.* table
   ## ------------------------------------------------
   if (missing(tab.name)) {
     tab.name <- paste(x@taxon@tip.rank, x@locus@sql, sep = "_")
@@ -33,9 +41,10 @@ dbReadDNA <- function(x, tab.name, taxon, regex = TRUE,
   }
   if (tab.name == "acc") tab.name <- paste("acc", x@locus@sql, sep = "_")
   if (tab.name == x@taxon@tip.rank) tab.name <- paste(x@taxon@tip.rank, x@locus@sql, sep = "_")
+  ## Check if table exists
+  if (!tab.name %in% dbTableNames(x)) stop("relation '", tab.name, "' not available")
   
-  
-  ## field names in <tab.name>
+  ## Field names in <tab.name>
   ## -------------------------
   conn <- dbconnect(x)
   cols <- paste("SELECT column_name FROM information_schema.columns WHERE", 
@@ -54,11 +63,10 @@ dbReadDNA <- function(x, tab.name, taxon, regex = TRUE,
     if (!missing(min.identity)) SQL <- paste(SQL, "AND identity >=", min.identity)
     if (!missing(min.coverage)) SQL <- paste(SQL, "AND coverage >=", min.coverage)
     if (ignore.excluded) SQL <- paste(SQL, "AND status !~ 'excluded|too'")
-#     print(SQL)
     seqs <- dbGetQuery(conn, SQL)
     if (nrow(seqs) == 0) {
       dbDisconnect(conn)
-      warning("no sequences for '", otaxon, "'")
+      warning("no sequences for\n- ", paste(otaxon, collapse = "\n- "))
       return(NULL)
     }
     seqnames <- paste(seqs$taxon, seqs$gi)
@@ -82,11 +90,12 @@ dbReadDNA <- function(x, tab.name, taxon, regex = TRUE,
     }
     SQL <- paste("SELECT", paste(tr.sql, "status", dna, sep = ", "),
                  "FROM", tab.name, SQL)
+    # message(SQL)
     # if ( masked ) SQL <- paste(SQL, "AND status ~ 'masked'") # masking can drop species from alignments!
     seqs <- dbGetQuery(conn, SQL)
     if (!nrow(seqs)) {
       dbDisconnect(conn)
-      warning("no sequences for '", otaxon, "'")
+      warning("no sequences for\n- ", paste(otaxon, collapse = "\n- "))
       return(NULL)
     }
     na <- is.na(seqs[, 3])

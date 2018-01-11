@@ -1,6 +1,28 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-02-22)
+## © C. Heibl 2014 (last update 2018-01-11)
 
+#' @title Set Database Parameters
+#' @description Sets the connection parameters for a PostgreSQL database and, as
+#'   a side effect, creates the database, if it does not yet exist.
+#' @param host A vector of mode \code{"character"}, giving the name of the host,
+#'   most often this will be \code{"localhost"}.
+#' @param port Numeric, giving the port number, most often \code{5432}.
+#' @param dbname A vector of mode \code{"character"}, giving the name of the
+#'   database.
+#' @param user A vector of mode \code{"character"}, giving the name of the user.
+#' @param password A vector of mode \code{"character"}, giving the password.
+#' @details \bold{megaptera} stores all data internally in a PostgreSQL
+#'   database. Therefore, \code{dbPars} represents the first step in setting up a megaptera
+#'   project pipeline. See \code{\link[DBI]{dbConnect}} and
+#'   \code{\link{PostgreSQL}} for further details about the connection
+#'   parameters and procedure.
+#' @references See the documentation at the PostgreSQL Web site
+#'   \url{http://www.postgresql.org} for details.
+#' @return An object of class \code{\linkS4class{dbPars}}.
+#' @seealso \code{\linkS4class{dbPars}} for the class' description;
+#'   \code{\link{taxon}}, \code{\link{locus}}, and \code{\link{megapteraPars}}
+#'   for defining of taxa, loci, and the pipeline's parameters, respectively;
+#'   and \code{\link{megapteraProj}} for the bundling of input data.
 #' @include dbPars-class.R
 #' @importFrom methods new
 #' @export

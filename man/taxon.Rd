@@ -9,11 +9,11 @@ Creates a S4 class defining a taxonomic parameters for a \code{\link{megapteraPr
 \usage{
 taxon(ingroup, extend.ingroup = FALSE, outgroup,
   extend.outgroup = FALSE, kingdom, hybrids = FALSE,
-  tip.rank = "spec", reference.rank = "auto")
+  tip.rank = "species", reference.rank = "auto")
       
 taxonGuidetree(ingroup, extend.ingroup = FALSE, outgroup,
   extend.outgroup = FALSE, kingdom, hybrids = FALSE,
-  tip.rank = "spec", reference.rank = "auto", guide.tree)
+  tip.rank = "species", reference.rank = "auto", guide.tree)
 }
 \arguments{
   \item{ingroup}{

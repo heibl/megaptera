@@ -1,5 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-02-17)
+## © C. Heibl 2014 (last update 2017-10-18)
+
+#' @importFrom ips mrbayes mrbayes.prset
+#' @export
 
 supermatrix.mrbayes <- function(megapteraProj, min.n.seq, masked = TRUE, 
                         partition,

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-10-11)
+## © C. Heibl 2017 (last update 2017-11-06)
 
 #' @title Lineage Down to the Root
 #' @description Finds the lineage from one taxon, or the most recent common
@@ -10,6 +10,7 @@
 #'  \item{id}{the unique identifier of the taxon}
 #'  \item{taxon}{the scientific name of the taxon}
 #'  \item{rank}{the rank of the taxon}
+#' @importFrom methods slot
 #' @export
 
 findRoot <- function(x, what){
@@ -21,7 +22,7 @@ findRoot <- function(x, what){
     tax <- unlist(slot(x@taxon, what))
   }
   
-  if (all(sapply(tax, is.Linnean))){
+  if (all(is.Linnean(unlist(tax)))){
     
     ## read taxonomy from database
     tax <- dbReadTaxonomy(x, subset = tax)
@@ -36,7 +37,7 @@ findRoot <- function(x, what){
     r <- tax[match(all_ids, tax$id), c("parent_id", "id", "taxon", "rank")]
   } else {
     r <- dbReadTaxonomy(x)
-    r <- lapply(tax, taxdumpLineage, x = r)
+    r <- lapply(tax, taxdumpLineage, tax = r)
     r <- r[!sapply(r, is.null)]
     
     

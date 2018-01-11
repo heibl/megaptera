@@ -1,80 +1,110 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-06-12)
+## © C. Heibl 2017 (last update 2017-11-28)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Convert a taxonomy table in parent-child format into an object 
 #'   of class \code{\link{phylo}}.
-#' @param x A data frame representing a taxonomy in parent-child format as 
+#' @param tax A data frame representing a taxonomy in parent-child format as 
 #'   returned by \code{\link{dbReadTaxonomy}}.
-#' @param tip.rank A character string giving the name a rank. This rank will be
+#' @param tip.rank A character string giving the name of a rank. This rank will be
 #'   treated as tip rank, i.e. all taxa of lower rank will be dicarded.
 #' @return An object of class \code{\link{phylo}}.
 #' @seealso \code{\link{dbReadTaxonomy}}, 
 #'   \code{\link{taxdumpDaughters}},\code{\link{taxdumpLineage}}, 
 #'   \code{\link{taxdumpSubset}}, \code{\link{taxdumpAddNode}}.
+#' @importFrom ape collapse.singles
 #' @export
 
-taxdump2phylo <- function(x, tip.rank){
+taxdump2phylo <- function(tax, tip.rank){
   
   tip.rank <- match.arg(tip.rank, c("species", "genus"))
   
-  x <- unique(x)
+  ## Do some checks
+  ## --------------
+  tax <- unique(tax)
+  if (is.character(tax$id)) tax$id <- as.numeric(tax$id)
+  if (is.character(tax$parent_id)) tax$parent_id <- as.numeric(tax$parent_id)
   
   phy <- list()
   
   ## parent-child table is edge matrix
   ## ---------------------------------
-  phy$edge <- as.matrix(x[, c("parent_id", "id")])
+  phy$edge <- as.matrix(tax[, c("parent_id", "id")])
   rownames(phy$edge) <- colnames(phy$edge) <- NULL
   
-  ## set tips
-  ## --------
-  tip.id <- x$rank == tip.rank
+  ## SET TIP LABELS, RUNUMBER TIPS
+  ## -----------------------------
+  tip.id <- tax$rank == tip.rank
   ntip <- length(which(tip.id)) 
-  if (ntip == 1) return(x$taxon[tip.id]) ## break here if only 1 leaf
-  phy$edge <- phy$edge + ntip
-  phy$tip.label <- x[tip.id, "taxon"]
+  if (ntip == 1) return(tax$taxon[tip.id]) ## break here if only 1 leaf
+  ## Make node numbers won't be overwritten
+  phy$edge <- phy$edge + (2 * ntip) 
+  phy$tip.label <- tax[tip.id, "taxon"]
   phy$tip.label <- gsub(" ", "_", phy$tip.label)
   phy$edge[tip.id, 2] <- seq_along(phy$tip.label)
   
-  ## set root node
+  
+  ## SET ROOT NODE
   ## -------------
+  ## Identity root
   root.id <- setdiff(phy$edge[, 1], phy$edge[, 2])
-  phy$edge <- phy$edge[phy$edge[, 2] != root.id, ]
-  root.id <- which(phy$edge[, 1] == root.id)
-  current.node <- length(phy$tip.label) + 1
-  phy$edge[root.id, 1] <- current.node
-
-  ## set internal nodes
-  ## ------------------
-  while (any(phy$edge[, 2] > current.node)){
-  # while (current.node < 6238){
-    n <- phy$edge[phy$edge[, 2] > current.node, 2][1]
-    id <- which(phy$edge == n, arr.ind = TRUE)
-    if (nrow(id) == 1){
-      ## lineages ending before species rank:
+  phy$edge <- phy$edge[phy$edge[, 2] != root.id, ] ## drop NCBI "root"
+  ## If present, drop singleton root edge(s)
+  while (length(phy$edge[phy$edge[, 1] == root.id, 2]) == 1){
+    phy$edge <- phy$edge[phy$edge[, 1] != root.id, ] ## drop root edge
+    root.id <- setdiff(phy$edge[, 1], phy$edge[, 2])
+  }
+  ## Renumber root node
+  current.node <- length(phy$tip.label) + 1 ## will be reused below!
+  phy$edge[phy$edge[, 1] == root.id, 1] <- current.node
+  
+  
+  ## RENUMBER INTERNAL NODES
+  ## -----------------------
+  root_children <- phy$edge[phy$edge[, 1] == current.node, 2]
+  alt_nodes <- root_children[-1]
+  n <- root_children[1]
+  while (length(alt_nodes) | length(n)){
+    next_node <- phy$edge[phy$edge[, 1] == n, 2]
+    if (length(next_node) == 0){
+      ## Lineages ending before species rank:
       ## eliminate them
-      phy$edge <- phy$edge[-id[, "row"], ]
+      delete_id <- phy$edge[, 1] == n
+      phy$edge <- phy$edge[!delete_id, ]
+      n <- tail(alt_nodes, 1)
+      alt_nodes <- head(alt_nodes, -1)
+      next
+    }
+    if (length(next_node) == 1){
+      ## Delete singleton edges (e.g. monotypic genus)
+      delete_id <- phy$edge[, 1] == n
+      change_id <- phy$edge[, 2] == n
+      phy$edge[change_id, 2] <- next_node
+      phy$edge <- phy$edge[!delete_id, ]
+      n <- next_node
+      next
+    }
+    ## normal case: nodes of degree > 2
+    id <- which(phy$edge == n, arr.ind = TRUE)
+    current.node <- current.node + 1
+    phy$edge[id] <- current.node
+    next_node <- setdiff(next_node, 1:ntip)
+    if (length(next_node)){
+      n <- next_node[1]
+      alt_nodes <- c(alt_nodes, next_node[-1])
     } else {
-      if (nrow(id) == 2){
-        ## singleton node (e.g. monotypic genus)
-        id1 <- phy$edge[, 1] == n
-        id2 <- phy$edge[, 2] == n
-        phy$edge[id2, 2] <- phy$edge[id1, 2]
-        phy$edge <- phy$edge[!id1, ]
-      } else {
-        ## normal case: nodes of degree > 2
-        current.node <- current.node + 1
-        phy$edge[id] <- current.node
-      }
+      n <- tail(alt_nodes, 1)
+      alt_nodes <- head(alt_nodes, -1)
     }
   }
-  # if (max(phy$edge) > 2 * ntip + 1) stop("setting internal nodes failed")
-  ## reorder edges
+
+  
+  ## REORDER EDGE MATRIX  
+  ## -------------------
   node <- ntip + 1
   nodes <- 1:nrow(phy$edge)
   for (i in nodes){
-  # for (i in 1:8){
+    # for (i in 1:8){
     # if (node <= ntip) next
     id <- which(phy$edge[, 1] == node)
     id <- c((1:i) - 1, ## head
@@ -86,19 +116,10 @@ taxdump2phylo <- function(x, tip.rank){
     node <- phy$edge[i, 2] ## next node
   }
   class(phy) <- "phylo"
-  phy <- collapse.singles(phy)
-  # test <- table(phy$edge[phy$edge > length(phy$tip.label)])
-  # test <- as.numeric(names(test)[test == 1])
-  # test.len <- length(test)
-
-
-  # if (test.len > 0){
-  #   phy$edge <- phy$edge[!(phy$edge[, 2] %in% test), ]
-  #   test <- phy$edge[, 2][phy$edge[, 2] > min(test)]
-  #   if (length(test) > 0){
-  #     phy$edge[phy$edge %in% test] <- phy$edge[phy$edge %in% test] - (test.len - 1)
-  #   }
-  # }
-  phy$Nnode <- max(phy$edge) - length(phy$tip.label)
+  ## ape::collapse.singles will not work when reorder does not
+  ## work, which is often the case with taxonomies
+  # phy <- collapse.singles(phy)
+  phy$Nnode <- length(unique(phy$edge[, 1]))
+  # phy <- collapseSingles(phy)
   phy
 }

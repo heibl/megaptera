@@ -4,13 +4,13 @@
 \alias{taxdump2phylo}
 \title{Utilities for NCBI Taxdump}
 \usage{
-taxdump2phylo(x, tip.rank)
+taxdump2phylo(tax, tip.rank)
 }
 \arguments{
-\item{x}{A data frame representing a taxonomy in parent-child format as 
+\item{tax}{A data frame representing a taxonomy in parent-child format as 
 returned by \code{\link{dbReadTaxonomy}}.}
 
-\item{tip.rank}{A character string giving the name a rank. This rank will be
+\item{tip.rank}{A character string giving the name of a rank. This rank will be
 treated as tip rank, i.e. all taxa of lower rank will be dicarded.}
 }
 \value{

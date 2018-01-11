@@ -1,8 +1,18 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-04-20)
+## © C. Heibl 2014 (last update 2017-11-06)
 
-#' @export
+#' @title Step G: Profile Alignment
+#' @description Performs a profile alignment (with MAFFT) of the sequences
+#'   selected by \code{\link{stepD}} along a taxonomy build with \code{stepA}.
+#' @param x An object of class \code{\link{megapteraProj}}.
+#' @seealso \code{\link{megapteraProj}}; \code{\link{stepF}} for the preceeding
+#'   and \code{\link{stepH}} for the subsequent step.
+#' @note The function is under development and the results should always be
+#'   checked.
+#' @importFrom ape ladderize
 #' @import DBI
+#' @importFrom ips terminal.clades write.nex write.phy
+#' @export
 
 stepG <- function(x){	
   
@@ -33,8 +43,8 @@ stepG <- function(x){
   ## iniate logfile
   ## --------------
   logfile <- paste0("log/", gene, "-stepG.log")
-  if ( !quiet & file.exists(logfile) ) unlink(logfile)
-  if ( !quiet )  slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
+  if (!quiet & file.exists(logfile)) unlink(logfile)
+  if (!quiet)  slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
                       paste("\n", Sys.time(), sep = ""),
                       "\nSTEP G: alignment\n", 
                       paste("\n.. locus:", x@locus@sql), file = logfile)
@@ -44,7 +54,7 @@ stepG <- function(x){
   
   ## check if msa table exists
   ## -------------------------
-  if ( !dbExistsTable(conn, msa.tab) ){
+  if (!dbExistsTable(conn, msa.tab)){
     dbDisconnect(conn)
     slog("\nWARNING: table", msa.tab, "does not exist!\n", 
          file = logfile)
@@ -60,7 +70,7 @@ stepG <- function(x){
   ## 'raw' is inserted by stepF and dbExcludeSpec.
   ## --------------------------------------------
   SQL <- paste("SELECT status = 'raw' AS status FROM", msa.tab)
-  if ( !any(dbGetQuery(conn, SQL)$status) ){
+  if (!any(dbGetQuery(conn, SQL)$status)){
     dbDisconnect(conn)
     slog(paste("\ntable '", msa.tab, "' is up to date", 
                " - nothing to be done\n", sep = ""), 
@@ -79,7 +89,7 @@ stepG <- function(x){
   ## alignment of genera -- either sequential or parallel
   ## ----------------------------------------------------
   gen <- unique(tax$gen)
-  if ( length(gen) > 0 ) {
+  if (length(gen)) {
     slog("\n.. aligning", length(gen), 
          "genera ..", file = logfile)
     cpus <- x@params@cpus

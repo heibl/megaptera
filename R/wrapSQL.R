@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-06-12)
+## © C. Heibl 2014 (last update 2017-11-21)
 
 ## when searching/reading x should be interpretable both as literal or regular expression
 ## when writing, x is literal and the operator must be the equal sign

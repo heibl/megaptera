@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-03-22)
+## © C. Heibl 2014 (last update 2017-11-29)
 
 #' @import DBI
 
@@ -10,7 +10,7 @@ alignSpecies <- function(megProj, spec){
   logfile <- paste0("log/", gene, "-stepC.log")
   
   conn <- dbconnect(megProj)
-  seqs <- dbReadDNA(megProj, acc.tab, spec, regex = FALSE, 
+  seqs <- dbReadDNA(megProj, tab.name = acc.tab, taxon = spec, regex = FALSE, 
                     max.bp = 2 * megProj@params@max.bp)
   slog(paste("\n-- ", ifelse(is.list(seqs), length(seqs), nrow(seqs)), 
              " seqs. of ", spec,  sep = ""), file = logfile) 

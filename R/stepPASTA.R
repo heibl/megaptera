@@ -1,11 +1,16 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-05-26)
+## © C. Heibl 2016 (last update 2018-01-10)
 
-#' @export
+#' @title STEP G: PASTA Alignment
+#' @description Use PASTA to align tip-rank-level sequences.
+#' @param x An object of class \code{\link{megapteraProj}}.
+#' @param k An integer giving the size of a subset.
+#' @note This function is not fully implemented!
 #' @import DBI snow snowfall
 #' @importFrom snow setDefaultClusterOptions
+#' @export
 
-stepPOLENTA <- function(x, k = 200){	
+stepPASTA <- function(x, k = 200){	
   
   start <- Sys.time()
   quiet = FALSE
@@ -105,9 +110,9 @@ stepPOLENTA <- function(x, k = 200){
   ## PASTA
   ## -----
   slog("Doing PASTA alignment\n", file = logfile)
-  seqs <- pasta(seqs, k = k, gt = gt, parallel = x@params@parallel,
-                exec = x@align.exe, ncore = x@params@cpus)
-  
+  # seqs <- pasta(seqs, k = k, gt = gt, parallel = x@params@parallel,
+  #               exec = x@align.exe, ncore = x@params@cpus)
+  # 
   
   ## prune ends of alignment from 'thin tails'
   ## -----------------------------------------

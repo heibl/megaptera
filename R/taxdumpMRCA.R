@@ -4,8 +4,10 @@
 #' @title Utilities for NCBI Taxdump
 #' @description Get most-recent common ancestor (MRCA) of a group of species.
 #' @param x Either an object of class \code{\link{megapteraProj}} or a data
-#'   frame containing a taxonomy table in parent-child format as returned by \code{\link{dbReadTaxonomy}}.
+#'   frame containing a taxonomy table in parent-child format as returned by
+#'   \code{\link{dbReadTaxonomy}}.
 #' @param species A vector of mode \code{"character"} giving the species names.
+#'   Can be missing, in which case the root is returned.
 #' @param tip.rank A character string giving the name a rank.
 #' @return A character string giving the name a the MRCA.
 #' @seealso \code{\link{dbReadTaxonomy}},
@@ -19,13 +21,28 @@ taxdumpMRCA <- function(x, species, tip.rank){
   ## when tip.rank = "genus", but the actual target is
   ## species level like in megaptera:stepD()
   
-  ## species must not use underscores!
-  species <- gsub("_", " ", species)
-  
-  if (inherits(x, "megapteraProj")){
-    x <- dbReadTaxonomy(x, tip.rank = tip.rank, subset = species, root = "mrca")
+  ## Create subset of taxonomy ...
+  ## -----------------------------
+  if (!missing(species)){
+    
+    ## species must not use underscores!
+    species <- gsub("_", " ", species)
+    
+    if (inherits(x, "megapteraProj")){
+      x <- dbReadTaxonomy(x, tip.rank = tip.rank, subset = species, root = "mrca")
+    } else {
+      x <- taxdumpSubset(x, species = species, root = "mrca")
+    }
+    
+    ## ... or use whole taxonomy
+    ## -------------------------
   } else {
-    x <- taxdumpSubset(x, species = species, root = "mrca")
+    if (inherits(x, "megapteraProj")){
+      x <- dbReadTaxonomy(x, tip.rank = tip.rank, root = "mrca")
+    }
   }
+  
+  ## Identity MRCA
+  ## -------------
   x[!x$parent_id %in% x$id, "taxon"]
 }

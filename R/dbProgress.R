@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-03-07)
+## © C. Heibl 2014 (last update 2018-01-10)
 
 #' @export
 
@@ -8,7 +8,7 @@ dbProgress <- function(megProj, step, status, locus.wise = TRUE){
   conn <- dbconnect(megProj)
   gene <- megProj@locus@sql
   SQL <- "SELECT * FROM progress"
-  if (locus.wise & x@locus@sql != "undefined") {
+  if (locus.wise & megProj@locus@sql != "undefined") {
     SQL <- paste(SQL, "WHERE", wrapSQL(gene, "locus", "="))
   }
   y <- dbGetQuery(conn, SQL)

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-05-28)
+## © C. Heibl 2014 (last update 2017-11-21)
 
 #' @title Get Information about Species
 #' @description Returns information about the 'fate' of a single species along the pipeline.
@@ -12,14 +12,13 @@
 
 checkSpecies <- function(megProj, spec){
   
-  
   conn <- dbconnect(megProj)
   
   ## A: TAXONOMY
   ## -----------
   tax <- dbReadTaxonomy(megProj)
   
-  ## if not found, is it a synonym?
+  ## If not found, is it a synonym?
   ## ------------------------------
   if (!nrow(tax)){
     tax <- paste("SELECT spec FROM  taxonomy", 

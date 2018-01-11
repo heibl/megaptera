@@ -1,7 +1,16 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-01-09)
+## © C. Heibl 2014 (last update 2017-11-21)
 
+#' @title Identify Undetermined Species
+#' @description Provides a set of regular expressions (\code{\link{regex}}) that
+#'   identify undetermined names as they will appear in the NCBI Taxonomy.
+#' @param hybrids Logical, indicating if hybrids should be also identified by
+#'   the set of regular expressions.
+#' @param collapse Logical, if \code{TRUE} the regular expressions are collected
+#'   in one single characters string using the \code{|} operator.
+#' @param SQL Logical, \emph{currently unused}.
 #' @export
+#' @keywords internal
 
 indet.strings <- function(hybrids = TRUE, collapse = FALSE, SQL = FALSE){
   
@@ -9,8 +18,10 @@ indet.strings <- function(hybrids = TRUE, collapse = FALSE, SQL = FALSE){
                                    # Amanita_sp. Amanita_sp._xxx Amanita_sp-53
            "spec$",
            "( |_)n[.]sp[.]", # Hydropsyche_n.sp._2006031401
-           "( |_)cf[.]", 
-           "( |_)aff[.]", 
+           "( |_)nr[.]", # "near", e.g. Onthophagus nr. babirussa
+           "( |_)cf[.]", # "confer"
+           "( |_)aff[.]", # "affinis",
+           "( |_)gen[.]", # "affinis",
            # Amylosporus_sp._'succulentus', Limenitis_hybrid_form_'rubidus'
            # singles quotes are escaped by single quotes in pgSQL!
            # e.g. WHERE spec_ncbi~''''
@@ -26,8 +37,8 @@ indet.strings <- function(hybrids = TRUE, collapse = FALSE, SQL = FALSE){
            "^[[:lower:]]") 
   
   ## exclude hybrids? (hybrids == FALSE)
-  if ( !hybrids ) obj <- c(obj, "_x_", "^x_")
+  if (!hybrids) obj <- c(obj, "_x_", "^x_")
   
-  if ( collapse ) obj <- paste(obj, collapse =  "|")
+  if (collapse) obj <- paste(obj, collapse =  "|")
   obj
 }

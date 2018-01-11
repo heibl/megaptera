@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-02-20)
+## © C. Heibl 2014 (last update 2017-10-24)
 
 #' @export
 #' @import DBI
@@ -47,6 +47,9 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
     coverage = NA,
     dna = dna,
     stringsAsFactors = FALSE)
+    
+    
+  ## check taxonomy
   
   ## check for duplicates
   ## --------------------
@@ -55,8 +58,8 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
   in.db <- dbGetQuery(conn, in.db)$id
   in.dna <- paste(dna$gi, dna$taxon, sep = "_")
   dup <- in.dna %in% in.db
-  if ( any(dup) ){
-    if ( overwrite ){
+  if (any(dup)){
+    if (overwrite){
       e <- dna[dup, c("gi", "taxon")]
       e <- paste("DELETE FROM", acc.tab,
                  "WHERE", wrapSQL(e$gi, term = "gi", boolean = NULL),
@@ -68,7 +71,10 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
       dna <- dna[!dup, ]
     }
   }
-  if ( nrow(dna) > 0 ) {
+  
+  ## write data to pgSQL database
+  ## ----------------------------
+  if (nrow(dna)) {
     dbWriteTable(conn, acc.tab, dna, 
                  row.names = FALSE, append = TRUE)
     slog("\n --", nrow(dna), "seqs. written to", acc.tab, 
@@ -84,7 +90,7 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
   dbMaxGIPerSpec(x)
   
   ## create and update relation <taxonomy>
-  # dbUpdateTaxonomy(x) # handle species found in stepB 
+  dbUpdateTaxonomy(x) # handle species found in stepB 
   # that are not included in taxonomy table
   
   # summary

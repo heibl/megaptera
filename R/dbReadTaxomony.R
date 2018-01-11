@@ -1,8 +1,9 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-06-12)
+## © C. Heibl 2017 (last update 2017-11-09)
 
-#' @export
+#' @rdname dbTaxonomy
 #' @import DBI
+#' @export
 
 dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
   
@@ -48,6 +49,9 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
   ## subsetting taxonomy ..
   ## ----------------------
   if (!missing(subset)){
+    
+    ## .. based on sequence names or ..
+    ## --------------------------------
     if (is.character(subset)) {
       ## .. based on MAS table or ..
       ## ---------------------------
@@ -58,21 +62,25 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
                         "WHERE status !~ 'excluded'")
         subset <- dbGetQuery(conn, subset)[, "taxon"]
       } else {
-        ## .. based on a vector of species names
-        ## -------------------------------------
+        ## .. based on a vector of species names (without synonyms)
+        ## --------------------------------------------------------
         subset <- subset
       }
     } 
-    ## .. based on sequence names or ..
-    ## --------------------------------
-    if (inherits(subset, "DNAbin")){
-      if (is.list(subset)) subset <- names(subset)
-      if (is.matrix(subset)) subset <- rownames(subset)
-    }
+    
     ## .. based on a phylogeny or ..
     ## -----------------------------
     if (inherits(subset, "phylo")){
       subset <-  subset$tip.label
+    } else {
+      if (inherits(subset, "DNAbin")){
+        if (is.list(subset)) subset <- names(subset)
+        if (is.matrix(subset)) subset <- rownames(subset)
+      } else {
+        ## .. based on a list of species names (with synonyms)
+        ## ---------------------------------------------------
+        if (is.list(subset)) subset <- sapply(subset, head, n = 1)
+      }
     }
     
     ## tip rank is genus, but subset species-level

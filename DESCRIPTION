@@ -9,6 +9,7 @@ Authors@R: person("Christoph", "Heibl",
 Imports:
     ape,
     bold,
+    crul,
     DBI,
     knitr,
     methods,
@@ -25,8 +26,6 @@ Depends:
     ips
 Suggests:
     viper,
-    knitr,
-    rmarkdown,
     testthat
 Encoding: UTF-8
 Description: Given a set of taxa and marker, the goal is build a complete and
@@ -37,6 +36,7 @@ VignetteBuilder: knitr
 Packaged: Thu Oct 20 19:35:17 2016
 RoxygenNote: 6.0.1
 Collate: 
+    'BOLD2megaptera.R'
     'EFetchXML.R'
     'MAD.R'
     'NCBI.wrap.R'
@@ -47,7 +47,6 @@ Collate:
     'alignGenus.R'
     'alignSisterClades.R'
     'alignSpecies.R'
-    'alignSubtree.R'
     'as.Linnean.R'
     'boxplotMSA.R'
     'changeSpecName.R'
@@ -59,18 +58,19 @@ Collate:
     'checkSpecLocus.R'
     'checkSpecies.R'
     'checkStatus.R'
+    'collapseSingles.R'
     'compareToRef.R'
     'comprehensiveGuidetree.R'
     'coverage.R'
     'cropToReference.R'
     'dbAutofillTaxonomy.R'
     'dbChooseRef.R'
+    'dbDNA.R'
     'dbDeleteSpec.R'
     'dbExcludeIndet.R'
     'dbExcludeSpec.R'
     'dbIncludeSpec.R'
     'dbMaxGIPerSpec.R'
-    'dbPReadDNA.R'
     'dbPars-class.R'
     'dbPars.R'
     'dbProgress.R'
@@ -81,6 +81,7 @@ Collate:
     'dbSummaryMSA.R'
     'dbSummaryTaxonomy.R'
     'dbTableNames.R'
+    'dbTaxonomy.R'
     'dbUpdateReference.R'
     'dbUpdateReference_Clade.R'
     'dbUpdateSurrogate.R'
@@ -89,14 +90,12 @@ Collate:
     'dbWriteMSA.R'
     'dbWriteString.r'
     'dbconnect.R'
-    'decomposePhylo.R'
     'downloadSequences.R'
     'dropExtendedIngroup.R'
     'extractIGS.R'
     'extractLocus.R'
     'findRoot.R'
     'fixTaxonomy.R'
-    'ftp2postgres.R'
     'fuzzy.match.R'
     'getLineage.R'
     'giConsensus.R'
@@ -122,19 +121,15 @@ Collate:
     'taxonGuidetree-class.R'
     'megapteraProj-class.R'
     'megapteraProj.R'
-    'mergeSubMSA.R'
-    'mergeSubMSA2.R'
     'myDist.R'
     'ncbiGenome.R'
     'ncbiTaxonomy.R'
     'nonmonophyletic.R'
     'nucleotideOverlap.R'
-    'opal.merge.R'
     'optimizeCoverage.R'
     'optimizeIdentity.R'
     'overlappingPairs2.R'
     'pdfPhyloA0.R'
-    'plotPhyloWithClassification.R'
     'proParte.R'
     'prune.phylo.rank.R'
     'robustXMLparse.R'
@@ -158,12 +153,10 @@ Collate:
     'stepE.R'
     'stepF.R'
     'stepG.R'
-    'stepGG.R'
     'stepH.R'
     'stepI.R'
+    'stepMAFFT.R'
     'stepPASTA.R'
-    'stepPASTAin.R'
-    'stepPASTAout.R'
     'stepPOLENTA.R'
     'strip.infraspec.R'
     'strip.spec.R'

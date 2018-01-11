@@ -11,7 +11,7 @@ dropExtendedIngroup(x, phy, surrogate = FALSE)
 }
 \arguments{
   \item{x}{
-an object of class \code{\link[megapteraProj-class]{megapteraProj}}.
+an object of class \code{\linkS4class{megapteraProj}}.
 }
   \item{phy}{
 an object of class \code{phylo}.

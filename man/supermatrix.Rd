@@ -4,42 +4,71 @@
 \alias{supermatrix}
 \title{Retrieval and Concatentation of Multiple Sequence Alignments}
 \usage{
-supermatrix(megProj, min.n.seq = 3, masked = TRUE, partition, subset.locus,
-  coverage.locus = 0.5, exclude.locus, exclude.species, core.locus,
-  core.species, squeeze.outgroup)
+supermatrix(megProj, min.n.seq = 3, masked = TRUE, blocks = "split",
+  partition, coverage.locus = 0.5, subset.locus, subset.species,
+  exclude.locus, exclude.species, core.locus, core.species, squeeze.outgroup)
 }
 \arguments{
 \item{megProj}{An object of class \code{\link{megapteraProj}}.}
 
-\item{min.n.seq}{Numeric, the minimum number of sequences in any alignment that is required to be included in the supermatrix.}
+\item{min.n.seq}{Numeric, the minimum number of sequences in any alignment
+that is required to be included in the supermatrix.}
 
-\item{masked}{Logical, if \code{TRUE} masked (if available) alignments will be concatenated; see \code{\link{stepH}}.}
+\item{masked}{Logical, if \code{TRUE} masked (if available) alignments will
+be concatenated; see \code{\link{stepH}}.}
 
-\item{partition}{A named list, each element of which contains the names of the loci to group together in one partition. The default is to assign each locus to its own partition. Partitioning of first/second and third nucleotides positions is not yet possible, but might be implemented in the future.}
+\item{blocks}{A character string indicating how to handle alignment blocks:
+\code{"split"} causes blocks to be returned as elements of a list.
+\code{"concatenate"} means, blocks will be concatendated and returned as a
+single alignment.}
 
-\item{subset.locus}{\emph{Currently unused.}}
+\item{partition}{A named list, each element of which contains the names of
+the loci to group together in one partition. The default is to assign each
+locus to its own partition. Partitioning of first/second and third
+nucleotides positions is not yet possible, but might be implemented in the
+future.}
 
-\item{coverage.locus}{Numeric between 0 and 1 giving the required minimum coverage of any species in any alignment.}
+\item{coverage.locus}{Numeric between 0 and 1 giving the required minimum
+coverage of any species in any alignment.}
 
-\item{exclude.locus}{A vector of mode \code{"character"} giving the names of the loci in the database that will be excluded from the concatenation.}
+\item{subset.locus}{A vector of mode \code{"character"} for choosing a subset
+of loci from the loci available.}
+
+\item{subset.species}{A vector of mode \code{"character"} for choosing a
+subset of the species from the total species available.}
+
+\item{exclude.locus}{A vector of mode \code{"character"} giving the names of
+the loci in the database that will be excluded from the concatenation.}
 
 \item{exclude.species}{\emph{Currently unused.}}
 
-\item{core.locus}{A vector of mode \code{"character"} giving the names of the 'core' loci: The resulting supermatrix will only contain species that are contained in the 'core' loci. This option is intended to create denser supermatrices.}
+\item{core.locus}{A vector of mode \code{"character"} giving the names of the
+'core' loci: The resulting supermatrix will only contain species that are
+contained in the 'core' loci. This option is intended to create denser
+supermatrices.}
 
 \item{core.species}{\emph{Currently unused.}}
 
-\item{squeeze.outgroup}{Numeric, can be given to reduce the number of outgroup species: The function will select the \code{squeeze.outgroup} outgroup species with the best coverage. The idea is to create a more densely sampled outgroup.}
+\item{squeeze.outgroup}{Numeric, can be given to reduce the number of
+outgroup species: The function will select the \code{squeeze.outgroup}
+outgroup species with the best coverage. The idea is to create a more
+densely sampled outgroup.}
 }
 \value{
-a list with four elements:
-\item{zipname}{a character string giving the name of the files produced.}
-\item{supermatrix}{a matrix of class \code{\link{DNAbin}}.}
-\item{outgroup}{a vector of mode \code{"character"} giving the names of the species used as an outgroup.}
-\item{partitions}{a vector of mode \code{"character"} giving the partitions of the supermatrix in the same spelling as accepted by RAxML.}
+a list with four elements: \item{zipname}{a character string giving
+  the name of the files produced.} \item{supermatrix}{a matrix of class
+  \code{\link{DNAbin}}.} \item{outgroup}{a vector of mode \code{"character"}
+  giving the names of the species used as an outgroup.} \item{partitions}{a
+  vector of mode \code{"character"} giving the partitions of the supermatrix
+  in the same spelling as accepted by RAxML.}
 
-In addition, three files are written to the working directory: (1) a NEXUS-formatted file and (2) a PHYLIP-formatted file containing the sequence matrix and (3) a zipped directory containing the PHYLIP-formatted sequence matrix plus output and partitions as separate ASCII-formatted files.
+  In addition, three files are written to the working directory: (1) a
+  NEXUS-formatted file and (2) a PHYLIP-formatted file containing the
+  sequence matrix and (3) a zipped directory containing the PHYLIP-formatted
+  sequence matrix plus output and partitions as separate ASCII-formatted
+  files.
 }
 \description{
-Concatenates multiple sequence alignments of individual loci into a supermatrix.
+Concatenates multiple sequence alignments of individual loci
+  into a supermatrix.
 }

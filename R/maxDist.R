@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-02-22)
+## © C. Heibl 2017 (last update 2017-11-28)
 
 #' @export
 

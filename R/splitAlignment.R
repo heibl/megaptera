@@ -1,6 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-02-20)
+## © C. Heibl 2016 (last update 2017-10-18)
 
+#' @importFrom ips unlistFirstLevel
 #' @export
 
 splitAlignment <- function(root, gt, a){

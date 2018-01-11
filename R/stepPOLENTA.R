@@ -1,9 +1,14 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-05-26)
+## © C. Heibl 2016 (last update 2017-10-18)
 
-#' @export
+#' @title STEP G: POLENTA Alignment
+#' @description Use POLENTA to align tip-rank-level sequences.
+#' @param x An object of class \code{\link{megapteraProj}}.
+#' @param k An integer giving the size of a subset.
+#' @note This function is not fully implemented!
 #' @import DBI snow snowfall
 #' @importFrom snow setDefaultClusterOptions
+#' @export
 
 stepPOLENTA <- function(x, k = 200){	
   
@@ -47,10 +52,10 @@ stepPOLENTA <- function(x, k = 200){
   ## --------------
   logfile <- paste0("log/", gene, "-stepPASTA.log")
   if (!quiet & file.exists(logfile)) unlink(logfile)
-  if (!quiet)  slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
-                      paste("\n", Sys.time(), sep = ""),
-                      "\nSTEP G: PASTA alignment\n", 
-                      paste("\n.. locus:", x@locus@sql), file = logfile)
+  if (!quiet) slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
+                   paste("\n", Sys.time()),
+                   "\nSTEP G: POLENTA alignment\n", 
+                   paste("\n.. locus:", x@locus@sql), file = logfile)
   
   ## open database connection
   conn <- dbconnect(x)
@@ -103,8 +108,8 @@ stepPOLENTA <- function(x, k = 200){
   guidetree <- gt
   
   ## POLENTA
-  seqs <- polenta(seqs, k = k, parallel = x@params@parallel,
-                  exec = x@align.exe, ncore = x@params@cpus)
+  # seqs <- polenta(seqs, k = k, parallel = x@params@parallel,
+  #                 exec = x@align.exe, ncore = x@params@cpus)
 
   
   ## prune ends of alignment from 'thin tails'

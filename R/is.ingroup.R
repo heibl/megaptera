@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-03-28)
+## © C. Heibl 2017 (last update 2017-11-21)
 
 #' @title Does a Taxon Belong to Ingroup?
 #' @description Check if taxon belong to the ingroup as defined by \code{\link{taxon}}.
@@ -19,11 +19,13 @@ is.ingroup <- function(megProj, taxon){
   
   ingroup <- unlist(megProj@taxon@ingroup)
   if (!all(is.Linnean(ingroup))){
+    
+      ## Was sollte das?
       ## ingroup genera compared against species names in stepD
-      if (all(is.Linnean(taxon))){
-        taxon <- strip.spec(taxon)
-      }
-      ingroup <- lapply(ingroup, taxdumpDaughters, x = megProj, tip.rank = tip.rank)
+      # if (all(is.Linnean(taxon))){
+      #   taxon <- strip.spec(taxon)
+      # }
+      ingroup <- lapply(ingroup, taxdumpDaughters, tax = megProj, tip.rank = tip.rank)
       ingroup <- lapply(ingroup, function(z, tr) z[z$rank == tr, "taxon"], 
                         tr = tip.rank)
       ingroup <- unlist(ingroup)

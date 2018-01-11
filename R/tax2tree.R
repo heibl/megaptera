@@ -1,6 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-11-08)
+## © C. Heibl 2014 (last update 2017-10-18)
 
+#' @importFrom ape as.phylo
+#' @importFrom stats formula
 #' @export
 
 tax2tree <- function(tax, tip.rank = "spec", 

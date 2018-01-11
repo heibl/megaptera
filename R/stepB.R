@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-02-22)
+## © C. Heibl 2014 (last update 2017-11-13)
 
 #' @title Step B: Search and Download Sequences
 #' @description For any given project (see \code{\link{megapteraProj}}), 
@@ -32,10 +32,10 @@ stepB <- function(x, update.seqs = "no"){
   
   ## CHECKS
   ## ------
-  if ( !inherits(x, "megapteraProj") )
+  if (!inherits(x, "megapteraProj"))
     stop("'x' is not of class 'megapteraProj'")
-  if ( x@locus@kind == "undefined" ) stop("undefined locus not allowed")
-  if ( !url.exists("https://eutils.ncbi.nlm.nih.gov") )
+  if (x@locus@kind == "undefined") stop("undefined locus not allowed")
+  if (!url.exists("https://eutils.ncbi.nlm.nih.gov"))
     stop("internet connection required for stepB")
   
   

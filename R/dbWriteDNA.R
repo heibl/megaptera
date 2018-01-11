@@ -1,6 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-11-07)
+## © C. Heibl 2014 (last update 2017-11-03)
 
+#' @rdname dbDNA
 #' @export
 
 dbWriteDNA <- function(conn, tab.name, dna, 

@@ -1,11 +1,13 @@
-## This code is part of the megaptera package © C. Heibl 2017 (last update
-## 2017-06-12)
+## This code is part of the megaptera package 
+##  © C. Heibl 2017 (last update 2017-11-16)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get subset of a taxonomy table in parent-child format.
 #' @param tax Either an object of class \code{\link{megapteraProj}} or a data
-#'   frame containing a taxonomy table in parent-child format as returned by \code{\link{dbReadTaxonomy}}.
-#' @param mrca A character string giving the most revent common ancestor (mrca) of the subset.
+#'   frame containing a taxonomy table in parent-child format as returned by
+#'   \code{\link{dbReadTaxonomy}}.
+#' @param mrca A character string giving the most revent common ancestor (mrca)
+#'   of the subset.
 #' @param species A vector of mode \code{"character"} giving subset.
 #' @param root A character string choosing between \code{"mrca"} and
 #'   \code{"tol"} (tree of life).
@@ -20,6 +22,21 @@ taxdumpSubset <- function(tax, mrca, species, root = "tol"){
   
   if (inherits(tax, "megapteraProj")){
     tax <- dbReadTaxonomy(tax, subset = species)
+    
+    ## delete tree-of-life root "tail"
+    if (root == "mrca") {
+      id <- tax$id[tax$taxon == "cellular organisms"]
+      repeat {
+        new_id <- tax[tax$parent_id == id[1], "id"]
+        if (length(new_id) > 1) {
+          id[1] <- 1 ## replace MRCA by root
+          break
+        }
+        id <- c(new_id, id)
+      }
+      tax <- tax[!tax$id %in% id, ]
+    } 
+    
   } else {
     ## get subset if tips are given
     if (!missing(species)){
@@ -29,20 +46,22 @@ taxdumpSubset <- function(tax, mrca, species, root = "tol"){
         all_ids <- c(all_ids, id)
       }
       tax <- tax[tax$id %in% all_ids, c("parent_id", "id", "taxon", "rank")]
-      ## delete tree-of-life root "tail"
-      if (root == "mrca") {
-        id <- tax$id[tax$taxon == "cellular organisms"]
-        repeat {
-          new_id <- tax[tax$parent_id == id[1], "id"]
-          if (length(new_id) > 1) {
-            id[1] <- 1 ## replace MRCA by root
-            break
-          }
-          id <- c(new_id, id)
-        }
-        tax <- tax[!tax$id %in% id, ]
-      }
     }
+    
+    ## delete tree-of-life root "tail"
+    if (root == "mrca") {
+      id <- tax$id[tax$taxon == "cellular organisms"]
+      repeat {
+        new_id <- tax[tax$parent_id == id[1], "id"]
+        if (length(new_id) > 1) {
+          id[1] <- 1 ## replace MRCA by root
+          break
+        }
+        id <- c(new_id, id)
+      }
+      tax <- tax[!tax$id %in% id, ]
+    } ## end of IF (line 37)
+    
     ## get subset if MRCA is given
     if (!missing(mrca)){
       id <- all_ids <- tax[tax$taxon %in% mrca, "id"]

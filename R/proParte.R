@@ -1,5 +1,9 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-09-22)
+## © C. Heibl 2016 (last update 2017-11-06)
+
+#' @keywords internal
+#' importFrom ips sister
+#' export
 
 proParte <- function(phy, id){
   
@@ -12,7 +16,7 @@ proParte <- function(phy, id){
     identifyBreaks <- function(z){
       
       zz <- list()
-      while ( length(z) > 0 ){
+      while (length(z)){
         y <- z == (seq_len(length(z)) + min(z) - 1)
         zz <- c(zz, list(z[y]))
         z <- z[!y]

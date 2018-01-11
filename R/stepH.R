@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-02-23)
+## © C. Heibl 2016 (last update 2017-10-18)
 
 #' @export
 #' @import DBI snowfall
@@ -56,80 +56,12 @@ stepH <- function(x, max.mad){
   ## ------------------------
   conn <- dbconnect(x@db)
   
-  ## check if stepC has been run
-  ## ---------------------------
-  # status <- paste("SELECT DISTINCT status",
-  #                 "FROM", acc.tab)
-  # status <- dbGetQuery(conn, status)
-  # if ("raw" %in% status$status){
-  #   dbDisconnect(conn)
-  #   stop("stepC has not been run")
-  # }
-  
-  ## check if msa table exists
-  ## -------------------------
-  # if (!dbExistsTable(conn, msa.tab)){
-  #   dbDisconnect(conn)
-  #   slog("\nWARNING: table", msa.tab, "does not exist!\n", file = logfile)
-  #   td <- Sys.time() - start
-  #   slog("\nSTEP H finished after", round(td, 2), attr(td, "units"), "\n",
-  #        file = logfile)
-  #   return()
-  # }
-  
-  ## check if at least 3 (ingroup) species are available
-  ## ---------------------------------------------------
-  # n <- paste("SELECT count(spec) FROM", msa.tab)
-  # n <- dbGetQuery(conn, n)$count
-  # if (n < 3){
-  #   dbDisconnect(conn)
-  #   slog("\nWARNING: only", n, "species available,", 
-  #        "no saturation assessment possible\n", file = logfile)
-  #   td <- Sys.time() - start
-  #   slog("\nSTEP H finished after", round(td, 2), attr(td, "units"), 
-  #        "\n", file = logfile)
-  #   dbProgress(x, "step_h", "failure")
-  #   return()
-  # }
-  # if (n < 100){ # 100 is arbitrary
-  #   n <- paste("SELECT spec FROM", msa.tab)
-  #   n <- dbGetQuery(conn, n)
-  #   n <- which(is.ingroup(x, n$spec))
-  #   if (length(n) < 3){
-  #     dbDisconnect(conn)
-  #     slog("\nWARNING:", length(n), "ingroup species available,", 
-  #          "no saturation assessment possible\n", file = logfile)
-  #     td <- Sys.time() - start
-  #     slog("\nSTEP GG finished after", round(td, 2), attr(td, "units"), 
-  #          "\n", file = logfile)
-  #     dbProgress(x, "step_h", "failure")
-  #     return()
-  #   }
-  # }
-  
   ## read alignment
   ## --------------
   slog("\n.. reading alignment with ", file = logfile)
-  # if ( x@params@parallel ){
-  #   spec <- dbGetQuery(conn, paste("SELECT", tip.rank, "FROM", msa.tab))[, tip.rank]
-  #   spec <- paste("^", spec, "$", sep = "")
-  #   n <- length(spec)
-  #   id <- seq(from = 1, to = n, by = ceiling(n/x@params@cpus))
-  #   id <- data.frame(from = id, to = c(id[-1] - 1, n))
-  #   spec <- apply(id, 1, function(i, a) paste(a[i[1]:i[2]], collapse = "|"), a = spec)
-  #   sfInit(parallel = TRUE, cpus = x@params@cpus, 
-  #          type = x@params@cluster.type)
-  #   sfLibrary("megaptera", character.only = TRUE)
-  #   sfLibrary("seqinr", character.only = TRUE)
-  #   megProj <- x
-  #   sfExport("spec", "msa.tab", "megProj")
-  #   a <- sfLapply(x = megProj, fun = dbPReadDNA, tab.name = msa.tab, 
-  #                 regex = TRUE, max.bp = max.bp)
-  #   sfStop()
-  #   a <- do.call(rbind, a)
-  # } else {
+ 
   a <- dbReadDNA(x, msa.tab)
-  # }
+ 
   ## check if stepG has been run properly
   ## should include checking for status = 'raw'
   if (!is.matrix(a)){

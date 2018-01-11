@@ -1,26 +1,29 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-06-07)
+## © C. Heibl 2014 (last update 2017-10-18)
 
 #' @title NCBI Taxonomy Database
 #' @description Retrieve taxonomic classification from the taxonomy database at
 #'   the National Center for Biotechnology Information (NCBI).
-#' @param x Database connection parameters, either as object of class 
+#' @param x Database connection parameters, either as object of class
 #'   \code{\link{dbPars}} or \code{\link{megapteraProj}}.
-#' @details The NCBI taxonomy database will be downloaded via FTP in "taxdump" 
-#'   format, unpacked, and translated into data frames. In a second 
-#'   step, the data frames will be stored in a postgreSQL database called 
-#'   \code{"ncbitaxonomy"}. Any existing data will be overwritten in the process.
+#' @details The NCBI taxonomy database will be downloaded via FTP in "taxdump"
+#'   format, unpacked, and translated into data frames. In a second step, the
+#'   data frames will be stored in a postgreSQL database called
+#'   \code{"ncbitaxonomy"}. Any existing data will be overwritten in the
+#'   process.
 #' @return \code{ncbiTaxonomy} is called for its side effect (see Details).
 #' @references NCBI Taxonomy Database website:
 #'   \url{http://www.ncbi.nlm.nih.gov/taxonomy}
 #' @references Federhen, Scott. 2012. The NCBI taxonomy database. \emph{Nucleic
 #'   Acids Research} \bold{40}: DI36-DI43.
-#' @seealso \code{\link{stepA}} for extracting the taxonomic information 
-#'   relevant for a given \bold{megaptera} project.
-#'   \code{\link{dbUpdateTaxonomy}} and \code{\link{dbReadTaxonomy}} for storing
-#'   and retrieving taxonomic information in a \bold{megaptera} project
-#'   database.
+#' @seealso \code{\link{stepA}} for extracting the taxonomic information
+#'   relevant for a given megaptera project; \code{\link{dbUpdateTaxonomy}} and
+#'   \code{\link{dbReadTaxonomy}} for storing and retrieving taxonomic
+#'   information in a megaptera project database;
+#'   \code{\link{dbSummaryTaxonomy}} for a short numerical summary of the
+#'   project taxonomy.
 #' @importFrom DBI dbDisconnect dbRemoveTable dbSendQuery dbWriteTable
+#' @importFrom utils read.table untar
 #' @export
 
 ncbiTaxonomy <- function(x){

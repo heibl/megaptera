@@ -10,7 +10,7 @@ comprehensiveGuidetree(megProj, tip.rank, subset)
 \item{megProj}{An object of class \code{\link{megapteraProj}}.}
 
 \item{tip.rank}{A character string giving the rank of the tips (e.g. 
-\code{spec}, \code{gen}, ...)}
+\code{species}, \code{genus}, ...).}
 
 \item{subset}{A subset of species names the taxonomy should be limited to. 
 This can be a DNA alignment of class \code{DNAbin}, a phylogenetic tree of class

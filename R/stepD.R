@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-04-10)
+## © C. Heibl 2014 (last update 2017-11-28)
 
 #' @export
 
@@ -48,7 +48,7 @@ stepD <- function(x){
   if (file.exists(logfile)) unlink(logfile)
   slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
        paste("\n", Sys.time(), sep = ""),
-       "\nSTEP D: reference sequence\n", file = logfile)
+       "\nSTEP D: reference sequence\n", file = logfile, megProj = x)
   
   ## open database connection
   ## ------------------------
@@ -83,10 +83,10 @@ stepD <- function(x){
     
     ## CASE 2: pipeline-defined reference sequences
     ## --------------------------------------------
-    slog("\n.. using heuristic algorithm", 
-         "to create reference sequences ..", file = logfile)
-    slog("\n.. minimum number of species required for reference calculation:", 
-         min.seqs.reference, file = logfile)
+    slog("\nUsing heuristic algorithm to create reference sequences", 
+         file = logfile, megProj = x)
+    slog("\nMinimum number of species required for reference calculation:", 
+         min.seqs.reference, file = logfile, megProj = x)
     
     ## reset database if updating
     ## --------------------------
@@ -156,6 +156,7 @@ stepD <- function(x){
     ## select taxa with more than 1 accession
     ## --------------------------------------
     tax <- tax[tax$n > 1, ]
+    refc <- intersect(tax$ref, refc)
   
     ## reference clades (refc): updating or not
     ## ----------------------------------------
@@ -180,18 +181,18 @@ stepD <- function(x){
     names(ref) <- refc
     for (i in refc) {
       
-      slog("\n -", i, file = logfile)
+      slog("\n -", i, file = logfile, megProj = x)
       
       spec <- tax[tax$ref == i, "taxon"]
       if (!length(spec)){
         slog("\nCAUTION: reference clade extended", 
-             length(ali), file = logfile)
+             length(ali), file = logfile, megProj = x)
         spec <- tax[, "taxon"]
       }
       ali <- lapply(spec, dbReadDNA, x = x, tab.name = acc.tab, regex = FALSE)
       names(ali) <- gsub(" ", "_", spec)
       slog("\n  > number of species with > 1 accession:", 
-           length(ali), file = logfile)
+           length(ali), file = logfile, megProj = x)
       
       ## identify species, which have (nearly) identical accessions
       ## ----------------------------------------------------------
@@ -205,7 +206,7 @@ stepD <- function(x){
       ali <- ali[bt]
       bp <- ifelse(j == 0, "bp", "bp or less")
       slog("\n  > found", length(bt), "species with a distance of", j, bp,  
-           file = logfile)
+           file = logfile, megProj = x)
       
       ## check if there are species that have not been used 
       ## to create reference. Only create reference if new species are available
@@ -220,7 +221,7 @@ stepD <- function(x){
            i %in% already){ # it is possible that status column contains
         # 'reference', but reference table has been
         # deleted since
-        slog("\n- reference has already been calculated", file = logfile)
+        slog("\n- reference has already been calculated", file = logfile, megProj = x)
         next
       } 
       
@@ -247,7 +248,7 @@ stepD <- function(x){
       ## check distance matrix
       ## ---------------------
       if (nrow(ali) > 1 ){
-        slog("\n  > check genetic distances ...", file = logfile)
+        slog("\n  > check genetic distances ...", file = logfile, megProj = x)
         d <- dist.dna(ali, model = "raw", as.matrix = TRUE,
                       pairwise.deletion = TRUE)
         diag(d) <- NA
@@ -255,12 +256,12 @@ stepD <- function(x){
         id <- names(e)[e < reference.max.dist]
         if ( length(id)){
           slog("\n   ", length(id), "sequences with maximum distance of",
-               reference.max.dist, file = logfile)
+               reference.max.dist, file = logfile, megProj = x)
           ali <- ali[names(e)[e < reference.max.dist], ]
           ali <- deleteEmptyCells(ali, quiet = TRUE)
         } else {
           slog("\n", length(id), "sequences conform to maximum reference distance of",
-               reference.max.dist, "\n CAUTION: reference distance will be ignored", file = logfile)
+               reference.max.dist, "\n CAUTION: reference distance will be ignored", file = logfile, megProj = x)
           id <- rownames(ali)
         }
       } else {
@@ -277,7 +278,7 @@ stepD <- function(x){
       
       ## create 'reference' sequence
       ## ---------------------------
-      slog("\n  > creating reference sequence ...", file = logfile)
+      slog("\n  > creating reference sequence ...", file = logfile, megProj = x)
       ref[[i]] <- specCons(ali)
     } # end of FOR-loop over i
     
@@ -297,9 +298,9 @@ stepD <- function(x){
   }
   dbDisconnect(conn)
   
-  slog("\n\nSTEP D finished", file = logfile)
+  slog("\n\nSTEP D finished", file = logfile, megProj = x)
   td <- Sys.time() - start
   slog(" after", round(td, 2), attr(td, "units"), 
-       "\n", file = logfile)
+       "\n", file = logfile, megProj = x)
   dbProgress(x, "step_d", "success")
 }

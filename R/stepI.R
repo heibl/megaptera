@@ -1,8 +1,9 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-04-06)
+## © C. Heibl 2014 (last update 2017-10-18)
 
 #' @export
 #' @import DBI
+#' @importFrom ips gblocks write.nex write.phy
 
 stepI <- function(x){
   

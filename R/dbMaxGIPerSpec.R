@@ -1,48 +1,103 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-05-30)
+## © C. Heibl 2014 (last update 2017-11-10)
 
-#' @export
+#' @title Limit Numbers of Sequences per Species
+#' @description Some species (e.g. model organism) have thousands or more
+#'   sequences of a single locus on GenBank. Much of this genetic information is
+#'   redundant in a phylogenetic context, so \strong{megaptera} internally
+#'   limits the number of sequences per species to 10. This number can be
+#'   changed by the user via with \code{megapteraPars} or \code{dbMaxGIPerSpec},
+#'   the latter function allowing more fine-tuning (see Details).
+#' @param megProj An object of class \code{\link{megapteraProj}}.
+#' @param max.gi.per.spec An integer giving the maximum number of sequences per
+#'   species to be used by the pipeline.
+#' @param prefer A character string indicating under what criterion the
+#'   sequences will be choosen; available are \code{"longest"} (default),
+#'   \code{"shortest"}, \code{"most frequent length"} and \code{"random"}.
+#' @param taxon A character string giving one or more taxon names for which the
+#'   number of sequences will be limited. If left missing, all taxon names found
+#'   in the database are handled.
+#' @details After calling \code{dbMaxGIPerSpec} the pipeline must be rerun from
+#'   \code{\link{stepC}} onwards.
+#'
+#'   \emph{To do: describe parameters!}
+#' @seealso \code{\link{megapteraPars}}
 #' @import DBI
+#' @importFrom utils tail
+#' @export
 
-dbMaxGIPerSpec <- function(x, max.gi.per.spec){
+
+dbMaxGIPerSpec <- function(megProj, max.gi.per.spec = 10, prefer = "longest", taxon){
   
   ## PARAMETERS
   ## -----------
-  gene <- x@locus@sql
+  gene <- megProj@locus@sql
+  if (gene == "undefined") stop("undefined locus not allowed")
   acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
   logfile <- paste0("log/", gene, "-stepB.log")
+  prefer <- match.arg(prefer, c("longest", "shortest", "most frequent length", "random"))
   
   if (missing(max.gi.per.spec)) 
-    max.gi.per.spec <- x@params@max.gi.per.spec
+    max.gi.per.spec <- megProj@params@max.gi.per.spec
   
-  conn <- dbconnect(x@db)
-  taxon <- paste("SELECT gi, taxon, npos", 
+  conn <- dbconnect(megProj@db)
+  tax <- paste("SELECT gi, taxon, npos", 
                  "FROM", acc.tab,
                  "WHERE status != 'excluded (indet)'",
                  "AND status != 'excluded (too long)'")
-  taxon <- dbGetQuery(conn, taxon)
-  freqs <- table(taxon$taxon)
+  
+  ## handle only a subset of taxa
+  ## ----------------------------
+  if (!missing(taxon)) {
+    taxon <- gsub("_", " ", taxon)
+    tax <- paste(tax, "AND", wrapSQL(taxon, "taxon", "="))
+  }
+  
+  tax <- dbGetQuery(conn, tax)
+  freqs <- table(tax$taxon)
   if (any(id <- freqs > max.gi.per.spec)){
     id <- names(id)[id]
-    slog("\n..", length(id), "species have >", 
-         max.gi.per.spec, "sequenes:", 
-         file = logfile)
-    for (i in id){
-      acc <- taxon[taxon$taxon == i, ]
-      acc <- acc[order(acc$npos, decreasing = TRUE), ]
-      acc.exclude <- tail(acc$gi, -max.gi.per.spec)
-      acc.include <- setdiff(acc$gi, acc.exclude)
-      slog("\n -", i, "(", length(acc.exclude), "sequences excluded )",
+    if (missing(taxon)){
+      slog("\n..", length(id), "species have >", 
+           max.gi.per.spec, "sequenes:", 
            file = logfile)
-      acc.include <- paste("UPDATE", acc.tab,
+    }
+    for (i in id){
+      acc <- tax[tax$taxon == i, ]
+      if (prefer == "longest"){
+        acc <- acc[order(acc$npos, decreasing = TRUE), ]
+        acc_exclude <- tail(acc$gi, -max.gi.per.spec)
+      }
+      if (prefer == "shortest"){
+        acc <- acc[order(acc$npos, decreasing = FALSE), ]
+        acc_exclude <- tail(acc$gi, -max.gi.per.spec)
+      }
+      if (prefer == "most frequent length"){
+        freqs <- sort(table(acc$npos), decreasing = TRUE)
+        freqs[] <- 1:length(freqs)
+        acc$order <- freqs[match(acc$npos, names(freqs))]
+        acc <- acc[order(acc$order), ]
+        acc_exclude <- tail(acc$gi, -max.gi.per.spec)
+      }
+      if (prefer == "random"){
+        acc_exclude <- sample(acc$gi, max.gi.per.spec)
+      }
+      acc_include <- setdiff(acc$gi, acc_exclude)
+      
+      ## prepare and execute SQL statements
+      ## ----------------------------------
+      slog("\n -", i, "(", length(acc_exclude), "sequences excluded )",
+           file = logfile)
+      acc_include <- paste("UPDATE", acc.tab,
                            "SET status='raw'",
-                           "WHERE", wrapSQL(acc.include, "gi", "=", "OR"))
-      lapply(acc.include, dbSendQuery, conn = conn)
-      acc.exclude <- paste("UPDATE", acc.tab,
-                           "SET status='excluded (max.gi)'",
-                           "WHERE", wrapSQL(acc.exclude, "gi", "=", "OR"))
-      lapply(acc.exclude, dbSendQuery, conn = conn)
+                           "WHERE", wrapSQL(acc_include, "gi", "=", "OR"))
+      lapply(acc_include, dbSendQuery, conn = conn)
+      acc_exclude <- paste("UPDATE", acc.tab,
+                           "SET status='excluded (max.gi)', identity=NULL, coverage=NULL",
+                           "WHERE", wrapSQL(acc_exclude, "gi", "=", "OR"))
+      lapply(acc_exclude, dbSendQuery, conn = conn)
+      
     }
   }
-  dbDisconnect(conn)
+  invisible(dbDisconnect(conn))
 }

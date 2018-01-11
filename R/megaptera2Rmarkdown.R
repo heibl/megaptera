@@ -1,15 +1,17 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-10-11)
+## © C. Heibl 2016 (last update 2018-01-10)
 
 #' @title RMarkdown Report
 #' @description Creates a status report for a megaptera Project using RMarkdown.
 #' @param x An object of class \code{\link{megapteraProj}}.
 #' @param file A character vector giving a file name.
+#' @param nmax An integer giving the maximun number of taxa for printed lists.
 #' @return None, \code{megaptera2Rmarkdown} is called for its side effect.
-#' @seealso \code{\link{checkSpecLoc}}, \code{\link{checkSpecies}}
+#' @seealso \code{\link{checkSpecLocus}}, \code{\link{checkSpecies}}
+#' @importFrom utils packageDescription
 #' @export
 
-megaptera2Rmarkdown <- function(x, file){
+megaptera2Rmarkdown <- function(x, file, nmax = 100){
   
   if (missing(file)) file <- "megaptera.Rmd"
   if (length(grep("^report/", file)) == 0){
@@ -154,16 +156,16 @@ megaptera2Rmarkdown <- function(x, file){
     tax.coverage <- c(
       "Query of the NCBI Taxonomy Database gave these results:", "",
       paste0("**", n_ingroup_received, "** ingroup species (of ",
-            length(ingroup_queried), " = ",
-            round(n_ingroup_received / length(ingroup_queried) * 100, 2),
-            "%) could be retrieved"))
-    if (n_ingroup_received <= 100) tax.coverage <- c(tax.coverage, "", paste0("- *", ingroup_queried, "*"))
+             length(ingroup_queried), " = ",
+             round(n_ingroup_received / length(ingroup_queried) * 100, 2),
+             "%) could be retrieved"))
+    if (n_ingroup_received <= nmax) tax.coverage <- c(tax.coverage, "", paste0("- *", ingroup_queried, "*"))
     if (n_ingroup_missing){
       tax.coverage <- c(tax.coverage, "",
                         paste0("**", n_ingroup_missing, "** ingroup species (",
-                        round(n_ingroup_missing / length(ingroup_queried) * 100, 2),
-                             "%) were missing"))
-      if (n_ingroup_missing <= 100) tax.coverage <- c(tax.coverage, "", paste0("- *", ingroup_missing, "*"))
+                               round(n_ingroup_missing / length(ingroup_queried) * 100, 2),
+                               "%) were missing"))
+      if (n_ingroup_missing <= nmax) tax.coverage <- c(tax.coverage, "", paste0("- *", ingroup_missing, "*"))
       
     }
     if (length(ingroup_false)){
@@ -171,32 +173,26 @@ megaptera2Rmarkdown <- function(x, file){
                         paste0("- **WARNING**: *", ingroup_false, "* falsely as ingroup classified"))
     }
   } else {
-    # tax.coverage <- c(
-    #   "Query of the NCBI Taxonomy Database gave these results:", "",
-    #   paste("- **", length(grep("ingroup", tax$tag)),
-    #         "** ingroup species", sep = ""),
-    #   paste("- **", length(grep("outgroup", tax$tag)),
-    #         "** outgroup species", sep = "")
-    # )
-    tax.coverage <- "Implement me!"
+    res <- table(tax$rank)
+    res <- res[c("species", "genus", "family", "order")]
+    names(res) <- c("species", "genera", "families", "orders")
+    tax.coverage <- c(paste0("NCBI Taxonomy was searched for **", x@taxon@tip.rank, 
+                             "** of **", x@taxon@ingroup, "**"), "",
+                      "The search retrieved:", "", paste("-", res, names(res)))
+    if (res["species"] <= nmax) tax.coverage <- c(tax.coverage, "", "IMPLEMENT ME!")
   }
   ## guide tree
   ## ----------
-  z <- c(z, "# Taxonomy",
-         tax.coverage,
-  #        "<a href='taxonomy.html'>view taxonomy table</a>",
-  #        "",
-  #        #          "```{r, echo=FALSE, message=FALSE}",
-  #        #          "if ( inherits(x@taxon, 'taxonGuidetree') ){",
-  #        #          "gt <- comprehensiveGuidetree(x, tip.rank = 'gen')",
-  #        #          "} else {" ,
-  #        #          "gt <- dbReadTaxonomy(x)",
-  #        #          "gt <- tax2tree(gt, tip.rank = 'gen')",
-  #        #          "}",
-  #        #          "gt <- ladderize(gt)",
-  #        #          "plot(gt, type = 'clado')",
-  #        # "```", 
-        "")
+  
+  if (inherits(x@taxon, 'taxonGuidetree')){
+    guide_tree <- c("## User-defined guide tree",
+                    "```{r, echo=FALSE, message=FALSE}",
+                    "plot(x@taxon@guide.tree, type = 'phylo', no.margin = TRUE)",
+                    "```", "")
+  } else {
+    guide_tree <- ""
+  }
+  z <- c(z, "# Taxonomy", tax.coverage, "", guide_tree)
   
   ## stop here if no sequences have been downloaded so far
   ## -----------------------------------------------------
@@ -208,7 +204,7 @@ megaptera2Rmarkdown <- function(x, file){
   ## RAW SEQUENCES
   ## -------------
   ll <- dbReadLocus(x)
-  loci_genbank <- ll[, grep("gb_", names(ll))]
+  loci_genbank <- ll[, grep("gb_", names(ll)), drop = FALSE]
   loci_genbank[loci_genbank > 1] <- 1
   loci_genbank <- rowSums(loci_genbank)
   taxa_not_found <- names(loci_genbank)[loci_genbank == 0]
@@ -219,8 +215,8 @@ megaptera2Rmarkdown <- function(x, file){
       paste("##", Tip_rank ,"without any sequences"),
       paste0(n_taxa_not_found, " ", tip_rank, " (of ", nrow(ll), " available = ",
              round(100 * n_taxa_not_found/nrow(ll), 2), "%) have no sequences."))
-    if (n_taxa_not_found <= 100){ 
-      taxaNotFound <- c(taxaNotFound, paste0("- *", taxa_not_found, "*"))
+    if (n_taxa_not_found <= nmax){ 
+      taxaNotFound <- c(taxaNotFound, "", paste0("- *", taxa_not_found, "*"))
     } 
   } else {
     taxaNotFound <- NULL
@@ -249,10 +245,12 @@ megaptera2Rmarkdown <- function(x, file){
   if (n_taxa_not_selected){
     taxaNotSelected <- c(
       paste("##", Tip_rank, "not selected for alignment"),
-      paste0(n_taxa_not_selected, " ", tip_rank, " (of ", n_taxa_found, " retrieved = ",
+      paste0(n_taxa_not_selected, " ", tip_rank, " (of ", nrow(ll), " available = ", 
+             round(100* n_taxa_not_selected/nrow(ll), 2),
+             "% and of ", n_taxa_found, " retrieved = ",
              round(100* n_taxa_not_selected/n_taxa_found, 2), "%) have not been selected."))
-    if (n_taxa_not_selected <= 100){
-      taxaNotSelected <- c(taxaNotSelected, paste0("- *", taxa_not_selected, "*"))
+    if (n_taxa_not_selected <= nmax){
+      taxaNotSelected <- c(taxaNotSelected, "", paste0("- *", taxa_not_selected, "*"))
     }
   } else {
     taxaNotSelected <- NULL

@@ -8,9 +8,11 @@ taxdumpSubset(tax, mrca, species, root = "tol")
 }
 \arguments{
 \item{tax}{Either an object of class \code{\link{megapteraProj}} or a data
-frame containing a taxonomy table in parent-child format as returned by \code{\link{dbReadTaxonomy}}.}
+frame containing a taxonomy table in parent-child format as returned by
+\code{\link{dbReadTaxonomy}}.}
 
-\item{mrca}{A character string giving the most revent common ancestor (mrca) of the subset.}
+\item{mrca}{A character string giving the most revent common ancestor (mrca)
+of the subset.}
 
 \item{species}{A vector of mode \code{"character"} giving subset.}
 

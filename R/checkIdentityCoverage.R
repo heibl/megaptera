@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-12-06)
+## © C. Heibl 2014 (last update 2017-10-18)
 
 #' @title Histograms of Identity/Coverage per Locus
 #' 
@@ -11,6 +11,7 @@
 #' @seealso \code{\link{checkSpecLocus}},\code{\link{checkMissingSpec}}, 
 #' \code{\link{checkSpecies}}.
 #' @importFrom graphics hist par
+#' @importFrom grDevices dev.off pdf
 #' @export
  
 checkIdentityCoverage <- function(megapteraProj){

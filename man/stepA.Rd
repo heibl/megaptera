@@ -10,12 +10,12 @@ stepA(x)
 \item{x}{An object of class \code{\link{megapteraProj}}.}
 }
 \value{
-None. \code{stepA} is called for its side effects: (1) a taxonomic 
-  classifiaction is stored in the pgSQL database; (2) a log file is written 
+None. \code{stepA} is called for its side effects: (1) a taxonomic
+  classifiaction is stored in the pgSQL database; (2) a log file is written
   to the \code{log} directory of the project directory.
 }
 \description{
-Creates a project taxonomy from the NCBI taxonomy (see 
+Creates a project taxonomy from the NCBI taxonomy (see
   \code{\link{ncbiTaxonomy}}).
 }
 \note{
@@ -24,6 +24,7 @@ Any subsequent call to \code{stepA} will overwrite the existing
   will have to be rerun also.
 }
 \seealso{
-\code{\link{megapteraProj}} for bundling the project's input 
-  information; \code{\link{stepB}} for the next step in the pipeline.
+\code{\link{megapteraProj}} for bundling the project's input
+  information and \code{\link{ncbiTaxonomy}} for downloading the NCBI
+  taxonomy; the next step in the pipeline is \code{\link{stepB}}.
 }

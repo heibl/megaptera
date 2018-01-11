@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-02-20)
+## © C. Heibl 2014 (last update 2017-11-23)
 
 #' @export
 
@@ -11,8 +11,9 @@ downloadSequences <- function(x, taxon){
   acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
   logfile <- paste0("log/", gene, "-stepB.log")
   retmax <- x@params@retmax
+  dbl <- x@params@debug.level
   
-  slog("\n\n.. search taxon:", taxon, "..", file = logfile)
+  slog("\n\n.. search taxon:", taxon, "..", file = logfile, megProj = x)
   
   ## post UIDs on Entrez History Server
   ## ----------------------------------
@@ -38,11 +39,11 @@ downloadSequences <- function(x, taxon){
   n <- as.numeric(xpathSApply(xml, fun = xmlValue,
                               path = "//eSearchResult/Count"))
   if (n == 0) {
-    slog("\n.. no sequences available ..", file = logfile)
+    slog("\n.. no sequences available ..", file = logfile, megProj = x)
     return(NULL)
   }
   slog("\n..", n, "UIDs posted on Entrez History Server ..", 
-       file = logfile)
+       file = logfile, megProj = x)
   
   ## do not download more than 100 sequences if taxon
   ## is of rank species or below (e.g. Manduca sexta 
@@ -50,7 +51,7 @@ downloadSequences <- function(x, taxon){
   ## -------------------------------------
   if (is.Linnean(taxon) & n > 100){
     slog("\n.. reached limit of 100 sequences per species ..", 
-         file = logfile)
+         file = logfile, megProj = x)
     n <- 100
   }
   
@@ -66,8 +67,8 @@ downloadSequences <- function(x, taxon){
   ## CASE 1: THERE ARE NO NEW SEQUENCES
   ## ----------------------------------
   missing.gi <- setdiff(uid, present.gi)
-  if (length(missing.gi) == 0) {
-    slog("\n.. all", n, "sequences already in database ..", file = logfile)
+  if (!length(missing.gi)) {
+    slog("\n.. all", n, "sequences already in database ..", file = logfile, megProj = x)
     return(NULL)
   }
   
@@ -87,7 +88,7 @@ downloadSequences <- function(x, taxon){
     slog("\n..", length(already.present), 
          "sequences already in database ..\n..",
          length(missing.gi), "sequences will be downloaded ..", 
-         file = logfile)
+         file = logfile, megProj = x)
     xml <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/", 
                   "efetch.fcgi?tool=megaptera&email=heibsta@gmx.net",
                   "&db=nucleotide", 
@@ -107,7 +108,7 @@ downloadSequences <- function(x, taxon){
     sw <- data.frame(from = sw, to = c(sw[-1] - 1, n))
     b <- ifelse(nrow(sw) == 1, "batch", "batches")
     slog("\n.. retrieving records in", nrow(sw), b, "..", 
-         file = logfile)
+         file = logfile, megProj = x)
     
     for (i in 1:nrow(sw)) {
       
@@ -125,6 +126,10 @@ downloadSequences <- function(x, taxon){
       ## embedded into try()
       ## -------------------
       xml <- robustXMLparse(xml, logfile = logfile)
+      if (x@params@debug.level > 3){
+        err_file <- paste0("log/", Sys.Date(), "_DEBUG_downloadingSequences.rda")
+        save(x, xml, file = err_file)
+      }
       if (is.null(xml)) next
       # saveXML(xml, "megapteraAP-DEBUG.xml"); system("open -t megapteraAP-DEBUG.xml")
       XML2acc(x, xml, taxon)

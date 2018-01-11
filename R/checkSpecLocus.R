@@ -1,20 +1,22 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-10-11)
+## © C. Heibl 2014 (last update 2017-11-29)
 
 #' @title Barplot of Species Numbers per Locus
-#' @description Produce a barplot showing the number of species found for each 
+#' @description Produce a barplot showing the number of species found for each
 #'   locus. Thereby the number of species either refers to the number of species
-#'   found on GenBank, the number of species selected according to identity and 
-#'   coverage, or the number of species included in the final alignment. 
-#'   Additionally, black lines to right of the bars indicate the cumulative 
-#'   species numbers for each locus if this locus was to be concatenated with 
+#'   found on GenBank, the number of species selected according to identity and
+#'   coverage, or the number of species included in the final alignment.
+#'   Additionally, black lines to right of the bars indicate the cumulative
+#'   species numbers for each locus if this locus was to be concatenated with
 #'   all other loci having more species.
 #' @param megProj An object of class \code{\link{megapteraProj}}.
-#' @param stage A vector of mode \code{character}; valid are \code{"gb"}, 
-#'   \code{"sel"}, or \code{"blocks"} referring to the number of species (1) 
-#'   found on GenBank, (2) selected according to coverage and identity (see 
+#' @param stage A vector of mode \code{character}; valid are \code{"gb"},
+#'   \code{"sel"}, or \code{"blocks"} referring to the number of species (1)
+#'   found on GenBank, (2) selected according to coverage and identity (see
 #'   \code{\link{locus}}); or included in the final alignment, respectively.
-#' @param plot Logical, indicating if the barplot should be produced on the 
+#' @param subset A vector of mode \code{"character"}, that can be used to choose
+#'   a subset of the total taxa available.
+#' @param plot Logical, indicating if the barplot should be produced on the
 #'   current graphical device or not.
 #' @return A list, but mainly called for its side effect, the plotting of a
 #'   barplot.
@@ -23,12 +25,12 @@
 #' @importFrom graphics barplot lines par text
 #' @export
 
-checkSpecLocus <- function(megProj, stage = "sel",
-                              plot = TRUE){
+checkSpecLocus <- function(megProj, stage = "sel", subset,
+                           plot = TRUE){
   
   ## join taxonomy and locus tables
   ## ------------------------------
-  x <- dbReadLocus(megProj)
+  x <- dbReadLocus(megProj, subset = subset)
   spec <- rownames(x)
   
   ## select columns according to 'colname'

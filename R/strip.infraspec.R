@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-08-07)
+## © C. Heibl 2014 (last update 2017-11-13)
 
 #' @title Truncation of Species Names
 #' @description Delete infraspecific names and epithets form species names.

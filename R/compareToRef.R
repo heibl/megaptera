@@ -1,5 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-04-20)
+## © C. Heibl 2014 (last update 2017-11-29)
+
+#' @importFrom ips mafft.merge
+#' @export
 
 compareToRef <- function(megProj, spec, reference){
   
@@ -15,7 +18,8 @@ compareToRef <- function(megProj, spec, reference){
   
   cat("\n", spec[1])
   
-  obj <- dbReadDNA(megProj, acc.tab, spec[1], FALSE, max.bp)
+  obj <- dbReadDNA(megProj, tab.name = acc.tab, taxon = spec[1], 
+                   regex = FALSE, max.bp = max.bp)
   if (is.list(obj)) stop("sequences of ", spec[1], " not aligned")
   
   if (length(spec) == 2){

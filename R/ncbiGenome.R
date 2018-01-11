@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-10-11)
+## © C. Heibl 2016 (last update 2017-11-06)
 
 ## to do:
 ## extend outgroup to genus if it is a single species

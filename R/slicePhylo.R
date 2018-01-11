@@ -1,5 +1,18 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-09-23)
+## © C. Heibl 2016 (last update 2017-10-18)
+
+#' @title Plot Very Large Phylogenies
+#' @description Cut a phylogeny into suitable slices (at least try to - result
+#'   will always depend on topoloy) and create a series of PDF files showing the
+#'   individual slices. This technique is meant to facilitate the graphical
+#'   inspection of very large phylogenies.
+#' @param phy An object of class \code{\link{phylo}}.
+#' @param file A vector of mode \code{"character"} giving a filename (and path)
+#'   for the PDF file.
+#' @return None, \code{slicePhylo} is called for its side effect of
+#'   generating one or more PDF file.
+#' @importFrom ips sister
+#' @export
 
 slicePhylo <- function(phy, file){
   

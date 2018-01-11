@@ -2,7 +2,7 @@
 % Please edit documentation in R/findRoot.R
 \name{findRoot}
 \alias{findRoot}
-\title{Lineage down to the Root}
+\title{Lineage Down to the Root}
 \usage{
 findRoot(x, what)
 }

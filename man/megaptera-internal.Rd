@@ -1,11 +1,10 @@
 \name{megaptera-internal}
 
 % these function deserve proper documentation
+
 \alias{giConsensus}
 \alias{stepBOLD}
 \alias{supermatrix.mrbayes}
-
-
 \alias{conn}
 \alias{cropToReference} % compareToRef
 \alias{tax}
@@ -18,7 +17,6 @@
 \alias{alignSpecies} % stepC
 \alias{as.Linnean} % stepE
 \alias{boxplotMSA}
-\alias{checkBlocks}
 \alias{checkExcludedSpec}
 \alias{checkStatus}
 \alias{check.TaxAgainstPhy}
@@ -30,15 +28,16 @@
 \alias{dbconnect}
 \alias{dbChooseRef}
 \alias{dbExcludeIndet}
-\alias{dbMaxGIPerSpec}
 \alias{dbSummaryMSA}
 \alias{dbTableNames}
 \alias{dbUpdateSurrogate}
 \alias{dbWriteMSA}
 \alias{dbPReadDNA}
+\alias{dbProgress} % stepB, stepBOLD, stepC, stepD, stepE, stepF, stepMAFFT, stepPASTA, stepPOLENTA, stepH, stepI
 \alias{dbReadReference}
 \alias{dbUpdateLocus}
 \alias{dbUpdateReference} % stepD
+\alias{dbUpdateReference_Clade} % stepD
 \alias{dbWriteDNAbin}
 \alias{dbWriteString}
 \alias{downloadSequences}
@@ -55,13 +54,11 @@
 \alias{getLineage}
 \alias{getMaxDist}
 \alias{htmlTable} % megaptera2Rmarkdown
-\alias{indet.strings} % stepB, dbUpdateTaxonomy, ncbiGenome
 \alias{insert.tip.phylo}
 \alias{is.alignable}
 \alias{is.Linnean} % stepE
 \alias{MAD}
 \alias{md5} % stepF
-\alias{mafft.merge}
 \alias{markersGenbank}
 \alias{maxDist}
 \alias{maxDistMPI}
@@ -71,6 +68,7 @@
 \alias{ncbiLineage}
 \alias{NCBI.wrap}
 \alias{nucleotideOverlap}
+\alias{proParte} % prune.phylo.rank
 \alias{revCompTest}
 \alias{robustXMLparse} % downloadSequences
 \alias{select.seqs}
@@ -80,10 +78,10 @@
 \alias{sortRanks}
 \alias{splitAlignment} % stepH
 \alias{splitGiTaxon}
+\alias{splitNonoverlapping} % splitAlignment
 \alias{sql.conform}
 \alias{sqlTaxonomyHeader}
 \alias{sql.wrap}
-\alias{stepAA}
 \alias{summary.sproj}
 \alias{tab}
 \alias{tax2tree}

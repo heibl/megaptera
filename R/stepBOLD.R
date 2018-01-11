@@ -1,8 +1,17 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-02-20)
+## © C. Heibl 2014 (last update 2017-11-02)
 
-#' @export
+## TO DO: 1. enable search of all taxa
+##        2. enable search of taxa that have no sequences 
+##           or have not been selected
+
+## current status:
+## if species list only missing ingroup species will be searched for
+## if higher taxon the entire taxon will be searched. [2017-10-18]
+
+#' @importFrom bold bold_tax_name
 #' @import DBI
+#' @export
 
 stepBOLD <- function(x, overwrite = TRUE){
   
@@ -10,10 +19,10 @@ stepBOLD <- function(x, overwrite = TRUE){
   
   ## CHECKS
   ## ------
-  if ( !inherits(x, "megapteraProj") )
+  if (!inherits(x, "megapteraProj"))
     stop("'x' is not of class 'megapteraProj'")
-  if ( x@locus@kind == "undefined" ) stop("undefined locus not allowed")
-  if ( !url.exists("https://eutils.ncbi.nlm.nih.gov") )
+  if (x@locus@kind == "undefined") stop("undefined locus not allowed")
+  if (!url.exists("https://eutils.ncbi.nlm.nih.gov"))
     stop("internet connection required for stepBOLD")
   
   ## iniate logfile
@@ -41,8 +50,8 @@ stepBOLD <- function(x, overwrite = TRUE){
   }
   marker <- markerSet[id]
   
-  ## get species names
-  ## -----------------
+  ## species present in NCBI taxonomy
+  ## --------------------------------
   conn <- dbconnect(x)
   spec <- paste("SELECT taxon",
                 "FROM taxonomy",
@@ -51,19 +60,36 @@ stepBOLD <- function(x, overwrite = TRUE){
   spec <- dbGetQuery(conn, spec)$taxon
   dbDisconnect(conn)
   
+  ingroup_queried <- x@taxon@ingroup
+  id <- sapply(ingroup_queried, function(a, b)  any(a %in% b), b = spec)
+  ingroup_missing <- ingroup_queried[!id]
+  ingroup_missing <- sapply(ingroup_missing, head, n = 1)
+  slog(length(ingroup_missing), "ingroup species are missing on NCBI",
+       file = logfile)
+  
+  ## check whether these taxa are present on BOLD SYSTEMS
+  ## ----------------------------------------------------
+  onBOLD <- bold_tax_name(ingroup_missing)
+  id <- is.na(onBOLD$taxid)
+  if (any(id)){
+    stop("implement this warning!")
+    ingroup_missing <- ingroup_missing[-id]
+  }
+  
   ## sliding window breaks specis names vector in
   ## batches of 100
   ## --------------
-  sw <- seq(from = 1, to = length(spec), by = 100)
-  sw <- data.frame(from = sw, to = c(sw[-1] -1, length(spec)))
-  sw <- apply(sw, 1, function(z, spec) spec[z[1]:z[2]], spec = spec)
+  sw <- seq(from = 1, to = length(ingroup_missing), by = 100)
+  sw <- data.frame(from = sw, to = c(sw[-1] -1, length(ingroup_missing)))
+  sw <- apply(sw, 1, function(z, spec) spec[z[1]:z[2]], spec = ingroup_missing)
+  if (is.null(dim(sw))) dim(sw) <- c(1, 1)
   
   ## wrap bold_seq to get DNAbin
   ## ---------------------------
-  formatBOLD <- function(spec, marker){
-    b <- bold::bold_seq(spec, marker = marker)
-    b <- do.call(rbind, b)
-    bb <- paste(b[, "name"], b[, "id"])
+  formatBOLD <- function(x, species, marker){
+    b <- BOLD2megaptera(species, marker) 
+    if (!length(b)) return(NA)
+    bb <- paste(b[, "taxon"], b[, "id"])
     bb <- gsub(" ", "_", bb)
     b <- as.list(b[, "sequence"])
     b <- lapply(b, strsplit, split = "")
@@ -74,19 +100,36 @@ stepBOLD <- function(x, overwrite = TRUE){
   }
   
   ## download and format sequences
-  b <- lapply(sw, formatBOLD, marker = marker)
-  b <- do.call(c, b)
+  b <- apply(sw, 1, formatBOLD, x = x, marker = marker)
+  b <- b[!is.na(b)]
+  if (!length(b)){
+    slog("\n.. no sequences on BOLD either", file = logfile)
+    # dbProgress(x, "step_bold", "success") # not yet possible
+    return()
+  }
+  slog("Found", length(b), "sequences", file = logfile)
   
   ## manage duplicates name + id combinations
   ## where do they come from???
   ## --------------------------
+  b <- do.call(c, b)
   d <- duplicated(names(b))
-  if ( any(d) ){
+  if (any(d)){
+    slog("Removed", length(which(d)), "duplicates", file = logfile)
     names(b)[d] <- paste(names(b)[d], 1:length(which(d)), sep = "-")
     # a <- b[names(b) == "Locusta_migratoria_CYTC5284-12"]
     # a <- mafft(a, exec = x@align.exe)
     # rownames(a) <- paste(rownames(a), 1:nrow(a), sep = "_")
     # write.nex(a, "aaa.nex")
   }
+  
+  ## remove sequences that are not determined on species level
+  ## ---------------------------------------------------------
+  taxa_bold <- splitGiTaxon(names(b))$taxon
+  id <- is.Linnean(taxa_bold)
+  b <- b[id]
+  
+  ## write into pgSQL database
+  ## -------------------------
   stepBX(x, b, tag = "bold", overwrite = overwrite)
 }

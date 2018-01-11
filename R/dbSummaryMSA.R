@@ -1,6 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-02-17)
+## © C. Heibl 2016 (last update 2017-10-18)
 
+#' @importFrom stats mad sd
 #' @export
 
 dbSummaryMSA <- function(x, masked = FALSE){

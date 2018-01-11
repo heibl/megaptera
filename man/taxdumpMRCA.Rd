@@ -8,9 +8,11 @@ taxdumpMRCA(x, species, tip.rank)
 }
 \arguments{
 \item{x}{Either an object of class \code{\link{megapteraProj}} or a data
-frame containing a taxonomy table in parent-child format as returned by \code{\link{dbReadTaxonomy}}.}
+frame containing a taxonomy table in parent-child format as returned by
+\code{\link{dbReadTaxonomy}}.}
 
-\item{species}{A vector of mode \code{"character"} giving the species names.}
+\item{species}{A vector of mode \code{"character"} giving the species names.
+Can be missing, in which case the root is returned.}
 
 \item{tip.rank}{A character string giving the name a rank.}
 }

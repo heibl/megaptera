@@ -4,12 +4,14 @@
 \alias{megaptera2Rmarkdown}
 \title{RMarkdown Report}
 \usage{
-megaptera2Rmarkdown(x, file)
+megaptera2Rmarkdown(x, file, nmax = 100)
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}
 
 \item{file}{A character vector giving a file name.}
+
+\item{nmax}{An integer giving the maximun number of taxa for printed lists.}
 }
 \value{
 None, \code{megaptera2Rmarkdown} is called for its side effect.
@@ -18,5 +20,5 @@ None, \code{megaptera2Rmarkdown} is called for its side effect.
 Creates a status report for a megaptera Project using RMarkdown.
 }
 \seealso{
-\code{\link{checkSpecLoc}}, \code{\link{checkSpecies}}
+\code{\link{checkSpecLocus}}, \code{\link{checkSpecies}}
 }

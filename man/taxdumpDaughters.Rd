@@ -4,18 +4,23 @@
 \alias{taxdumpDaughters}
 \title{Utilities for NCBI Taxdump}
 \usage{
-taxdumpDaughters(x, taxon, tip.rank, indet = indet.strings())
+taxdumpDaughters(tax, taxon, immediate = FALSE, tip.rank = "species",
+  indet = indet.strings())
 }
 \arguments{
-\item{x}{Either an object of class \code{\link{megapteraProj}} or a data
+\item{tax}{Either an object of class \code{\link{megapteraProj}} or a data
 frame as returned by \code{\link{dbReadTaxonomy}}.}
 
 \item{taxon}{A character string giving the name of the taxon.}
 
-\item{tip.rank}{A character string giving the name a rank. This rank will be 
+\item{immediate}{Logical, if \code{TRUE}, only the immediate children of
+\code{taxon} will be returned. The default (\code{FALSE}) return all
+children.}
+
+\item{tip.rank}{A character string giving the name a rank. This rank will be
 treated as tip rank, i.e. all taxa of lower rank will be dicarded.}
 
-\item{indet}{A vector of character strings containing regular expressions 
+\item{indet}{A vector of character strings containing regular expressions
 (see Examples).}
 }
 \value{
@@ -29,5 +34,6 @@ Get all children of certain rank for a given taxon.
 indet.strings()
 }
 \seealso{
-\code{\link{taxdumpLineage}}, \code{\link{taxdumpMRCA}}, \code{\link{taxdump2phylo}}.
+\code{\link{taxdumpLineage}}, \code{\link{taxdumpMRCA}},
+  \code{\link{taxdump2phylo}}.
 }

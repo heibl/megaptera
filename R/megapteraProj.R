@@ -1,6 +1,34 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-12-06)
+## © C. Heibl 2014 (last update 2018-01-11)
 
+#' @title Bundle Input Data for the Pipeline
+#' @description Create an object of class \code{\linkS4class{megapteraProj}} to
+#'   hold all the input data necessary for running of the pipeline.
+#' @param db An object of class \code{\linkS4class{dbPars}}.
+#' @param taxon An object of classes \code{\linkS4class{taxon}} or
+#'   \code{\linkS4class{taxonGuidetree}}.
+#' @param locus An object of classes \code{\linkS4class{locus}} or
+#'   \code{\linkS4class{locusRef}}.
+#' @param align.exe A vector of mode \code{"character"}, giving name of the
+#'   alignment program; currently only \bold{MAFFT} is allowed.
+#' @param merge.exe A vector of mode \code{"character"}, giving name of the
+#'   alignment merging program; currently only \bold{OPAL} is allowed.
+#' @param mask.exe A vector of mode \code{"character"}, giving name of the
+#'   alignment masking program; currently only \bold{Gblocks} is allowed.
+#' @param params An object of class \code{\linkS4class{megapteraPars}}.
+#' @param update Logical: if \code{TRUE}, the pipeline's steps are executed as
+#'   if called for the first time, i.e., possibly overriding data and setting
+#'   that have been previously achieved.
+#' @return An object of class \code{\linkS4class{megapteraProj}}.
+#' @references MAFFT: \url{http://mafft.cbrc.jp/alignment/software/}
+#'
+#'   OPAL: \url{http://opal.cs.arizona.edu/}
+#'
+#'   Gblocks: \url{http://molevol.cmima.csic.es/castresana/Gblocks.html}
+#' @seealso \code{\link{dbPars}}, \code{\link{taxon}},
+#'   \code{\link{taxonGuidetree}}, \code{\link{locus}}, \code{\link{locusRef}},
+#'   and \code{\link{megapteraPars}} for defining of database parameters, taxa,
+#'   loci, and the pipeline's parameters, respectively.
 #' @include megapteraProj-class.R
 #' @importFrom methods new
 #' @export

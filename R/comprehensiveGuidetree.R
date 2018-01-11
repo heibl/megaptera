@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-08-10)
+## © C. Heibl 2014 (last update 2017-11-28)
 
 #' @title Comprehensive Guide Tree
 #' @description Creates a complete (or comprehensive) guide tree for the
@@ -9,7 +9,7 @@
 #'   resolution of the comprehensive guide tree.
 #' @param megProj An object of class \code{\link{megapteraProj}}.
 #' @param tip.rank A character string giving the rank of the tips (e.g. 
-#'   \code{spec}, \code{gen}, ...)
+#'   \code{species}, \code{genus}, ...).
 #' @param subset A subset of species names the taxonomy should be limited to. 
 #'   This can be a DNA alignment of class \code{DNAbin}, a phylogenetic tree of class
 #'   \code{phylo}, a data frame or a character vector listing the species names.
@@ -22,7 +22,7 @@
 #' @return An object of class \code{\link{phylo}}.
 #' @seealso \code{\link{dbReadTaxonomy}} for reading a taxonomic classification 
 #'   from the postgreSQL database.
-#' @importFrom ape bind.tree drop.tip
+#' @importFrom ape bind.tree drop.tip read.tree
 #' @export
 
 comprehensiveGuidetree <- function(megProj, tip.rank, subset){
@@ -39,14 +39,21 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
     tax <- dbReadTaxonomy(megProj, tip.rank = tip.rank, subset = subset, root = "mrca")
   }
   
+  ## get outgroup taxa
+  ## -----------------
+  og <- unlist(megProj@taxon@outgroup)
+  if (tip.rank == "genus" & all(is.Linnean(og))) og <- strip.spec(og)
+  og <- intersect(og, tax$taxon) ## actual subset of outgroup
+  
   ## collapse incertae sedis nodes
   ## -----------------------------
   incsed <- grep("incertae sedis", tax$taxon)
-  for (i in incsed){
-    tax$parent_id[tax$parent_id == tax$id[i]] <- tax$parent_id[i]
+  if (length(incsed)){
+    for (i in incsed){
+      tax$parent_id[tax$parent_id == tax$id[i]] <- tax$parent_id[i]
+    }
+    tax <- tax[-incsed, ]
   }
-  tax <- tax[-incsed, ]
-  
   
   if (inherits(megProj@taxon, "taxonGuidetree")){
     
@@ -66,13 +73,23 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
     ## create subtrees that will be plotted onto the guide
     ## tree's tips
     ## -----------
-    subtrees <- lapply(gt$tip.label, taxdumpDaughters, x = tax, tip.rank = tip.rank)
+    subtrees <- lapply(gt$tip.label, taxdumpDaughters, tax = tax, tip.rank = tip.rank)
     subtrees <- lapply(subtrees, taxdump2phylo, tip.rank = tip.rank)
     names(subtrees) <- gt$tip.label
-    
+
     single.gen <- sapply(subtrees, is.character)
     multi.gen <- which(!single.gen)
     single.gen <- which(single.gen)
+    
+    ## check if subtrees contain all focal species/genera
+    ## This check could be done earlier, eg. after step A
+    ## ---------------------------------------------------
+    test_present <- c(unlist(subtrees[single.gen]),
+                      unlist(lapply(subtrees[multi.gen], function(z) z$tip.label)))
+    test_required <- tax$taxon[tax$rank == tip.rank]
+    test_missing <- setdiff(test_required, gsub("_", " ", test_present))
+    test_missing <- setdiff(test_missing, og) ## do not consider outgroup as missing
+    if (length(test_missing)) stop("there is no anchorage in user-defined guide tree for\n- ", paste(test_missing, collapse = "\n -"))
     
     ## add ingroup clade if nessesary
     ## ------------------------------
@@ -108,7 +125,6 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
     
     ## add outgroup if nessesary
     ## -------------------------
-    og <- unlist(megProj@taxon@outgroup)
     cond1 <- any(tax[tax$rank == tip.rank, "taxon"] %in% og)
     cond2 <- !all(og %in% gt$tip.label)
     if (cond1 & cond2){
@@ -117,9 +133,10 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
       if (length(og) == 1){
         gt$tip.label[gt$tip.label == "outgroup"] <- og
       } else {
-        og_phylo <- taxdumpSubset(tax, og)
+        
+        og_phylo <- taxdumpSubset(megProj, species = og, root = "mrca")
         og_phylo <- taxdump2phylo(og_phylo, tip.rank)
-        tt <- bind.tree(tt, og_phylo, which(tt$tip.label == "outgroup"))
+        gt <- bind.tree(gt, og_phylo, which(tt$tip.label == "outgroup"))
       }
     }
     

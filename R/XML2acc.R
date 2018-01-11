@@ -1,8 +1,9 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-03-24)
+## © C. Heibl 2014 (last update 2017-11-21)
 
 #' @export
-#' @import XML
+#' @importFrom DBI dbWriteTable
+#' @importFrom XML xmlToList xmlValue xpathApply xpathSApply
 
 XML2acc <- function(x, xml, taxon){
   
@@ -63,7 +64,8 @@ XML2acc <- function(x, xml, taxon){
   if (length(id) & x@locus@use.genomes){
     slog(paste("\n.. extracting '", x@locus@aliases[1], 
                "' from ", length(id), 
-               " annotated genomes ..", sep = ""), file = logfile)
+               " annotated genomes ..", sep = ""), 
+         file = logfile, megProj = x)
     if (x@locus@kind %in% c("gene", "rRNA")){
       dna[id] <- sapply(gi[id], extractLocus, xml = xml, 
                         locus = x@locus)
@@ -102,7 +104,7 @@ XML2acc <- function(x, xml, taxon){
     indet <- grep(indet, taxa)
     status <- rep("raw", length(taxa))
     status[indet] <- "excluded (indet)"
-    if (length(indet)){
+    if (length(indet) > 0 & length(indet) < length(status)){
       taxa[-indet] <- strip.infraspec(taxa[-indet])
     } else {
       taxa <- strip.infraspec(taxa)
@@ -123,16 +125,16 @@ XML2acc <- function(x, xml, taxon){
   
   ## write into pgSQL database
   ## -------------------------
-  if ( nrow(seqs) > 0 ) {
+  if (nrow(seqs)) {
     conn <- dbconnect(x@db)
     present <- dbGetQuery(conn, paste("SELECT gi FROM", acc.tab))
-    if ( nrow(present) > 0 ){
+    if (nrow(present)){
       id <- seqs$gi %in% present$gi
-      slog("\n..", length(which(id)), "duplicates removed ..", file = logfile)
+      slog("\n..", length(which(id)), "duplicates removed ..", file = logfile, megProj = x)
       seqs <- seqs[!id, ]
     }
     dbWriteTable(conn, acc.tab, seqs, row.names = FALSE, append = TRUE)
-    slog("\n..", nrow(seqs), "sequences written to", acc.tab, "", file = logfile)  
+    slog("\n..", nrow(seqs), "sequences written to", acc.tab, "", file = logfile, megProj = x)  
     dbDisconnect(conn)
   } # end of IF-clause (l.123)
 }

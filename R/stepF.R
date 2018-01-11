@@ -1,9 +1,20 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-03-28)
+## © C. Heibl 2014 (last update 2017-11-06)
 
+#' @title Step F: Select Sequences and Assemble FASTA file
+#' @description In \code{stepF} FASTA files will be assembled selecting all
+#'   sequences that passed the quality evalution.
+#' @param x An object of class \code{\link{megapteraProj}}.
+#' @param update Logical, if \code{FALSE}, step F is redone from scratch, if
+#'   \code{TRUE}, updating is done only if the data or parameters have changed. If
+#'   left empty, \code{update} is taken from \code{\link{dbPars}}.
+#' @seealso \code{\link{megapteraProj}}; \code{\link{stepE}} for the preceeding
+#'   and \code{\link{stepG}} for the subsequent step.
+#' @importFrom DBI dbGetQuery dbRemoveTable dbSendQuery
+#' @importFrom ips write.fas
 #' @export
 
-stepF <- function(x){
+stepF <- function(x, update){
   
   start <- Sys.time()
   
@@ -33,6 +44,7 @@ stepF <- function(x){
   
   ## PARAMETERS
   ## -----------
+  if (missing(update)) update <- x@update
   gene <- x@locus@sql
   acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
   tip.rank <-x@taxon@tip.rank
@@ -70,7 +82,8 @@ stepF <- function(x){
   conn <- dbconnect(x)
   
   ## TO DO: nachfolgenden Code sinnvoll einbetten!
-  if (!x@update){
+  if (!update){
+    slog("\nUpdate: no -> deleting existing MSA table", file = logfile)
     dbRemoveTable(conn, msa.tab)
   } 
   

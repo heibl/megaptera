@@ -1,23 +1,38 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-06-08)
+## © C. Heibl 2017 (last update 2017-11-28)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get all higher ranks including a given taxon.
-#' @param x Either an object of class \code{\link{megapteraProj}} or a data
+#' @param tax Either an object of class \code{\link{megapteraProj}} or a data
 #'   frame as returned by \code{\link{dbReadTaxonomy}}.
 #' @param taxon A character string giving the name of the taxon.
+#' @seealso \code{\link{taxdumpAddNode}}, \code{\link{taxdumpDaughters}},
+#'   \code{\link{taxdumpMRCA}}, \code{\link{taxdumpSubset}},
+#'   \code{\link{taxdump2phylo}}
 #' @export
 
-taxdumpLineage <- function(x, taxon){
+taxdumpLineage <- function(tax, taxon){
   
-  ## get taxonomy if necessary (i.e. x is not a parent-child-table)
+  ## get taxonomy if necessary (i.e. tax is not a parent-child-table)
   ## --------------------------------------------------------------
-  if (inherits(x, "megapteraProj")){
-    x <- dbReadTaxonomy(x)
+  if (inherits(tax, "megapteraProj")){
+    tax <- dbReadTaxonomy(tax)
+  }
+  
+  taxon <- gsub("_", " ", taxon)
+  
+  ## Try to guess root (DIRTY!)
+  ## --------------------------
+  if (any(tax$taxon == "root")){
+    root <- "root"
+  } else {
+    root <- setdiff(tax$parent_id, tax$id)
+    root <- tax[tax$parent_id %in% root, ]
+    root <- root$taxon[!root$rank %in% c("species", "genus")]
   }
   
   obj <- data.frame(stringsAsFactors = FALSE)
-  pid <- x[x$taxon == taxon, c("parent_id", "id", "taxon", "rank")]
+  pid <- tax[tax$taxon == taxon, c("parent_id", "id", "taxon", "rank")]
   obj <- rbind(obj, pid)
   
   if (!nrow(obj)) return(NULL)
@@ -29,8 +44,9 @@ taxdumpLineage <- function(x, taxon){
     obj <- obj[obj$rank != "subgenus", ]
   }
   
-  while (!"root" %in% obj$taxon){
-    pid <- x[x$id == pid$parent_id, c("parent_id", "id", "taxon", "rank")]
+  # while (!any(c("root", "Root of life") %in% obj$taxon)){
+  while (!any(root %in% obj$taxon)){
+    pid <- tax[tax$id == pid$parent_id, c("parent_id", "id", "taxon", "rank")]
     if (!nrow(pid)) stop(obj$taxon[nrow(obj)], " (id=", obj$id[nrow(obj)], ", pid=", 
                          obj$parent_id[nrow(obj)],") has no parent")
     obj <- rbind(obj, pid)

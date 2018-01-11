@@ -1,5 +1,19 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2016-09-22)
+## © C. Heibl 2016 (last update 2017-10-18)
+
+#' @title Plot Large Phylogenies
+#' @description Create a PDF file of a large phylogeny.
+#' @param phy An object of class \code{\link{phylo}}.
+#' @param file A vector of mode \code{"character"} giving a filename (and path)
+#'   for the PDF file.
+#' @param view Logical, if \code{TRUE}, the PDF will be opened in the default
+#'   PDF viewer, but nothing is saved.
+#' @param save Logical, if \code{TRUE}, the PDF is saved to \code{file}.
+#' @return None, \code{slicePhylo} is called for its side effect of generating a
+#'   PDF file.
+#' @importFrom ape nodelabels
+#' @importFrom graphics plot
+#' @export
 
 pdfPhyloA0 <- function(phy, file = "bigtree.pdf",
                        view = FALSE, save = TRUE){
