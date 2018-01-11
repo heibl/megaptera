@@ -1,8 +1,8 @@
 Package: megaptera
 Type: Package
 Title: MEGAPhylogeny Techniques in R
-Version: 1.0-52
-Date: 2016-10-20
+Version: 1.1.0
+Date: 2018-01-11
 Authors@R: person("Christoph", "Heibl", 
   email = "christoph.heibl@gmx.net",
   role = c("aut", "cre"))
