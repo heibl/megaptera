@@ -34,6 +34,10 @@ Get all children of certain rank for a given taxon.
 indet.strings()
 }
 \seealso{
-\code{\link{taxdumpLineage}}, \code{\link{taxdumpMRCA}},
-  \code{\link{taxdump2phylo}}.
+\code{\link{ncbiTaxonomy}} for downloading the NCBI taxonomy and
+  \code{\link{dbReadTaxonomy}} for reading the project taxonomy; other
+  taxdump-related tools: \code{\link{taxdumpAddNode}},
+  \code{\link{taxdumpDropTip}}, \code{\link{taxdumpHigherRank}},
+  \code{\link{taxdumpMRCA}}, \code{\link{taxdumpSubset}},
+  \code{\link{taxdump2phylo}} and \code{\link{taxdump_isTerminal}}.
 }

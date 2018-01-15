@@ -14,8 +14,12 @@
 #' @param indet A vector of character strings containing regular expressions
 #'   (see Examples).
 #' @return A data frame.
-#' @seealso \code{\link{taxdumpLineage}}, \code{\link{taxdumpMRCA}},
-#'   \code{\link{taxdump2phylo}}.
+#' @seealso \code{\link{ncbiTaxonomy}} for downloading the NCBI taxonomy and
+#'   \code{\link{dbReadTaxonomy}} for reading the project taxonomy; other
+#'   taxdump-related tools: \code{\link{taxdumpAddNode}},
+#'   \code{\link{taxdumpDropTip}}, \code{\link{taxdumpHigherRank}},
+#'   \code{\link{taxdumpMRCA}}, \code{\link{taxdumpSubset}},
+#'   \code{\link{taxdump2phylo}} and \code{\link{taxdump_isTerminal}}.
 #' @examples
 #' # The set of default regular expressions used to identify nonvalid species binomials
 #' indet.strings()

@@ -11,13 +11,17 @@ taxdumpDropTip(tax, id)
 frame containing a taxonomy table in parent-child format as returned by
 \code{\link{dbReadTaxonomy}}.}
 
-\item{id}{Numeric the ID of a terminal node (tip).}
+\item{id}{a vector of mode \code{"numeric"}, giving one or more IDs of a
+terminal node (tip).}
 }
 \description{
 Get subset of a taxonomy table in parent-child format.
 }
 \seealso{
-\code{\link{dbReadTaxonomy}},
-  \code{\link{taxdumpDaughters}},\code{\link{taxdumpLineage}},
-  \code{\link{taxdumpAddNode}}, \code{\link{taxdump2phylo}}.
+\code{\link{ncbiTaxonomy}} for downloading the NCBI taxonomy and
+  \code{\link{dbReadTaxonomy}} for reading the project taxonomy; other
+  taxdump-related tools: \code{\link{taxdumpAddNode}},
+  \code{\link{taxdumpDaughters}}, \code{\link{taxdumpHigherRank}},
+  \code{\link{taxdumpMRCA}}, \code{\link{taxdumpSubset}},
+  \code{\link{taxdump2phylo}} and \code{\link{taxdump_isTerminal}}.
 }

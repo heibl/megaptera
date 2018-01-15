@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-11-28)
+## © C. Heibl 2017 (last update 2018-01-15)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Convert a taxonomy table in parent-child format into an object 
@@ -17,7 +17,7 @@
 
 taxdump2phylo <- function(tax, tip.rank){
   
-  tip.rank <- match.arg(tip.rank, c("species", "genus"))
+  tip.rank <- match.arg(tip.rank, c("species", "genus", "family"))
   
   ## Do some checks
   ## --------------
@@ -25,20 +25,57 @@ taxdump2phylo <- function(tax, tip.rank){
   if (is.character(tax$id)) tax$id <- as.numeric(tax$id)
   if (is.character(tax$parent_id)) tax$parent_id <- as.numeric(tax$parent_id)
   
+  ## Truncate taxonomy to tip rank; this is done in two steps:
+  ## ---------------------------------------------------------
+  
+  ## Step 1: Remove all nodes below tip.rank
+  ## ---------------------------------------
+  id <- tax[tax$rank == tip.rank, "id"]
+  tdDescendants <- function(tax, id){
+    all_ids <- vector()
+    gain <- length(id)
+    while (gain > 0){
+      id <- tax[tax$parent_id %in% id, "id"]
+      all_ids <- c(all_ids, id)
+      gain <- length(id)
+    }
+    all_ids
+  }
+  id <- lapply(id, tdDescendants, tax = tax)
+  id <- unlist(id)
+  tax <- tax[!tax$id %in% id, ]
+  
+  ## Step 2
+  ## There can be lineages with tip.rank missing,
+  ## e.g. subgenus: Neocicindela, no genus, tribe: Cicindelini,
+  ## These lineages will be dropped entirely.
+  ## ----------------------------------------
+  tn <- taxdump_isTerminal(tax)
+  id <- tax$id[tn & tax$rank != tip.rank]
+  if (length(id)){
+    warning(length(id)," terminal taxa without a taxon of rank '", tip.rank, 
+            "' in their lineage were removed:",
+            paste("\n-", tax$taxon[tax$id %in% id]))
+    tax <- taxdumpDropTip(tax, id)
+  }
+  
+  ## BEGIN ASSEMBLING THE PHYLO OBJECT:
+  ## ----------------------------------
   phy <- list()
   
   ## parent-child table is edge matrix
   ## ---------------------------------
   phy$edge <- as.matrix(tax[, c("parent_id", "id")])
   rownames(phy$edge) <- colnames(phy$edge) <- NULL
+  storage.mode(phy$edge) <- "integer"
   
-  ## SET TIP LABELS, RUNUMBER TIPS
+  ## SET TIP LABELS, RENUMBER TIPS
   ## -----------------------------
   tip.id <- tax$rank == tip.rank
   ntip <- length(which(tip.id)) 
   if (ntip == 1) return(tax$taxon[tip.id]) ## break here if only 1 leaf
-  ## Make node numbers won't be overwritten
-  phy$edge <- phy$edge + (2 * ntip) 
+  ## Make sure node numbers won't be overwritten
+  phy$edge <- phy$edge + max(phy$edge) 
   phy$tip.label <- tax[tip.id, "taxon"]
   phy$tip.label <- gsub(" ", "_", phy$tip.label)
   phy$edge[tip.id, 2] <- seq_along(phy$tip.label)
@@ -98,6 +135,7 @@ taxdump2phylo <- function(tax, tip.rank){
     }
   }
 
+  
   
   ## REORDER EDGE MATRIX  
   ## -------------------

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-11-09)
+## © C. Heibl 2017 (last update 2018-01-15)
 
 #' @rdname dbTaxonomy
 #' @import DBI
@@ -29,8 +29,11 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
     dbSendQuery(conn, "DROP TABLE tmp")
   }
   
-  ## truncate taxonomy to tip rank
-  ## -----------------------------
+  ## Truncate taxonomy to tip rank; this is done in two steps:
+  ## ---------------------------------------------------------
+  
+  ## Step 1: Remove all nodes below tip.rank
+  ## ---------------------------------------
   id <- tax[tax$rank == tip.rank, "id"]
   tdDescendants <- function(tax, id){
     all_ids <- vector()
@@ -45,6 +48,20 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
   id <- lapply(id, tdDescendants, tax = tax)
   id <- unlist(id)
   tax <- tax[!tax$id %in% id, ]
+  
+  ## Step 2
+  ## There can be lineages with tip.rank missing,
+  ## e.g. subgenus: Neocicindela, no genus, tribe: Cicindelini,
+  ## These lineages will be dropped entirely.
+  ## ----------------------------------------
+  tn <- taxdump_isTerminal(tax)
+  id <- tax$id[tn & tax$rank != tip.rank]
+  if (length(id)){
+    warning(length(id)," terminal taxa without a taxon of rank '", tip.rank, 
+            "' in their lineage were removed:",
+            paste("\n-", tax$taxon[tax$id %in% id]))
+    tax <- taxdumpDropTip(tax, id)
+  }
   
   ## subsetting taxonomy ..
   ## ----------------------

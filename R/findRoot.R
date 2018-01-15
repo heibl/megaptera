@@ -34,7 +34,7 @@ findRoot <- function(x, what){
       id <- tax[tax$parent_id == id, "id"]
     }
     
-    r <- tax[match(all_ids, tax$id), c("parent_id", "id", "taxon", "rank")]
+    r <- tax[match(rev(all_ids), tax$id), c("parent_id", "id", "taxon", "rank")]
   } else {
     r <- dbReadTaxonomy(x)
     r <- lapply(tax, taxdumpLineage, tax = r)

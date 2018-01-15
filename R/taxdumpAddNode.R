@@ -9,7 +9,12 @@
 #' @param parent A character string giving the name of the parent taxon.
 #' @return None, \code{taxdumpAddNote} is called for its side effect of
 #'   inserting data in the underlying PostgreSQL database.
-#' @seealso \code{\link{ncbiTaxonomy}} for downloading the NCBI taxonomy
+#' @seealso \code{\link{ncbiTaxonomy}} for downloading the NCBI taxonomy and
+#'   \code{\link{dbReadTaxonomy}} for reading the project taxonomy; other
+#'   taxdump-related tools: \code{\link{taxdumpDaughters}},
+#'   \code{\link{taxdumpDropTip}}, \code{\link{taxdumpHigherRank}}, \code{\link{taxdumpMRCA}},
+#'   \code{\link{taxdumpSubset}}, \code{\link{taxdump2phylo}} and
+#'   \code{\link{taxdump_isTerminal}}.
 #' @export
 
 taxdumpAddNode <- function(x, taxon, rank, parent){

@@ -1,8 +1,8 @@
 Package: megaptera
 Type: Package
 Title: MEGAPhylogeny Techniques in R
-Version: 1.1.0
-Date: 2018-01-11
+Version: 1.1.1
+Date: 2018-01-15
 Authors@R: person("Christoph", "Heibl", 
   email = "christoph.heibl@gmx.net",
   role = c("aut", "cre"))
@@ -28,12 +28,12 @@ Suggests:
     viper,
     testthat
 Encoding: UTF-8
-Description: Given a set of taxa and marker, the goal is build a complete and
+Description: Given a set of taxa and markers, the goal is build a complete and
     correct sequence alignment for phylogenetic analysis.
 License: GPL (>= 2)
 LazyData: true
 VignetteBuilder: knitr
-Packaged: Thu Oct 20 19:35:17 2016
+Packaged: Mon Jan 15 16:51:48 2018
 RoxygenNote: 6.0.1
 Collate: 
     'BOLD2megaptera.R'
@@ -172,6 +172,7 @@ Collate:
     'taxdumpLineage.R'
     'taxdumpMRCA.R'
     'taxdumpSubset.R'
+    'taxdump_isTerminal.R'
     'taxon.R'
     'taxonGuidetree.R'
     'taxonomy2html.R'

@@ -13,8 +13,8 @@ frame containing a taxonomy table in parent-child format as returned by
 
 \item{taxon}{A vector of mode \code{"character"} giving the taxon name.}
 
-\item{rank}{A vector of mode \code{"character"} giving the name of a higher (relative to
-\code{taxon}) rank.}
+\item{rank}{A vector of mode \code{"character"} giving the name of a higher
+(relative to \code{taxon}) rank.}
 }
 \value{
 A character string giving a taxon name.
@@ -24,7 +24,10 @@ Get the taxon name of a certain higher rank for a particular
   taxon, e.g. get the familiy of \emph{Megaptera}.
 }
 \seealso{
-\code{\link{dbReadTaxonomy}},
-  \code{\link{taxdumpDaughters}},\code{\link{taxdumpLineage}},
-  \code{\link{taxdumpAddNode}}, \code{\link{taxdump2phylo}}.
+\code{\link{ncbiTaxonomy}} for downloading the NCBI taxonomy and
+  \code{\link{dbReadTaxonomy}} for reading the project taxonomy; other
+  taxdump-related tools: \code{\link{taxdumpAddNode}},
+  \code{\link{taxdumpDaughters}}, \code{\link{taxdumpDropTip}},
+  \code{\link{taxdumpMRCA}}, \code{\link{taxdumpSubset}},
+  \code{\link{taxdump2phylo}} and \code{\link{taxdump_isTerminal}}.
 }

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-11-06)
+## © C. Heibl 2016 (last update 2018-01-11)
 
 ## to do:
 ## extend outgroup to genus if it is a single species
@@ -50,7 +50,7 @@ ncbiGenome <- function(x, organelle, n = 5){
   ## find common root of ingroup and outgroup
   ## ----------------------------------------
   common.root <- findRoot(x, "both")
-  # common.root <- head(common.root$taxon, 1)
+  # common.root <- head(common.root$taxon, 1) ## slugs (2017-10-11)
   
   core <- function(this.root, organelle, fn){
     ## query ENTREZ and save history on server
@@ -82,7 +82,7 @@ ncbiGenome <- function(x, organelle, n = 5){
   
   ## search iteratively beginning from the MRCA down to the root-of-life
   ## -------------------------------------------------------------------
-  for (i in nrow(common.root):1){
+  for (i in 1:nrow(common.root)){
     
     this.root <- common.root$taxon[i] ## slugs (2017-10-11)
     slog("\n.. common root   :", this.root, file = fn) 

@@ -89,7 +89,8 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
     test_required <- tax$taxon[tax$rank == tip.rank]
     test_missing <- setdiff(test_required, gsub("_", " ", test_present))
     test_missing <- setdiff(test_missing, og) ## do not consider outgroup as missing
-    if (length(test_missing)) stop("there is no anchorage in user-defined guide tree for\n- ", paste(test_missing, collapse = "\n -"))
+    if (length(test_missing)) stop("there is no anchorage in user-defined guide tree for\n- ", 
+                                   paste(test_missing, collapse = "\n -"))
     
     ## add ingroup clade if nessesary
     ## ------------------------------
