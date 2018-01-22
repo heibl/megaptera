@@ -11,7 +11,8 @@ megapteraPars(...)
 names of the parameters described in the `Pipeline Parameters' section.}
 }
 \description{
-S4 Class for parameters of a megaptera project pipeline, as stored in \code{\link{megapteraProj}}.
+S4 Class for parameters of a megaptera project pipeline, as
+  stored in \code{\link{megapteraProj}}.
 }
 \details{
 The pipeline's verbosity can be fine-tuned with \code{debug.level}:
@@ -24,56 +25,50 @@ The pipeline's verbosity can be fine-tuned with \code{debug.level}:
 \section{Pipeline Parameters}{
  
 \describe{ 
-\item{\code{debug.level}}{Numeric,
-  a number between 0 and 5, determining the pipeline's verbosity. \emph{This
-  parameter is under development and should not be changed by the user.}} 
-\item{\code{parallel}}{Logical: if \code{TRUE}, several steps in the pipeline will
-  be run in parallel, otherwise all steps are serial.}
-\item{\code{cpus}}{Numerical: if \code{TRUE}, several steps in the pipeline will be
-  run in parallel, otherwise all steps are serial.}
-\item{\code{cluster.type}}{A character string: if \code{TRUE}, several steps in the
-  pipeline will be run in parallel, otherwise all steps are serial.}
-\item{\code{update.seqs}}{\emph{Currently unused}.}
-\item{\code{retmax}}{Numeric, giving the batch size when downloading sequences from
-  the Entrez History server (default: 500).}
-\item{\code{max.gi.per.spec}}{Numeric, giving the maximum number of sequences that
-  will be used per species. Can be used to avoid model organism (e.g., rice,
-  \emph{Drosophila}, ...) cluttering up the pipeline with thousands of
-  sequences (default: 10).}
-\item{\code{max.bp}}{Numeric, the maximal length of DNA sequences in base pairs to
-  be included in the alignment. The upper limit is determined by the
-  alignment program and the specific alignment and can only be determined by
-  trial-and-error (default: 5000).}
-\item{\code{reference.max.dist}}{\emph{Currently unused}.}
-\item{\code{min.seqs.reference}}{\emph{Currently unused}.}
-\item{\code{fract.miss}}{Numeric, ranging between 0 and 1. To avoid long stretches
-  of only a few sequences at the beginning and the ending of an alignment
-  block a minimum required number of sequences can be set as a fraction of
-  the total number of sequences in this alignment block. Has been superseeded
-  by the \code{gb.*} parameters.}
-\item{\code{block.max.dist}}{Numeric, ranging between 0 and 1. \code{block.max.dist}
-  gives the maximum genetic distance (measured as the fraction of divergent
-  nucleotide positions) allowed in a sequence alignment block. The alignment
-  of individual marker is iteratively broken into smaller blocks until this
-  condition is met with.}
-\item{\code{min.n.seq}}{Numeric, the minimum number of sequences required for an
-  alignment block. Alignment blocks with less than \code{min.n.seq} are
-  dropped from the output.}
-\item{\code{max.mad}}{Numeric, giving the treshold value for the assessment of
-  saturation: alignments with a median average distance (MAD) of
-  \code{max.mad} or greater will be broken into blocks. The default value has
-  been estimated with simulation by Smith et al. (2009).}
-\item{\code{gb1}}{Parameters for masking of alignment blocks with
-  \code{\link{gblocks}}.}
-\item{\code{gb2}}{Parameters for masking of alignment blocks with
-  \code{\link{gblocks}}.}
-\item{\code{gb3}}{Parameters for masking of alignment blocks with
-  \code{\link{gblocks}}.}
-\item{\code{gb4}}{Parameters for masking of alignment blocks with
-  \code{\link{gblocks}}.}
-\item{\code{gb5}}{Parameters for masking of alignment blocks with
-  \code{\link{gblocks}}.}
-}
+\item{\code{debug.level}}{Numeric, a
+  number between 0 and 5, determining the pipeline's verbosity (see Details). (default: 1)}
+\item{\code{parallel}}{Logical: if
+  \code{TRUE}, several steps in the pipeline will be run in parallel,
+  otherwise all steps are serial.} \item{\code{cpus}}{Numerical: if
+  \code{TRUE}, several steps in the pipeline will be run in parallel,
+  otherwise all steps are serial.} \item{\code{cluster.type}}{A character
+  string: if \code{TRUE}, several steps in the pipeline will be run in
+  parallel, otherwise all steps are serial.}
+  \item{\code{update.seqs}}{\emph{Currently unused}.}
+  \item{\code{retmax}}{Numeric, giving the batch size when downloading
+  sequences from the Entrez History server (default: 500).}
+  \item{\code{max.gi.per.spec}}{Numeric, giving the maximum number of
+  sequences that will be used per species. Can be used to avoid model
+  organism (e.g., rice, \emph{Drosophila}, ...) cluttering up the pipeline
+  with thousands of sequences (default: 10).} \item{\code{max.bp}}{Numeric,
+  the maximal length of DNA sequences in base pairs to be included in the
+  alignment. The upper limit is determined by the alignment program and the
+  specific alignment and can only be determined by trial-and-error (default:
+  5000).} \item{\code{reference.max.dist}}{\emph{Currently unused}.}
+  \item{\code{min.seqs.reference}}{\emph{Currently unused}.}
+  \item{\code{fract.miss}}{Numeric, ranging between 0 and 1. To avoid long
+  stretches of only a few sequences at the beginning and the ending of an
+  alignment block a minimum required number of sequences can be set as a
+  fraction of the total number of sequences in this alignment block. Has been
+  superseeded by the \code{gb.*} parameters.}
+  \item{\code{block.max.dist}}{Numeric, ranging between 0 and 1.
+  \code{block.max.dist} gives the maximum genetic distance (measured as the
+  fraction of divergent nucleotide positions) allowed in a sequence alignment
+  block. The alignment of individual marker is iteratively broken into
+  smaller blocks until this condition is met with.}
+  \item{\code{min.n.seq}}{Numeric, the minimum number of sequences required
+  for an alignment block. Alignment blocks with less than \code{min.n.seq}
+  are dropped from the output.} \item{\code{max.mad}}{Numeric, giving the
+  treshold value for the assessment of saturation: alignments with a median
+  average distance (MAD) of \code{max.mad} or greater will be broken into
+  blocks. The default value has been estimated with simulation by Smith et
+  al. (2009).} \item{\code{gb1}}{Parameters for masking of alignment blocks
+  with \code{\link{gblocks}}.} \item{\code{gb2}}{Parameters for masking of
+  alignment blocks with \code{\link{gblocks}}.} \item{\code{gb3}}{Parameters
+  for masking of alignment blocks with \code{\link{gblocks}}.}
+  \item{\code{gb4}}{Parameters for masking of alignment blocks with
+  \code{\link{gblocks}}.} \item{\code{gb5}}{Parameters for masking of
+  alignment blocks with \code{\link{gblocks}}.} }
 }
 
 \examples{

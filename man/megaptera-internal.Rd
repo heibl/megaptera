@@ -24,7 +24,6 @@
 \alias{compare.phylo.backbone}
 \alias{coverage}
 \alias{dbAutoFillTaxonomy}
-\alias{dbChangeSpecName}
 \alias{dbconnect}
 \alias{dbChooseRef}
 \alias{dbExcludeIndet}

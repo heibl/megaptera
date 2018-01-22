@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-11-28)
+## © C. Heibl 2016 (last update 2018-01-22)
 
 #' @title STEP G: MAFFT Alignment
 #' @description Use MAFFT to align tip-rank-level sequences.

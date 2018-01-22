@@ -1,8 +1,8 @@
 Package: megaptera
 Type: Package
 Title: MEGAPhylogeny Techniques in R
-Version: 1.1.1
-Date: 2018-01-15
+Version: 1.1.2
+Date: 2018-01-22
 Authors@R: person("Christoph", "Heibl", 
   email = "christoph.heibl@gmx.net",
   role = c("aut", "cre"))
@@ -33,7 +33,7 @@ Description: Given a set of taxa and markers, the goal is build a complete and
 License: GPL (>= 2)
 LazyData: true
 VignetteBuilder: knitr
-Packaged: Mon Jan 15 16:51:48 2018
+Packaged: Mon Jan 22 15:34:27 2018
 RoxygenNote: 6.0.1
 Collate: 
     'BOLD2megaptera.R'
@@ -49,7 +49,6 @@ Collate:
     'alignSpecies.R'
     'as.Linnean.R'
     'boxplotMSA.R'
-    'changeSpecName.R'
     'check.TaxAgainstPhy.R'
     'checkBlocks.R'
     'checkExcludedSpec.R'
@@ -58,6 +57,7 @@ Collate:
     'checkSpecLocus.R'
     'checkSpecies.R'
     'checkStatus.R'
+    'checkSubset.R'
     'collapseSingles.R'
     'compareToRef.R'
     'comprehensiveGuidetree.R'
@@ -78,6 +78,7 @@ Collate:
     'dbReadLocus.R'
     'dbReadReference.R'
     'dbReadTaxomony.R'
+    'dbRenameSpecies.R'
     'dbSummaryMSA.R'
     'dbSummaryTaxonomy.R'
     'dbTableNames.R'
