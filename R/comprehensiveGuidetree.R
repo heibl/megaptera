@@ -73,7 +73,7 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
     ## create subtrees that will be plotted onto the guide
     ## tree's tips
     ## -----------
-    subtrees <- lapply(gt$tip.label, taxdumpDaughters, tax = tax, tip.rank = tip.rank)
+    subtrees <- lapply(gt$tip.label, taxdumpChildren, tax = tax, tip.rank = tip.rank)
     subtrees <- lapply(subtrees, taxdump2phylo, tip.rank = tip.rank)
     names(subtrees) <- gt$tip.label
 
@@ -147,7 +147,7 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
   ## classification into guidetree
   ## -----------------------------
     # gt <- findRoot(megProj, "both")
-    # gt <- taxdumpDaughters(tax, tail(gt$taxon, 1), tip.rank)
+    # gt <- taxdumpChildren(tax, tail(gt$taxon, 1), tip.rank)
     # gt <- taxdump2phylo(gt, tip.rank)
     gt <- taxdump2phylo(tax, tip.rank)
     }

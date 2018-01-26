@@ -1,8 +1,8 @@
 Package: megaptera
 Type: Package
 Title: MEGAPhylogeny Techniques in R
-Version: 1.1.2
-Date: 2018-01-22
+Version: 1.1.3
+Date: 2018-01-26
 Authors@R: person("Christoph", "Heibl", 
   email = "christoph.heibl@gmx.net",
   role = c("aut", "cre"))
@@ -33,7 +33,7 @@ Description: Given a set of taxa and markers, the goal is build a complete and
 License: GPL (>= 2)
 LazyData: true
 VignetteBuilder: knitr
-Packaged: Mon Jan 22 15:34:27 2018
+Packaged: Fri Jan 26 12:53:42 2018
 RoxygenNote: 6.0.1
 Collate: 
     'BOLD2megaptera.R'
@@ -167,7 +167,7 @@ Collate:
     'tax2tree.R'
     'taxdump2phylo.R'
     'taxdumpAddNode.R'
-    'taxdumpDaughters.R'
+    'taxdumpChildren.R'
     'taxdumpDropTip.R'
     'taxdumpHigherRank.R'
     'taxdumpLineage.R'

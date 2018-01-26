@@ -22,6 +22,6 @@ Convert a taxonomy table in parent-child format into an object
 }
 \seealso{
 \code{\link{dbReadTaxonomy}}, 
-  \code{\link{taxdumpDaughters}},\code{\link{taxdumpLineage}}, 
+  \code{\link{taxdumpChildren}},\code{\link{taxdumpLineage}}, 
   \code{\link{taxdumpSubset}}, \code{\link{taxdumpAddNode}}.
 }

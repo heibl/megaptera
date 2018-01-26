@@ -86,7 +86,7 @@ stepA <- function(x){
     ingroup <- rbind(taxdumpLineage(tax, ig[1]), ingroup) ## add lineage to root
   } else {
     ## use lapply to handle more than one taxon
-    ingroup <- c(lapply(ig, taxdumpDaughters, tax = tax, tip.rank = "species"),
+    ingroup <- c(lapply(ig, taxdumpChildren, tax = tax, tip.rank = "species"),
                  lapply(ig, taxdumpLineage, tax = tax))
     ingroup <- do.call(rbind, ingroup)
   }
@@ -118,7 +118,7 @@ stepA <- function(x){
     outgroup <- rbind(taxdumpLineage(tax, outgroup$taxon[1]), outgroup) ## add lineage to root
   } else {
     ## use lapply to handle more than one taxon
-    outgroup <- c(lapply(og, taxdumpDaughters, tax = tax, tip.rank = "species"),
+    outgroup <- c(lapply(og, taxdumpChildren, tax = tax, tip.rank = "species"),
                  lapply(og, taxdumpLineage, tax = tax))
     outgroup <- do.call(rbind, outgroup)
   }

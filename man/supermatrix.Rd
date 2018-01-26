@@ -6,7 +6,8 @@
 \usage{
 supermatrix(megProj, min.n.seq = 3, masked = TRUE, blocks = "split",
   partition, coverage.locus = 0.5, subset.locus, subset.species,
-  exclude.locus, exclude.species, core.locus, core.species, squeeze.outgroup)
+  exclude.locus, exclude.species, core.locus, core.species,
+  best.sampled.congeneric = FALSE, squeeze.outgroup)
 }
 \arguments{
 \item{megProj}{An object of class \code{\link{megapteraProj}}.}
@@ -48,6 +49,9 @@ contained in the 'core' loci. This option is intended to create denser
 supermatrices.}
 
 \item{core.species}{\emph{Currently unused.}}
+
+\item{best.sampled.congeneric}{Logical, keep all but the best-sampled species
+in every genus.}
 
 \item{squeeze.outgroup}{Numeric, can be given to reduce the number of
 outgroup species: The function will select the \code{squeeze.outgroup}

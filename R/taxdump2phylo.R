@@ -10,7 +10,7 @@
 #'   treated as tip rank, i.e. all taxa of lower rank will be dicarded.
 #' @return An object of class \code{\link{phylo}}.
 #' @seealso \code{\link{dbReadTaxonomy}}, 
-#'   \code{\link{taxdumpDaughters}},\code{\link{taxdumpLineage}}, 
+#'   \code{\link{taxdumpChildren}},\code{\link{taxdumpLineage}}, 
 #'   \code{\link{taxdumpSubset}}, \code{\link{taxdumpAddNode}}.
 #' @importFrom ape collapse.singles
 #' @export

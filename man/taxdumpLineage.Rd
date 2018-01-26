@@ -16,7 +16,7 @@ frame as returned by \code{\link{dbReadTaxonomy}}.}
 Get all higher ranks including a given taxon.
 }
 \seealso{
-\code{\link{taxdumpAddNode}}, \code{\link{taxdumpDaughters}},
+\code{\link{taxdumpAddNode}}, \code{\link{taxdumpChildren}},
   \code{\link{taxdumpMRCA}}, \code{\link{taxdumpSubset}},
   \code{\link{taxdump2phylo}}
 }

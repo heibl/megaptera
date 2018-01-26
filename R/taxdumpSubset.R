@@ -12,7 +12,7 @@
 #' @param root A character string choosing between \code{"mrca"} and
 #'   \code{"tol"} (tree of life).
 #' @seealso \code{\link{dbReadTaxonomy}},
-#'   \code{\link{taxdumpDaughters}},\code{\link{taxdumpLineage}},
+#'   \code{\link{taxdumpChildren}},\code{\link{taxdumpLineage}},
 #'   \code{\link{taxdumpAddNode}}, \code{\link{taxdump2phylo}}.
 #' @export
 

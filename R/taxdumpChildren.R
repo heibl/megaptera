@@ -13,6 +13,7 @@
 #'   treated as tip rank, i.e. all taxa of lower rank will be dicarded.
 #' @param indet A vector of character strings containing regular expressions
 #'   (see Examples).
+#' @param quiet Logical, use \code{quiet = TRUE} to suppress warning messages.
 #' @return A data frame.
 #' @seealso \code{\link{ncbiTaxonomy}} for downloading the NCBI taxonomy and
 #'   \code{\link{dbReadTaxonomy}} for reading the project taxonomy; other
@@ -25,8 +26,8 @@
 #' indet.strings()
 #' @export
 
-taxdumpDaughters <- function(tax, taxon, immediate = FALSE, tip.rank = "species", 
-                             indet = indet.strings()){
+taxdumpChildren <- function(tax, taxon, immediate = FALSE, tip.rank = "species", 
+                             indet = indet.strings(), quiet = FALSE){
   
   ## checks
   ## ------
@@ -43,7 +44,7 @@ taxdumpDaughters <- function(tax, taxon, immediate = FALSE, tip.rank = "species"
   if (length(grep("[[:alpha:]]", taxon)) == 1){
     id <- tax[tax$taxon == taxon, "id"]
     if (!length(id)) {
-      warning("taxon '", taxon, "' not available")
+      if (!quiet) warning("taxon '", taxon, "' not available")
       return(NULL)
     }
   } else {

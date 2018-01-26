@@ -132,13 +132,13 @@ stepB <- function(x, update.seqs = "no"){
                "WHERE npos >", x@params@max.bp)
   dbSendQuery(conn, SQL)
   
-  ## select sequences if there are > max.gi.per.spec
+  ## Select sequences if there are > max.gi.per.spec
   ## -----------------------------------------------
   dbMaxGIPerSpec(x)
   
-  ## create and update relation <taxonomy>
-  ## handle species found in stepB that are not included in taxonomy table
-  # dbUpdateTaxonomy(x) 
+  ## Update relation <taxonomy>
+  ## Handle species found in stepB that are not included in taxonomy table
+  dbUpdateTaxonomy(x)
   
   # summary
   # -------

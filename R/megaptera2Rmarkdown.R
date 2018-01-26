@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2018-01-10)
+## © C. Heibl 2016 (last update 2018-01-23)
 
 #' @title RMarkdown Report
 #' @description Creates a status report for a megaptera Project using RMarkdown.
@@ -44,22 +44,21 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
   
   ## SETTINGS: TAXONOMY
   ## ------------------
-  spec.list <- all(unlist(sapply(x@taxon@ingroup, is.Linnean)))
+  ingroup_speclist <- all(unlist(sapply(x@taxon@ingroup, is.Linnean)))
   ingroup <- head(x@taxon@ingroup, 3)
-  if (spec.list) ingroup <- paste("*", ingroup, "*", sep = "")
+  if (ingroup_speclist) ingroup <- paste0("*", ingroup, "*")
   ingroup <- paste(ingroup, collapse = ", ")
   n <- length(x@taxon@ingroup)
   if (n > 3){
-    ingroup <- paste(ingroup, paste(", ... [", n, " taxa in total]", 
-                                    sep = ""), sep = "")
+    ingroup <- paste0(ingroup, paste0(", ... [", n, " taxa in total]"))
   }
+  outgroup_speclist <- all(unlist(sapply(x@taxon@outgroup, is.Linnean)))
   outgroup <- head(x@taxon@outgroup, 3)
-  outgroup <- paste("*", outgroup, "*", sep = "")
+  if (outgroup_speclist) outgroup <- paste0("*", outgroup, "*")
   outgroup <- paste(outgroup, collapse = ", ")
   n <- length(x@taxon@outgroup)
   if (n > 3){
-    outgroup <- paste(outgroup, paste(", ... [", n, " taxa in total]", 
-                                      sep = ""), sep = "")
+    outgroup <- paste0(outgroup, paste0(", ... [", n, " taxa in total]"))
   }
   
   z <- c(z, 
@@ -145,7 +144,9 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
   ## ------------------
   tax <- dbReadTaxonomy(x)
   
-  if (spec.list){
+  ## ingroup
+  ## -------
+  if (ingroup_speclist){
     ingroup_queried <- sapply(x@taxon@ingroup, head, n = 1)
     ingroup_received  <- intersect(ingroup_queried, tax$taxon)
     n_ingroup_received <- length(ingroup_received)
@@ -153,37 +154,92 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
     n_ingroup_missing <- length(ingroup_missing)
     ingroup_false <- setdiff(ingroup_received, ingroup_queried)
     
-    tax.coverage <- c(
+    ingroup_coverage <- c(
       "Query of the NCBI Taxonomy Database gave these results:", "",
       paste0("**", n_ingroup_received, "** ingroup species (of ",
              length(ingroup_queried), " = ",
              round(n_ingroup_received / length(ingroup_queried) * 100, 2),
              "%) could be retrieved"))
-    if (n_ingroup_received <= nmax) tax.coverage <- c(tax.coverage, "", paste0("- *", ingroup_queried, "*"))
+    if (n_ingroup_received <= nmax) ingroup_coverage <- c(ingroup_coverage, "", paste0("- *", ingroup_queried, "*"))
     if (n_ingroup_missing){
-      tax.coverage <- c(tax.coverage, "",
+      ingroup_coverage <- c(ingroup_coverage, "",
                         paste0("**", n_ingroup_missing, "** ingroup species (",
                                round(n_ingroup_missing / length(ingroup_queried) * 100, 2),
                                "%) were missing"))
-      if (n_ingroup_missing <= nmax) tax.coverage <- c(tax.coverage, "", paste0("- *", ingroup_missing, "*"))
+      if (n_ingroup_missing <= nmax) ingroup_coverage <- c(ingroup_coverage, "", paste0("- *", ingroup_missing, "*"))
       
     }
     if (length(ingroup_false)){
-      tax.coverage <- c(tax.coverage, "",
+      ingroup_coverage <- c(ingroup_coverage, "",
                         paste0("- **WARNING**: *", ingroup_false, "* falsely as ingroup classified"))
     }
   } else {
-    res <- table(tax$rank)
-    res <- res[c("species", "genus", "family", "order")]
-    names(res) <- c("species", "genera", "families", "orders")
-    tax.coverage <- c(paste0("NCBI Taxonomy was searched for **", x@taxon@tip.rank, 
-                             "** of **", x@taxon@ingroup, "**"), "",
-                      "The search retrieved:", "", paste("-", res, names(res)))
-    if (res["species"] <= nmax) tax.coverage <- c(tax.coverage, "", "IMPLEMENT ME!")
+    ranks <- data.frame(sg = c("species", "genus", "family", "order"),
+                        pl = c("species", "genera", "families", "orders"),
+                        stringsAsFactors = FALSE)
+    ingroup <- taxdumpSubset(tax, x@taxon@ingroup, root = "mrca")
+    ingroup_tab <- table(ingroup$rank)
+    ig_ranks <- ranks[ranks$sg %in% names(ingroup_tab), ]
+    ingroup_tab <- ingroup_tab[ig_ranks$sg]
+    names(ingroup_tab)[ingroup_tab > 1] <- ig_ranks$pl[ingroup_tab > 1]
+    ingroup_coverage <- c(paste0("NCBI Taxonomy was searched for **", x@taxon@tip.rank, 
+                                  "** of **", x@taxon@ingroup, "**."), "",
+                           paste0("The search retrieved ", 
+                                  paste(paste(ingroup_tab, names(ingroup_tab)), collapse = " in ")), ":")
+    if (ingroup_tab["species"] <= nmax) ingroup_coverage <- c(ingroup_coverage, "", 
+                                                                paste0("- *", sort(ingroup$taxon[ingroup$rank == x@taxon@tip.rank]), "*"))
   }
+  ingroup_coverage <- c("## Ingroup", ingroup_coverage)
+  
+  ## outgroup
+  ## -------
+  if (outgroup_speclist){
+    outgroup_queried <- sapply(x@taxon@outgroup, head, n = 1)
+    outgroup_received  <- intersect(outgroup_queried, tax$taxon)
+    n_outgroup_received <- length(outgroup_received)
+    outgroup_missing <- setdiff(outgroup_queried, outgroup_received)
+    n_outgroup_missing <- length(outgroup_missing)
+    outgroup_false <- setdiff(outgroup_received, outgroup_queried)
+    
+    outgroup_coverage <- c(
+      "Query of the NCBI Taxonomy Database gave these results:", "",
+      paste0("**", n_outgroup_received, "** outgroup species (of ",
+             length(outgroup_queried), " = ",
+             round(n_outgroup_received / length(outgroup_queried) * 100, 2),
+             "%) could be retrieved"))
+    if (n_outgroup_received <= nmax) outgroup_coverage <- c(outgroup_coverage, "", paste0("- *", outgroup_queried, "*"))
+    if (n_outgroup_missing){
+      outgroup_coverage <- c(outgroup_coverage, "",
+                            paste0("**", n_outgroup_missing, "** outgroup species (",
+                                   round(n_outgroup_missing / length(outgroup_queried) * 100, 2),
+                                   "%) were missing"))
+      if (n_outgroup_missing <= nmax) outgroup_coverage <- c(outgroup_coverage, "", paste0("- *", outgroup_missing, "*"))
+      
+    }
+    if (length(outgroup_false)){
+      outgroup_coverage <- c(outgroup_coverage, "",
+                            paste0("- **WARNING**: *", outgroup_false, "* falsely as outgroup classified"))
+    }
+  } else {
+    ranks <- data.frame(sg = c("species", "genus", "family", "order"),
+                        pl = c("species", "genera", "families", "orders"),
+                        stringsAsFactors = FALSE)
+    outgroup <- taxdumpSubset(tax, x@taxon@outgroup, root = "mrca")
+    outgroup_tab <- table(outgroup$rank)
+    og_ranks <- ranks[ranks$sg %in% names(outgroup_tab), ]
+    outgroup_tab <- outgroup_tab[og_ranks$sg]
+    names(outgroup_tab)[outgroup_tab > 1] <- og_ranks$pl[outgroup_tab > 1]
+    outgroup_coverage <- c(paste0("NCBI Taxonomy was searched for **", x@taxon@tip.rank, 
+                                 "** of **", x@taxon@outgroup, "**."), "",
+                          paste0("The search retrieved ", 
+                                paste(paste(outgroup_tab, names(outgroup_tab)), collapse = " in "), "."))
+    if (outgroup_tab["species"] <= nmax) outgroup_coverage <- c(outgroup_coverage, "", 
+                                                                paste0("- *", sort(outgroup$taxon[outgroup$rank == x@taxon@tip.rank]), "*"))
+  }
+  outgroup_coverage <- c("## Outgroup", outgroup_coverage)
+  
   ## guide tree
   ## ----------
-  
   if (inherits(x@taxon, 'taxonGuidetree')){
     guide_tree <- c("## User-defined guide tree",
                     "```{r, echo=FALSE, message=FALSE}",
@@ -192,7 +248,9 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
   } else {
     guide_tree <- ""
   }
-  z <- c(z, "# Taxonomy", tax.coverage, "", guide_tree)
+  z <- c(z, "# Taxonomy", ingroup_coverage, "", outgroup_coverage, "", guide_tree)
+  
+  
   
   ## stop here if no sequences have been downloaded so far
   ## -----------------------------------------------------

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-01-10)
+## © C. Heibl 2014 (last update 2018-01-25)
 
 # TO DO: marker-wise deletion of species (line 38)
 
@@ -34,6 +34,8 @@
 #'   contained in the 'core' loci. This option is intended to create denser
 #'   supermatrices.
 #' @param core.species \emph{Currently unused.}
+#' @param best.sampled.congeneric Logical, keep all but the best-sampled species
+#'   in every genus.
 #' @param squeeze.outgroup Numeric, can be given to reduce the number of
 #'   outgroup species: The function will select the \code{squeeze.outgroup}
 #'   outgroup species with the best coverage. The idea is to create a more
@@ -60,34 +62,40 @@ supermatrix <- function(megProj, min.n.seq = 3,
                         subset.locus, subset.species,
                         exclude.locus, exclude.species,
                         core.locus, core.species,
+                        best.sampled.congeneric = FALSE,
                         squeeze.outgroup){
   
-  ## CHECKS
-  ## ------
+  ## INITIAL CHECKS + ADJUSTMENTS
+  ## ----------------------------
   if (!inherits(megProj, "megapteraProj")) stop("'megProj' is not of class 'megapteraProj'")
-  
   tip.rank <- megProj@taxon@tip.rank
   if (length(min.n.seq) == 1) min.n.seq <- rep(min.n.seq, 2)
+  blocks <- match.arg(blocks, c("concatenate", "ignore", "split"))
+  if (blocks == "concatenate") blocks <- "split"
+  
+  #############################################
+  ##  PART 1: Determine tables (loci) to import
+  #############################################
   
   ## Determine tables that contain more than min.n.seq species
   ## ---------------------------------------------------------
   cat("Looking for database tables ... ")
   tabs <- checkBlocks(megProj, plot = FALSE, subset = subset.species)
-  cat(length(tabs), " found:", paste("\n  -", names(tabs)), sep = "")
+  cat(length(tabs), " found:", paste("\n-", names(tabs)), sep = "")
   id <- sapply(tabs, function(z) any(z >= min.n.seq[1]))
   tabs <- names(tabs)[id]
   cat("\n", length(tabs), " of these contain at least ", min.n.seq[1], " species:", 
-      paste("\n  -", tabs), sep = "")
+      paste("\n-", tabs), sep = "")
   
-  ## Subset loci to locus (optional)
-  ## -------------------------------
+  ## User-defined subset loci (optional)
+  ## -----------------------------------
   if (!missing(subset.locus)){
     cat("\nSubsetting to loci:", subset.locus)
     subset.locus <- paste(subset.locus, collapse = "|")
     tabs <- tabs[grep(subset.locus, tabs)]
   }
   
-  ## Exclude loci from concatenation (optional)
+  ## User-defined exclusion of loci (optional)
   ## ------------------------------------------
   if (!missing(exclude.locus)){
     cat("\nExcluding locus:", exclude.locus)
@@ -95,17 +103,22 @@ supermatrix <- function(megProj, min.n.seq = 3,
     tabs <- tabs[-grep(exclude.locus, tabs)]
   }
   
+  #############################################
+  ##  PART 2: Import alignments
+  #############################################
+  
   ## Select and read individual alignments
   ## -------------------------------------
   cat("\nReading", length(tabs), "alignments ... ")
   if (missing(subset.species)){
     x <- lapply(tabs, dbReadDNA, x = megProj, blocks = blocks, masked = masked)
   } else {
-    x <- lapply(tabs, dbReadDNA, x = megProj, taxon = subset.species, regex = FALSE, blocks = blocks, masked = masked)
+    x <- lapply(tabs, dbReadDNA, x = megProj, taxon = subset.species, regex = FALSE, 
+                blocks = blocks, masked = masked)
   }
   cat("done")
   if (any(sapply(x, is.null))) x <- x[!sapply(x, is.null)]
-
+  
   ## Handle blocks
   ## -------------
   block.id <- which(sapply(x, is.list))
@@ -124,7 +137,6 @@ supermatrix <- function(megProj, min.n.seq = 3,
     x[block.id] <- lapply(x[block.id], concatenateBlocks, n = min.n.seq[2])
   }
   
-  
   # x <- lapply(x, trimEnds, min.n.seq = min.n.seq)
   
   names(x) <- gsub(paste0("^", tip.rank, "_"), "", tabs)
@@ -138,13 +150,14 @@ supermatrix <- function(megProj, min.n.seq = 3,
   ## Exclude species from alignments that have
   ## less than 'coverage.locus' percent sites
   ## ----------------------------------------
-  cat("\nExcluding snippets (<", coverage.locus, "% sites) ..")
+  cat("\nExcluding snippets (<", coverage.locus, "% sites) ... ")
   exclude.snippets <- function(a, coverage.locus){
     cv <- coverage(a)
     cv <- names(cv)[cv >= coverage.locus]
     a[cv, ]
   }
   x <- lapply(x, exclude.snippets, coverage.locus = coverage.locus)
+  cat("done")
   ## any species lost?
   spec.set2 <- lapply(x, rownames)
   spec.set2 <- table(unlist(spec.set2))
@@ -162,11 +175,12 @@ supermatrix <- function(megProj, min.n.seq = 3,
   ## core set of species
   ## -------------------
   if (!missing(core.locus)){
-    cat("\nMaking core dataset")
+    cat("\nMaking core dataset ... ")
     core.species <- lapply(x[core.locus], function(x) rownames(x))
     core.species <- unique(unlist(core.species))
     subset.alignment <- function(a, s) deleteEmptyCells(a[rownames(a) %in% s, ], quiet = TRUE)
     x <- lapply(x, subset.alignment, s = core.species)
+    cat("done")
   }
   
   ## create partitions
@@ -193,26 +207,45 @@ supermatrix <- function(megProj, min.n.seq = 3,
   
   ## create SUPERMATRIX
   ## ------------------
-  cat("\nConcatenating alignments ..")
+  cat("\nConcatenating alignments ... ")
   x <- do.call(cbind.DNAbin, c(x, fill.with.gaps = TRUE))
+  cat("done")
   
   ## exclude species by user decision
   ## --------------------------------
   if (!missing(exclude.species)){
     exclude.species <- intersect(exclude.species, rownames(x))
     nes <- length(exclude.species)
-    if ( nes > 0 ){
-      cat("\nExcluding ", nes ," (", 
-          round(nes/nrow(x), 2), 
-          "%) species by user decision ..", sep = "")
+    if (nes > 0){
+      cat("\nExcluding ", nes ," (", round(nes/nrow(x), 2), 
+          "%) species by user decision ... ", sep = "")
       x <- x[!rownames(x) %in% exclude.species, ]
+      cat("done")
     }
+  }
+  
+  ## create denser ingroup
+  if (best.sampled.congeneric){
+    cat("\nKeeping only one best-sampled species per genus ... ")
+    percentInformative <- function(z){
+      length(which(!z %in% as.raw(c(n = 240, "?" = 2, "-" = 4))))/length(z)
+    }
+    bsc <- apply(x, 1, percentInformative)
+    bsc <- data.frame(species = names(bsc), 
+                      genus = strip.spec(names(bsc)),
+                      fraction = bsc,
+                      stringsAsFactors = FALSE)
+    bsc <- bsc[order(bsc$species), ]
+    bsc <- split(bsc, f = bsc$genus)
+    bsc <- sapply(bsc, function(z) z$species[which.max(z$fraction)])
+    x <- x[bsc, ]
+    cat("done")
   }
   
   ## outgroup
   ## --------
   tax <- dbReadTaxonomy(megProj)
-  outgroup <- lapply(megProj@taxon@outgroup, taxdumpDaughters,
+  outgroup <- lapply(megProj@taxon@outgroup, taxdumpChildren,
                      tax = tax, tip.rank = "species")
   outgroup <- do.call(rbind, outgroup)
   outgroup <- intersect(gsub(" ", "_", outgroup$taxon), rownames(x))
@@ -232,13 +265,19 @@ supermatrix <- function(megProj, min.n.seq = 3,
     cat("done")
   }
   
-  ## make filenames (from here on 'x' does not change any more)
+  ## Make filenames (from here on 'x' does not change any more)
   ## ----------------------------------------------------------
   masked <- ifelse(masked, "masked", "")
   fn <- paste("data/supermatrix", nrow(x), ngene, ncol(x), sep = "-")
   ext <- c("tre", "phy", "nex", "partitions", "outgroup")
   fns <- paste(fn, ext, sep = ".")
   names(fns) <- ext
+  
+  ## Assess amount of missing data
+  ## -----------------------------
+  md <- length(which(x %in% as.raw(c(n = 240, "?" = 2, "-" = 4))))/length(x)
+  cat("\nSupermatrix contains ", round(md * 100, 2), 
+      "% missing data (including gaps)", sep = "")
   
   ## prepare guide tree 
   ## ------------------
@@ -269,11 +308,12 @@ supermatrix <- function(megProj, min.n.seq = 3,
   
   ## write data as PHY and NEX
   ## -------------------------
-  cat("\nWriting supermatrix to files ..")
+  cat("\nWriting supermatrix to files ... ")
   write.tree(gt, fns["tre"])
   write.phy(x, fns["phy"])
   rownames(x) <- gsub("-", "_", rownames(x))
   write.nex(x, fns["nex"])
+  cat("done")
   
   obj
 }

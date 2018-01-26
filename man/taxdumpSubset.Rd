@@ -24,6 +24,6 @@ Get subset of a taxonomy table in parent-child format.
 }
 \seealso{
 \code{\link{dbReadTaxonomy}},
-  \code{\link{taxdumpDaughters}},\code{\link{taxdumpLineage}},
+  \code{\link{taxdumpChildren}},\code{\link{taxdumpLineage}},
   \code{\link{taxdumpAddNode}}, \code{\link{taxdump2phylo}}.
 }

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-29)
+## © C. Heibl 2014 (last update 2018-01-26)
 
 #' @title Barplot of Species Numbers per Locus
 #' @description Produce a barplot showing the number of species found for each
@@ -10,12 +10,14 @@
 #'   species numbers for each locus if this locus was to be concatenated with
 #'   all other loci having more species.
 #' @param megProj An object of class \code{\link{megapteraProj}}.
-#' @param stage A vector of mode \code{character}; valid are \code{"gb"},
+#' @param stage A vector of mode \code{character}; valid are \code{"retrieved"},
 #'   \code{"sel"}, or \code{"blocks"} referring to the number of species (1)
-#'   found on GenBank, (2) selected according to coverage and identity (see
+#'   found on in the database, (2) selected according to coverage and identity (see
 #'   \code{\link{locus}}); or included in the final alignment, respectively.
-#' @param subset A vector of mode \code{"character"}, that can be used to choose
+#' @param subset.taxon A vector of mode \code{"character"}, that can be used to choose
 #'   a subset of the total taxa available.
+#' @param subset.locus A vector of mode \code{"character"}, that can be used to choose
+#'   a subset of the total loci available.
 #' @param plot Logical, indicating if the barplot should be produced on the
 #'   current graphical device or not.
 #' @return A list, but mainly called for its side effect, the plotting of a
@@ -25,28 +27,45 @@
 #' @importFrom graphics barplot lines par text
 #' @export
 
-checkSpecLocus <- function(megProj, stage = "sel", subset,
+checkSpecLocus <- function(megProj, stage = "selected", 
+                           subset.taxon, subset.locus,
                            plot = TRUE){
   
-  ## join taxonomy and locus tables
+  if (!inherits(megProj, "megapteraProj")) 
+    stop("'megProj' is not of class 'megapteraProj'")
+  
+  ## Join taxonomy and locus tables
   ## ------------------------------
-  x <- dbReadLocus(megProj, subset = subset)
+  x <- dbReadLocus(megProj, subset = subset.taxon)
   spec <- rownames(x)
   
-  ## select columns according to 'colname'
+  ## Select columns according to 'colname'
   ## -------------------------------------
-  stage <- match.arg(stage, c("gb", "sel"))
+  args <- c(gb = "retrieved", sel = "selected")
+  stage <- names(match.arg(stage, args))
   stage <- paste(stage, "_", sep = "")
   cols <- grep(stage, names(x))
   if (!length(cols)) stop("no locus available")
   x <- x[, cols, drop = FALSE]
   
-  ## some cosmetics on locus names
+  ## Some cosmetics on locus names
   ## -----------------------------
   colnames(x) <- gsub(stage, "", colnames(x))
   colnames(x) <- gsub("^_", "", colnames(x))
   colnames(x) <- gsub("([[:digit:]])(_)([[:digit:]])", "\\1,\\3", colnames(x))
   colnames(x) <- gsub("([[:alpha:]])(_)([[:alpha:]])", "\\1 \\3", colnames(x))
+  
+  ## Choose subset of loci (optional)
+  ## --------------------------------
+  if (!missing(subset.locus)){
+    subset.locus <- gsub("^_", "", subset.locus)
+    id <- setdiff(subset.locus, colnames(x))
+    if (length(id)){
+      warning(length(id), " loci not available:",
+              paste0("\n- ", id))
+    }
+    x <- x[, subset.locus]
+  }
   
   ## convert to binary matrix
   ## ------------------------

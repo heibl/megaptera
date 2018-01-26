@@ -20,7 +20,7 @@ Check if nodes are terminal, e.g. they are not parent nodes.
 \code{\link{ncbiTaxonomy}} for downloading the NCBI taxonomy and
   \code{\link{dbReadTaxonomy}} for reading the project taxonomy; other
   taxdump-related tools: \code{\link{taxdumpAddNode}},
-  \code{\link{taxdumpDaughters}}, \code{\link{taxdumpDropTip}},
+  \code{\link{taxdumpChildren}}, \code{\link{taxdumpDropTip}},
   \code{\link{taxdumpHigherRank}}, \code{\link{taxdumpMRCA}},
   \code{\link{taxdumpSubset}}, \code{\link{taxdump2phylo}}
 }

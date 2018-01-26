@@ -25,7 +25,7 @@ is.ingroup <- function(megProj, taxon){
       # if (all(is.Linnean(taxon))){
       #   taxon <- strip.spec(taxon)
       # }
-      ingroup <- lapply(ingroup, taxdumpDaughters, tax = megProj, tip.rank = tip.rank)
+      ingroup <- lapply(ingroup, taxdumpChildren, tax = megProj, tip.rank = tip.rank)
       ingroup <- lapply(ingroup, function(z, tr) z[z$rank == tr, "taxon"], 
                         tr = tip.rank)
       ingroup <- unlist(ingroup)
