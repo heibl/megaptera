@@ -19,7 +19,7 @@ speciesConsensus <- function(megProj, spec){
   min.coverage <- megProj@locus@min.coverage
   logfile <- paste0("log/", gene, "stepF.log")
   
-  ## read species alignments
+  ## Read species alignments
   ## -----------------------
   obj <- dbReadDNA(spec, x = megProj, tab.name = acc.tab, 
                    max.bp = max.bp, 
@@ -27,14 +27,14 @@ speciesConsensus <- function(megProj, spec){
                    min.coverage = min.coverage)
   if (!is.matrix(obj)) obj <- mafft(obj, exec = megProj@align.exe)
 
-  ## species consensus sequences
+  ## Species consensus sequences
   ## ---------------------------
   obj <- specCons(obj, log = logfile)
   obj <- list(obj)
-  names(obj) <- spec
+  names(obj) <- spec$taxon
   class(obj) <- "DNAbin"
   
-  ## write MSA to database
+  ## Write MSA to database
   ## ---------------------
   dbWriteMSA(megProj, obj, n = n, md5 = md5)
 }
