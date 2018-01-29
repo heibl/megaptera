@@ -35,7 +35,8 @@ LazyData: true
 VignetteBuilder: knitr
 Packaged: Thu Oct 20 19:35:17 2016
 RoxygenNote: 6.0.1
-Collate:
+Collate: 
+    'DNAbin2pg.R'
     'EFetchXML.R'
     'MAD.R'
     'NCBI.wrap.R'
@@ -131,7 +132,7 @@ Collate:
     'optimizeIdentity.R'
     'overlappingPairs2.R'
     'pdfPhyloA0.R'
-    'plotPhyloWithClassification.R'
+    'pg2DNAbin.R'
     'proParte.R'
     'prune.phylo.rank.R'
     'robustXMLparse.R'
@@ -154,6 +155,7 @@ Collate:
     'stepD.R'
     'stepE.R'
     'stepF.R'
+    'stepFF.R'
     'stepG.R'
     'stepGG.R'
     'stepH.R'
