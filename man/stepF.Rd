@@ -19,5 +19,5 @@ In \code{stepF} FASTA files will be assembled selecting all
 }
 \seealso{
 \code{\link{megapteraProj}}; \code{\link{stepE}} for the preceeding
-  and \code{\link{stepG}} for the subsequent step.
+  and \code{\link{stepMAFFT}} for the subsequent step.
 }

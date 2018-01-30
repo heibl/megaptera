@@ -31,10 +31,15 @@ speciesConsensus <- function(megProj, spec){
   ## ---------------------------
   obj <- specCons(obj, log = logfile)
   obj <- list(obj)
-  names(obj) <- spec$taxon
+  names(obj) <- spec
   class(obj) <- "DNAbin"
   
   ## Write MSA to database
   ## ---------------------
   dbWriteMSA(megProj, obj, n = n, md5 = md5)
+  
+  cat(paste0("\n>", paste(gsub(" ", "_", names(obj)))), file = "aaa.fas", append = TRUE)
+  cat(paste0("\n", seqinr::c2s(unlist(as.character(obj)))), file = "aaa.fas", append = TRUE)
+  # z <- read.FASTA("aaa.fas")
+  
 }

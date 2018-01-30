@@ -13,7 +13,7 @@ downloadSequences <- function(x, taxon){
   retmax <- x@params@retmax
   dbl <- x@params@debug.level
   
-  slog("\n\n.. search taxon:", taxon, "..", file = logfile, megProj = x)
+  slog("\n\nSearch taxon:", taxon, file = logfile, megProj = x)
   
   ## post UIDs on Entrez History Server
   ## ----------------------------------

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-28)
+## © C. Heibl 2014 (last update 2018-01-29)
 
 #' @title Comprehensive Guide Tree
 #' @description Creates a complete (or comprehensive) guide tree for the

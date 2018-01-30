@@ -9,72 +9,62 @@ dbWriteMSA <- function(megProj, dna,
                        n, md5, score = FALSE){
   
   gene <- megProj@locus@sql
-  tip.rank <- megProj@taxon@tip.rank
-  msa.tab <- "species_meta"
-  msa.seq.tab <- "species_sequence"
-  nmd5 <- ifelse(missing(md5), "",
-                 paste(wrapSQL(n, "n", "="), ",", 
-                       wrapSQL(md5, "md5", "="), ","))
-  
+  tip.rank <-megProj@taxon@tip.rank
+  msa.tab <- paste(tip.rank, "sequence", sep = "_")
+
   conn <- dbconnect(megProj)
   
   ## Prepare data
   ## ------------
-  dna <- DNAbin2pg(dna)
-  taxa <- unique(dna$taxon)
+  dna <- DNAbin2pg(dna, score)
+  dna <- cbind(locus = gene, dna, status = status)
+  if (!missing(n)) dna <- cbind(dna, n)
+  if (!missing(md5)) dna <- cbind(dna, md5)
+  dna$taxon <- gsub("_", " ", dna$taxon)
   
   ## Devide into present and new taxa
   ## ---------------------------------
-  taxa_present <- dbGetQuery(conn, paste("SELECT taxon FROM", msa.tab))$taxon
-  taxa_new <- setdiff(taxa, taxa_present)
+  taxa_present <- paste("SELECT taxon FROM", msa.tab,
+                        "WHERE", wrapSQL(gene, "locus", "="))
+  taxa_present <- dbGetQuery(conn, taxa_present)$taxon
+  taxa_present <- intersect(dna$taxon, taxa_present)
+  taxa_new <- setdiff(dna$taxon, taxa_present)
   
   ## STORE DATA:
   
   ## 1. Add meta data for new taxa
   ## -----------------------------
+  # cat("\nAdding", length(taxa_new), "new taxa")
   if (length(taxa_new)){
+    dna_new <- dna[dna$taxon %in% taxa_new, ]
+    SQL <- apply(dna_new, 1, function(z) paste(paste0("'", z, "'"), collapse = ", "))
+    SQL <- paste(paste0("(", SQL, ")"), collapse = ", ")
     SQL <- paste("INSERT INTO", msa.tab, 
-                 "(locus, taxon, n, md5, status)",  
-                 "VALUES (", 
-                 wrapSQL(gene, NULL), ",",
-                 wrapSQL(taxa_new, NULL), ",",
-                 wrapSQL(n, NULL), ",",
-                 wrapSQL(md5, NULL), ",",
-                 wrapSQL(status, NULL), ")")
+                 paste0("(", paste(names(dna_new), collapse = ", "), ")"),  
+                 "VALUES", SQL)
     dbSendQuery(conn, SQL)
   }
   
   ## 2. Update meta data and delete sequence 
   ##    data for present taxa
   ## ---------------------------------------
+  # cat("\nUpdating", length(taxa_present), "present taxa")
   if (length(taxa_present)){
-    SQL <- paste("UPDATE", msa.tab, 
-                 "SET", 
-                 nmd5, 
-                 wrapSQL(status, "status", "="), ",", 
-                 "WHERE", wrapSQL(gene, "locus"),
-                 "AND", wrapSQL(taxa_present, "taxon"))
-    dbSendQuery(conn, SQL)
+    tt <- dna[dna$taxon %in% taxa_present, ]
+    SQL <- tt[, !names(tt) %in% c("locus", "taxon")]
+    for (i in 1:ncol(SQL)){
+      SQL[, i] <- paste0(names(SQL)[i], "='", SQL[, i], "'")
+    }
+    SQL <- apply(SQL, 1, paste, collapse = ", ")
     
-    SQL <- paste("DELETE FROM", msa.seq.tab, 
-                 "WHERE", wrapSQL(gene, "locus"),
-                 "AND", wrapSQL(taxa_present, "taxon"))
-    dbSendQuery(conn, SQL)
+    SQL <- paste("UPDATE", msa.tab, 
+                 "SET", SQL, 
+                 "WHERE", wrapSQL(gene, "locus", "="),
+                 "AND", wrapSQL(tt$taxon, "taxon", "=", NULL))
+    lapply(SQL, dbSendQuery, conn = conn)
   }
-  
-  ## 3. Add sequence data
-  ## --------------------
-  SQL <- paste("INSERT INTO", msa.seq.tab, 
-        "(locus, taxon, nuc, pos, reliability)",  
-        "VALUES (", 
-        wrapSQL(gene, NULL), ",",
-        wrapSQL(dna$taxon, NULL, "=", NULL), ",",
-        wrapSQL(dna$nuc, NULL, "=", NULL), ",",
-        wrapSQL(dna$pos, NULL, "=", NULL), ",",
-        wrapSQL(dna$reliability, NULL, "=", NULL), ")")
-  lapply(SQL, dbSendQuery, conn = conn)
   
   ## Close database connection
   ## -------------------------
-  dbDisconnect(conn)
+  invisible(dbDisconnect(conn))
 }

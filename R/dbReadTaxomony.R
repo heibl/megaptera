@@ -76,7 +76,8 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
         tip.rank <- gsub("_.+$", "", subset)
         subset <- paste("SELECT taxon", 
                         "FROM", subset, 
-                        "WHERE status !~ 'excluded'")
+                        "WHERE status !~ 'excluded'",
+                        "AND", wrapSQL(megProj@locus@sql, "locus", "="))
         subset <- dbGetQuery(conn, subset)[, "taxon"]
       } else {
         ## .. based on a vector of species names (without synonyms)

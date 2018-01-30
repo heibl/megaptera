@@ -4,18 +4,22 @@
 \alias{checkSpecLocus}
 \title{Barplot of Species Numbers per Locus}
 \usage{
-checkSpecLocus(megProj, stage = "sel", subset, plot = TRUE)
+checkSpecLocus(megProj, stage = "selected", subset.taxon, subset.locus,
+  plot = TRUE)
 }
 \arguments{
 \item{megProj}{An object of class \code{\link{megapteraProj}}.}
 
-\item{stage}{A vector of mode \code{character}; valid are \code{"gb"},
+\item{stage}{A vector of mode \code{character}; valid are \code{"retrieved"},
 \code{"sel"}, or \code{"blocks"} referring to the number of species (1)
-found on GenBank, (2) selected according to coverage and identity (see
+found on in the database, (2) selected according to coverage and identity (see
 \code{\link{locus}}); or included in the final alignment, respectively.}
 
-\item{subset}{A vector of mode \code{"character"}, that can be used to choose
+\item{subset.taxon}{A vector of mode \code{"character"}, that can be used to choose
 a subset of the total taxa available.}
+
+\item{subset.locus}{A vector of mode \code{"character"}, that can be used to choose
+a subset of the total loci available.}
 
 \item{plot}{Logical, indicating if the barplot should be produced on the
 current graphical device or not.}

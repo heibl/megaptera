@@ -48,7 +48,7 @@ compareToRef <- function(megProj, spec, reference){
   }
   
   # profile alignment is far quicker
-  obj <- mafft.merge(list(reference, obj), 
+  obj <- mafft.merge(subMSA = list(reference, obj), 
                      exec = megProj@align.exe,
                      thread = 1)
   

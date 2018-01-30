@@ -63,13 +63,13 @@ stepB <- function(x, update.seqs = "no"){
   ## ----------------------------------------------------
   if (dbExistsTable(conn, acc.tab) & update.seqs == "all") {
     dbRemoveTable(conn, acc.tab)
-    slog("\n.. removing TABLE", acc.tab, "..", file = logfile)
+    slog("\nRemoving TABLE", acc.tab, file = logfile)
   }
   
   ## create table (if it does not exist)
   ## -----------------------------------
   if (!dbExistsTable(conn, acc.tab)) {
-    slog("\n.. creating TABLE", acc.tab, "..", file = logfile)
+    slog("\nCreating TABLE", acc.tab, file = logfile)
     SQL <- paste(acc.tab, "_pk", sep = "")
     SQL <- paste("CREATE TABLE", acc.tab, 
                  "(gi text NOT NULL,",
@@ -87,7 +87,7 @@ stepB <- function(x, update.seqs = "no"){
   
   ## list of species or higher taxa to be be searched for
   ## ----------------------------------------------------
-  slog("\n.. assembling taxon search list ..", file = logfile)
+  slog("\nAssembling taxon search list", file = logfile)
   ingroup <- x@taxon@ingroup
   if (unique(is.Linnean(unlist(ingroup))) & x@taxon@extend.ingroup){
     ingroup <- unique(lapply(ingroup, strip.spec))

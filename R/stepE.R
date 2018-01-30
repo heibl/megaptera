@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-07-17)
+## © C. Heibl 2014 (last update 2018-01-30)
 
 #' @importFrom snow setDefaultClusterOptions
 #' @export
@@ -106,9 +106,9 @@ stepE <- function(x){
     tax <- dbGetQuery(conn, tax)
     slog(nrow(tax), "found ...", file = logfile)
     
-    ## distance from reference -- either sequential or parallel
+    ## Distance from reference -- either sequential or parallel
     ## --------------------------------------------------------
-    if ( nrow(tax) > 0 ) {
+    if (nrow(tax)) {
       cpus <- x@params@cpus
       if ( nrow(tax) < cpus | !x@params@parallel ){
         lapply(tax$taxon, compareToRef, 

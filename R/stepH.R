@@ -1,6 +1,23 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2017-10-18)
+## © C. Heibl 2016 (last update 2018-01-30)
 
+#' @title Step H: Detect and Separate Unalignable Blocks
+#' @description Dependent on the substitution rate of the genomic region and the
+#'   taxonomic depth of the study group, not always all accession can be aligned
+#'   into a single alignment. \code{step H} will detect and separate such
+#'   unalignable alignment blocks.
+#' @param x An object of class \code{\link{megapteraProj}}.
+#' @param max.mad Numeric, giving the treshold value for the assessment of
+#'   saturation: alignments with a median average distance (MAD) of
+#'   \code{max.mad} or greater will be broken into blocks. The default value of
+#'   0.01 has been estimated with simulation by Smith et al. (2009).
+#' @return None, \code{stepH} is called for its side effects.
+#' @references Smith, S. A., J. M. Beaulieu, and M. J. Donoghue. 2009.
+#'   Mega-phylogeny approach for comparative biology: an alternative to
+#'   supertree and supermatrix approaches. \emph{BMC Evolutionary Biology}
+#'   \bold{9}:37.
+#' @seealso \code{\link{megapteraProj}}; \code{\link{stepMAFFT}} for the preceeding
+#'   step and \code{\link{supermatrix}} for the concatenation of loci.
 #' @export
 #' @import DBI snowfall
 
@@ -37,7 +54,8 @@ stepH <- function(x, max.mad){
   gene <- x@locus@sql
   acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
   tip.rank <- x@taxon@tip.rank
-  msa.tab <- paste(tip.rank, gsub("^_", "", gene), sep = "_")
+  msa.tab <- paste(tip.rank, "meta", sep = "_")
+  msa.seq.tab <- paste(tip.rank, "sequence", sep = "_")
   block.max.dist <- x@params@block.max.dist
   min.n.seq <- x@params@min.n.seq
   max.bp <- x@params@max.bp * 1.5
@@ -50,17 +68,17 @@ stepH <- function(x, max.mad){
   slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
        paste0("\n", Sys.time()),
        "\nSTEP H: detection and separation of unsaturated blocks\n", 
-       paste("\n.. locus:", x@locus@sql), file = logfile)
+       paste("\nLocus:", x@locus@sql), file = logfile)
   
   ## open database connection
   ## ------------------------
-  conn <- dbconnect(x@db)
+  conn <- dbconnect(x)
   
   ## read alignment
   ## --------------
-  slog("\n.. reading alignment with ", file = logfile)
+  slog("\nReading alignment with ", file = logfile)
  
-  a <- dbReadDNA(x, msa.tab)
+  a <- dbReadMSA(x)
  
   ## check if stepG has been run properly
   ## should include checking for status = 'raw'
@@ -85,7 +103,7 @@ stepH <- function(x, max.mad){
   ## corrected and JC69-corrected patristic distances
   ## ------------------------------------------------
   check.mad <- MAD(a)
-  slog("\n.. assessing saturation: MAD =", round(check.mad, 5),
+  slog("\nAssessing saturation: MAD =", round(check.mad, 5),
        file = logfile)
   if (check.mad <= max.mad){
     SQL <- paste("UPDATE", msa.tab,
@@ -93,7 +111,7 @@ stepH <- function(x, max.mad){
                  "WHERE status = 'aligned'")
     dbSendQuery(conn, SQL)
     dbDisconnect(conn)
-    slog(paste("\n.. MAD below threshold of ", max.mad, ": ",
+    slog(paste("\nMAD below threshold of ", max.mad, ": ",
                "alignment not saturated\n", sep = ""), file = logfile)
     td <- Sys.time() - start
     slog("\nSTEP H finished after", round(td, 2), attr(td, "units"), "\n",
@@ -121,7 +139,7 @@ stepH <- function(x, max.mad){
     a <- a[order(check.mad, decreasing = TRUE)]
     this.root <- noi(gt, rownames(a[[1]]))
   }
-  slog("\n.. alignment was split into", length(a), 
+  slog("\nAlignment was split into", length(a), 
        "unsaturated blocks", file = logfile)
   check.size <- sapply(a, nrow)
   a <- a[order(check.size, decreasing = TRUE)]

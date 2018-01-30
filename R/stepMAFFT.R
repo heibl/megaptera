@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2018-01-22)
+## © C. Heibl 2016 (last update 2018-01-29)
 
 #' @title STEP G: MAFFT Alignment
 #' @description Use MAFFT to align tip-rank-level sequences.
@@ -96,7 +96,7 @@ stepMAFFT <- function(x, method, maxiterate, op, ep, options){
   gene <- x@locus@sql
   acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
   tip.rank <- match.arg(x@taxon@tip.rank, c("species", "genus"))
-  msa.tab <- paste(x@taxon@tip.rank, gsub("^_", "", gene), sep = "_")
+  msa.tab <- paste(tip.rank, "sequence", sep = "_")
   min.n.seq <- x@params@min.n.seq
   dbl <- x@params@debug.level
   
@@ -111,18 +111,6 @@ stepMAFFT <- function(x, method, maxiterate, op, ep, options){
   
   ## open database connection
   conn <- dbconnect(x)
-  
-  ## check if msa table exists
-  ## -------------------------
-  if (!dbExistsTable(conn, msa.tab)){
-    dbDisconnect(conn)
-    slog("\nWARNING: table", msa.tab, "does not exist!\n", 
-         file = logfile, megProj = x)
-    td <- Sys.time() - start
-    slog("\nSTEP G finished after", round(td, 2), attr(td, "units"), 
-         "\n", file = logfile, megProj = x)
-    return()
-  }
   
   ## check if at least 3 (ingroup) species are available
   ## ---------------------------------------------------
@@ -139,8 +127,7 @@ stepMAFFT <- function(x, method, maxiterate, op, ep, options){
     return()
   }
   if (n < 100){ # 100 is arbitrary
-    n <- paste("SELECT taxon FROM", msa.tab)
-    n <- dbGetQuery(conn, n)
+    n <- dbGetQuery(conn, paste("SELECT taxon FROM", msa.tab))
     n <- which(is.ingroup(x, n$taxon))
     if (length(n) < 3){
       dbDisconnect(conn)
@@ -163,7 +150,7 @@ stepMAFFT <- function(x, method, maxiterate, op, ep, options){
   ## read DNA sequences and check if guide tree is compatible
   ## --------------------------------------------------------
   slog("\nReading sequences ... ", file = logfile, megProj = x)
-  seqs <- dbReadDNA(x, msa.tab, regex = TRUE, blocks = "ignore")
+  seqs <- dbReadMSA(x, regex = TRUE, blocks = "ignore")
   slog("done", file = logfile, megProj = x)
   
   if (is.matrix(seqs)){
@@ -235,7 +222,7 @@ stepMAFFT <- function(x, method, maxiterate, op, ep, options){
   ## calculate mean absolute deviation (MAD)
   ## see Smith, Beaulieau, Donoghue (2009)
   this.mad <- round(MAD(seqs), 5)
-  slog("\n.. mean absolute deviation:",
+  slog("\nMean absolute deviation:",
        this.mad, "..", file = logfile, megProj = x)
 
   ## summary

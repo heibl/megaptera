@@ -39,6 +39,7 @@
 \alias{dbUpdateReference_Clade} % stepD
 \alias{dbWriteDNAbin}
 \alias{dbWriteString}
+\alias{DNAbin2pg} % dbWriteMSA
 \alias{downloadSequences}
 \alias{EFetchHigherTaxon}
 \alias{EFetchLocus}
@@ -67,6 +68,7 @@
 \alias{ncbiLineage}
 \alias{NCBI.wrap}
 \alias{nucleotideOverlap}
+\alias{pg2DNAbin} % dbReadMSA
 \alias{proParte} % prune.phylo.rank
 \alias{revCompTest}
 \alias{robustXMLparse} % downloadSequences

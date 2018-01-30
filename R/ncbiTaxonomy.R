@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-10-18)
+## © C. Heibl 2014 (last update 2018-01-30)
 
 #' @title NCBI Taxonomy Database
 #' @description Retrieve taxonomic classification from the taxonomy database at
@@ -47,11 +47,11 @@ ncbiTaxonomy <- function(x){
   sql <- paste("SELECT 1 FROM pg_database WHERE",
                wrapSQL("ncbitaxonomy", "datname", "="))
   if (nrow(dbGetQuery(conn, sql)) == 1){
-    cat("\ndatabase 'ncbitaxonomy' exists and will be updated")  
+    cat("\nDatabase 'ncbitaxonomy' exists and will be updated")  
   } else {
     ## .. and create if it does not exist
     ## ----------------------------------
-    cat("\ndatabase 'ncbitaxonomy' created") 
+    cat("\nDatabase 'ncbitaxonomy' created") 
     sql <- paste("CREATE DATABASE ncbitaxonomy",
                  "WITH ENCODING='UTF8'",
                  "CONNECTION LIMIT=-1;")

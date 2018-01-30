@@ -46,45 +46,81 @@
                          port = port, 
                          password = password)
   sql <- paste("SELECT 1 FROM pg_database WHERE",
-               sql.wrap(dbname, term = "datname"))
-  if ( nrow(dbGetQuery(conn, sql)) == 1 ){
-    cat("\ndatabase '", dbname, "' exists", sep = "")  
+               wrapSQL(dbname, "datname", "="))
+  if (nrow(dbGetQuery(conn, sql)) == 1){
+    cat("\nDatabase '", dbname, "' exists", sep = "")  
   } else {
+    
     ## .. and create if it does not exist
     ## ----------------------------------
-    cat("\ndatabase '", dbname, "' created", sep = "") 
+    cat("\nCreate database '", dbname, "'", sep = "") 
     sql <- paste("CREATE DATABASE", dbname,
                  "WITH ENCODING='UTF8'",
                  "CONNECTION LIMIT=-1;")
     dbSendQuery(conn, sql)
+    
+    ## Connect to new database
+    ## -----------------------
+    conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), 
+                           dbname = dbname,
+                           host = host,
+                           user = user, 
+                           port = port, 
+                           password = password)
+    
+    
+    
+    ## Create relation 'progress' if necessary
+    ## ---------------------------------------
+    if (!dbExistsTable(conn, "progress")) {
+      cat("\nCreate relation 'progress'")
+      SQL <- paste("CREATE TABLE progress",
+                   "(",
+                   "locus text NOT NULL,",
+                   "step_b text,",
+                   "step_c text,",
+                   "step_d text,",
+                   "step_e text,",
+                   "step_f text,",
+                   "step_g text,",
+                   "step_h text,",
+                   "step_i text,",
+                   "CONSTRAINT progress_pk PRIMARY KEY (locus)",
+                   ")")
+      dbSendQuery(conn, SQL)
+    }
+    
+    ## Create relation 'reference' if necessary
+    ## ----------------------------------------
+    cat("\nCreate relation 'reference'")
+    if (!dbExistsTable(conn, "reference")) {
+      SQL <- paste("CREATE TABLE reference",
+                   "(gene character varying NOT NULL,",
+                   "taxon character varying NOT NULL,",
+                   "reference character varying NOT NULL,",
+                   "CONSTRAINT reference_pk PRIMARY KEY (gene, taxon))")
+      dbSendQuery(conn, SQL)
+    }
+    
+    ## Create relation 'species_sequences' if necessary
+    ## ------------------------------------------------
+    msa.tab <- "species_sequence"
+    if (!dbExistsTable(conn, msa.tab)) {
+      cat("\nCreate relation 'species_sequence'")
+      SQL <- paste0(msa.tab, "_pk")
+      SQL <- paste("CREATE TABLE", msa.tab, 
+                   "(locus character varying NOT NULL,",
+                   "taxon character varying  NOT NULL,",
+                   "n integer,",
+                   "md5 character(32),",
+                   "status  character varying,",
+                   "sequence character varying,",
+                   "reliability character varying,",
+                   "CONSTRAINT", SQL, "PRIMARY KEY (locus, taxon))")
+      dbSendQuery(conn, SQL)
+      dbDisconnect(conn)
+    }
   }
-  dbDisconnect(conn)
-  
-  ## create relation 'progress' if necessary
-  ## ---------------------------------------
-  conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), 
-                         dbname = dbname,
-                         host = host,
-                         user = user, 
-                         port = port, 
-                         password = password)
-  if (!dbExistsTable(conn, "progress")){
-    SQL <- paste("CREATE TABLE progress",
-                 "(",
-                 "locus text NOT NULL,",
-                 "step_b text,",
-                 "step_c text,",
-                 "step_d text,",
-                 "step_e text,",
-                 "step_f text,",
-                 "step_g text,",
-                 "step_h text,",
-                 "step_i text,",
-                 "CONSTRAINT progress_pk PRIMARY KEY (locus)",
-                 ")")
-    dbSendQuery(conn, SQL)
-  }
-  dbDisconnect(conn)
   
   new("dbPars", 
       host = host, port = port, 

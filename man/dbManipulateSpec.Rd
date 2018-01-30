@@ -29,7 +29,7 @@ a character string giving a species name.
 % \references{}
 \author{Christoph Heibl}
 \note{
-\code{dbExcludeSpec} must be called between \code{\link{stepF}} and \code{\link{stepG}}. Because \code{stepF} rewrites the \code{spec_<locus>} table, \code{dbExcludeSpec} must be called again after every use of \code{stepF}. Note that there is no warning if manual exclusions set with \code{dbExcludeSpec} are eliminated by \code{stepF}.
+\code{dbExcludeSpec} must be called between \code{\link{stepF}} and \code{\link{stepMAFFT}}. Because \code{stepF} rewrites the \code{spec_<locus>} table, \code{dbExcludeSpec} must be called again after every use of \code{stepF}. Note that there is no warning if manual exclusions set with \code{dbExcludeSpec} are eliminated by \code{stepF}.
 }
 \seealso{\code{\link{dbUpdateTaxonomy}}, \code{\link{dbReadTaxonomy}},
 \code{\link{dbWriteDNA}}, \code{\link{dbReadDNA}}

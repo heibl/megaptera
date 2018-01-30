@@ -1,41 +1,40 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2018 (last update 2018-01-26)
+## © C. Heibl 2018 (last update 2018-01-30)
 
 #' @export
 
 DNAbin2pg <- function(DNAbin, reliability, mode = "character"){
   
   mode <- match.arg(mode, c("character", "raw"))
-  if (mode == "character") DNAbin <- as.character(DNAbin)
   
-  if (is.list(DNAbin)){
-    DNAbin <- lapply(DNAbin, function(z) {dim(z) <- NULL; z})
-    out <- list()
-    for (i in seq_along(DNAbin)){
-      if (mode == "raw") class(DNAbin[[i]]) <- NULL
-      out[[i]] <- data.frame(taxon = names(DNAbin)[i], 
-                             nuc = DNAbin[[i]],
-                             pos = 1:length(DNAbin[[i]]), 
-                             reliability = -1,
-                             stringsAsFactors = FALSE)
-      
+  ## Prepare sequences
+  ## -----------------
+  if (is.matrix(DNAbin)) DNAbin <- as.list(DNAbin)
+  if (mode == "character") DNAbin <- as.character(DNAbin)
+  DNAbin <- lapply(DNAbin, paste, collapse = "")
+  
+  ## Prepare reliability scores
+  ## --------------------------
+  if (!missing(reliability)) {
+    reliability <- round(reliability, 2)
+    ## Reliability can be ...
+    if (!is.null(dim(reliability))){
+      ## ... a matrix of cell scores ...
+      reliability <- apply(reliability, 1, paste, collapse = " ")
+    } else {
+      ## ... or a vector of columns scores.
+      reliability <- paste(reliability, collapse = " ")
     }
+    
+  } else {
+    reliability <- -1
   }
-  if (is.matrix(DNAbin)){
-    out <- list(length = nrow(DNAbin))
-    pos <- 1:ncol(DNAbin)
-    if (missing(reliability)){
-      reliability <- matrix(1, nrow = nrow(DNAbin), ncol = ncol(DNAbin))
-    }
-    for (i in seq_along(rownames(DNAbin))){
-      out[[i]] <- data.frame(taxon = rownames(DNAbin)[i], 
-                             nuc = DNAbin[i, ],
-                             pos = pos, 
-                             reliability = reliability[i, ],
-                             stringsAsFactors = FALSE)
-    }
-  }
-  out <- do.call(rbind, out)
+  
+  
+  out <- data.frame(taxon = names(DNAbin), 
+                    sequence = unlist(DNAbin),
+                    reliability = reliability,
+                    stringsAsFactors = FALSE)
   rownames(out) <- NULL
   out
 }

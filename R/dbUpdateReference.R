@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-04-10)
+## © C. Heibl 2014 (last update 2018-01-30)
 
 #' @export
 
@@ -11,18 +11,6 @@ dbUpdateReference <- function(conn, gene, ref){
     stop("object 'ref' is not of matrix")
   ref <- lapply(as.character(as.list(ref)), seqinr::c2s)
   
-  ## create table
-  ## ------------
-  if ( !dbExistsTable(conn, "reference") ) {
-    SQL <- paste("CREATE TABLE reference",
-                 "(gene text NOT NULL,",
-                 "taxon text NOT NULL,",
-                 "reference text NOT NULL,",
-                 "CONSTRAINT reference_pk PRIMARY KEY (gene, taxon))")
-    dbSendQuery(conn, SQL)
-  }
-  
-
   check <- paste("SELECT taxon FROM reference WHERE", 
                  sql.wrap(gene, term = "gene"), 
                  "AND (", sql.wrap(names(ref), 
