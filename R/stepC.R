@@ -140,5 +140,5 @@ stepC <- function(x){
   td <- Sys.time() - start
   slog(" after", round(td, 2), attr(td, "units"), 
        "\n", file = logfile)
-  dbProgress(x, "step_c", "success")
+  dbProgress(x, step = "step_c", status = "success")
 }

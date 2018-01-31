@@ -189,5 +189,4 @@ stepGBLOCKS <- function(x){
   slog("\n\nSTEP I finished", file = logfile)
   td <- Sys.time() - start
   slog(" after", round(td, 2), attr(td, "units"), file = logfile)
-  dbProgress(x, "step_i", "success")
 }

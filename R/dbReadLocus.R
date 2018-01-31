@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-01-11)
+## © C. Heibl 2014 (last update 2018-01-31)
 
 #' @title Taxon-Locus-Crosstable
 #' @description Create a data frame that contains for each taxon and locus the
@@ -65,29 +65,31 @@ dbReadLocus <- function(megProj, provenance = ".", tag, subset){
   
   ## selected sequences:
   ## -------------------
-  dbSelected <- function(conn, tab, tip.rank, tag){
-    tag <- ifelse(missing(tag), "",
-                  paste("WHERE", wrapSQL(tag, "t.tag")))
-    if (tip.rank == "genus") tag <- ""
-    SQL <- paste("(SELECT taxon",
-                  "FROM taxonomy",
-                  "WHERE", wrapSQL(tip.rank, "rank", "="))
+  selected_loci <- "SELECT DISTINCT locus FROM species_sequence ORDER BY locus"
+  selected_loci <- dbGetQuery(conn, selected_loci)$locus
+  if (!is.null(selected_loci)){
+    out <- gsub("__", "_", paste("sel", selected_loci, sep = "_"))
+    SQL <- paste("(SELECT taxon, status",
+                 "FROM species_sequence",
+                 "WHERE", wrapSQL(selected_loci, "locus", "=", NULL), ")")
     SQL <- paste("SELECT t.taxon, s.status", 
-                 "AS", gsub(tip.rank, "sel", tab),
-                 "FROM", SQL,
-                 ") AS t LEFT JOIN", tab, "AS s",
-                 "ON t.taxon = s.taxon", 
-                 tag,
+                 "AS", out,
+                 "FROM", SQL, "AS s",
+                 "FULL JOIN taxonomy AS t ON t.taxon = s.taxon", 
+                 "WHERE", wrapSQL(tip.rank, "t.rank", "="),
                  "ORDER BY t.taxon")
-    tab <- dbGetQuery(conn, SQL)
-    tab[is.na(tab)] <- 0
-    rownames(tab) <- tab[, 1]
-    tab[, 2, drop = FALSE]
+    
+    
+    tab.sel <- lapply(SQL, dbGetQuery, conn = conn)
+    taxon <- tab.sel[[1]][, "taxon"]
+    tab.sel <- lapply(tab.sel, function(z) z[, 2, drop = FALSE])
+    tab.sel <- do.call(cbind, tab.sel)
+    tab.sel[is.na(tab.sel)] <- 0
+    rownames(tab.sel) <- taxon
+  } else {
+    tab.sel <- NULL
   }
-  tab.sel <- lapply(msa, dbSelected, conn = conn, 
-                    # tag = tag, 
-                    tip.rank = tip.rank)
-  tab.sel <- do.call(cbind, tab.sel)
+  
   
   dbDisconnect(conn)
   

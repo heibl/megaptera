@@ -6,6 +6,9 @@
 #'   and subsequent steps) from the database, specifically from the table
 #'   'species_sequences'.
 #' @param x An object of class \code{\link{megapteraProj}}.
+#' @param locus A vector of mode \code{"character"} giving a locus name. This
+#'   argument is optional and, if specified, will override the locus definition in
+#'   \code{x}.
 #' @param taxon A vector of mode \code{"character"} used to choose a subset of
 #'   available taxa. This can be either one or more taxon names or a regular
 #'   expression.
@@ -19,15 +22,15 @@
 #' @importFrom DBI dbDisconnect dbGetQuery
 #' @export
 
-dbReadMSA <- function(x, taxon, regex = TRUE, 
+dbReadMSA <- function(x, locus, taxon, regex = TRUE, 
                       ignore.excluded = TRUE, 
                       blocks = "ignore"){
   
   ## Check and prepare input data
   ## ----------------------------
   if (!inherits(x, "megapteraProj")) stop("'x' is not of class 'megapteraProj'")
-  if (x@locus@kind == "undefined") stop("locus undefined; use setLocus() to define a locus")
-  gene <- x@locus@sql
+  if (x@locus@kind == "undefined" & missing(locus)) stop("locus undefined; use setLocus() to define a locus")
+  if (missing(locus)) locus <- x@locus@sql
   tip.rank <-x@taxon@tip.rank
   msa.tab <- paste(tip.rank, "sequence", sep = "_")
   
@@ -54,7 +57,7 @@ dbReadMSA <- function(x, taxon, regex = TRUE,
   ## ----------------------------------------------------
   SQL <- paste("SELECT regexp_replace(taxon, ' ', '_') AS taxon, sequence, reliability",
                "FROM", msa.tab,
-               "WHERE", wrapSQL(gene, "locus", "="))
+               "WHERE", wrapSQL(locus, "locus", "="))
   seqs <- dbGetQuery(conn, SQL)
   dbDisconnect(conn)
   if (!nrow(seqs)) {

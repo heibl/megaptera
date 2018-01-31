@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2018-01-30)
+## © C. Heibl 2016 (last update 2018-01-31)
 
 #' @title Step H: Detect and Separate Unalignable Blocks
 #' @description Dependent on the substitution rate of the genomic region and the
@@ -54,11 +54,9 @@ stepH <- function(x, max.mad){
   gene <- x@locus@sql
   acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
   tip.rank <- x@taxon@tip.rank
-  msa.tab <- paste(tip.rank, "meta", sep = "_")
-  msa.seq.tab <- paste(tip.rank, "sequence", sep = "_")
+  msa.tab <- paste(tip.rank, "sequence", sep = "_")
   block.max.dist <- x@params@block.max.dist
   min.n.seq <- x@params@min.n.seq
-  max.bp <- x@params@max.bp * 1.5
   if (missing(max.mad)) max.mad <- x@params@max.mad
   
   ## iniate logfile
@@ -77,9 +75,9 @@ stepH <- function(x, max.mad){
   ## read alignment
   ## --------------
   slog("\nReading alignment with ", file = logfile)
- 
+  
   a <- dbReadMSA(x)
- 
+  
   ## check if stepG has been run properly
   ## should include checking for status = 'raw'
   if (!is.matrix(a)){
@@ -95,10 +93,11 @@ stepH <- function(x, max.mad){
   ## -----------------
   SQL <- paste("UPDATE", msa.tab,
                "SET status = 'aligned'",
-               "WHERE status ~ 'block'")
+               "WHERE status ~ 'block'",
+               "AND", wrapSQL(gene, "locus", "="))
   dbSendQuery(conn, SQL)
   
-  ## checking saturation of alignment as measures
+  ## Checking saturation of alignment as measures
   ## by the median average difference (MAD) between
   ## corrected and JC69-corrected patristic distances
   ## ------------------------------------------------
@@ -108,7 +107,8 @@ stepH <- function(x, max.mad){
   if (check.mad <= max.mad){
     SQL <- paste("UPDATE", msa.tab,
                  "SET status = '1 block'",
-                 "WHERE status = 'aligned'")
+                 "WHERE status = 'aligned'",
+                 "AND", wrapSQL(gene, "locus", "="))
     dbSendQuery(conn, SQL)
     dbDisconnect(conn)
     slog(paste("\nMAD below threshold of ", max.mad, ": ",
@@ -120,21 +120,24 @@ stepH <- function(x, max.mad){
     return()
   }
   
-  ## prepare guide tree 
+  ## Prepare guide tree 
   ## ------------------
-  slog("\n.. preparing guidetree", file = logfile)
+  slog("\nPreparing guidetree ... ", file = logfile)
   gt <- comprehensiveGuidetree(x, tip.rank = tip.rank, subset = a)
   gt <- fixNodes(gt)
   a <- a[match(gt$tip.label, rownames(a)), ]
   a <- list(a)
   this.root <- Ntip(gt) + 1
+  slog("OK", file = logfile)
   
-  slog("\n.. successively splitting up alignment", file = logfile)
+  ## Split alignment into unsaturated blocks
+  ## ---------------------------------------
+  slog("\nSuccessively splitting up alignment:", file = logfile)
   repeat {
     aa <- splitAlignment(this.root, gt, a[[1]])
     a <- c(a[-1], aa)
     check.mad <- sapply(a, MAD)
-    slog("\n   - maximum MAD:", max(check.mad), file = logfile)
+    slog("\n- maximum MAD:", max(check.mad), file = logfile)
     if ( all(check.mad <= max.mad) ) break
     a <- a[order(check.mad, decreasing = TRUE)]
     this.root <- noi(gt, rownames(a[[1]]))
@@ -144,37 +147,28 @@ stepH <- function(x, max.mad){
   check.size <- sapply(a, nrow)
   a <- a[order(check.size, decreasing = TRUE)]
   
-  ## write alignment blocks to database
+  ## Write results to database
   ## ----------------------------------
   tips <- lapply(a, function(z) gsub("_", " ", rownames(z)))
-  names(tips) <- paste("block", 1:length(tips))
+  mrca <- lapply(tips, taxdumpMRCA, x = x)
+  names(tips) <- paste("block", 1:length(tips), mrca)
   tips <- lapply(tips, wrapSQL, term = "taxon", operator = "=", boolean = "OR")
+  tips <- lapply(tips, function(z) paste0("(", z, ")"))
   SQL <- paste("UPDATE", msa.tab,
                "SET", wrapSQL(names(tips), "status", "=", NULL),
-               "WHERE", tips)
+               "WHERE", tips,
+               "AND", wrapSQL(gene, "locus", "="))
   lapply(SQL, dbSendQuery, conn = conn)
-  
-  ## write files
-  ## -----------
-  #   slog("\n.. write alignment to files ..", file = logfile)
-  #   write.phy(a, paste(gene, "masked.phy", sep = "-"))
-  #   rownames(a) <- gsub("-", "_", rownames(a))
-  #   write.nex(a, paste(gene, "masked.nex", sep = "-"))
   
   ## summary of result
   ## -----------------
-  #     slog(paste("\n\n--- final alignment of", gene, "---"),
-  #          paste("\nnumber of sequences     :", nrow(a)),
-  #          paste("\nnumber of base pairs    :", ncol(a)),
-  #          file = logfile)
-  #     if ( length(blk) > 1 ) {
-  #       slog("\nnumber of blocks        :", length(blk), 
-  #            "(", paste(blk, collapse = ", "), ")", 
-  #            file = logfile) 
-  #     }
-  #     slog(paste("\nmean absolute deviation :", this.mad), 
-  #          file = logfile)
-  #   }
+  blocks <- format(paste(sapply(a, nrow), "species"), justify = "right")
+  blocks <- paste0("\n- ", format(names(tips)), blocks)
+  slog(blocks, file = logfile)
+  # slog(paste("\nMean absolute deviation :", this.mad),
+  #      file = logfile)
+  
+  
   dbDisconnect(conn)
   slog("\n\nSTEP H finished", file = logfile)
   td <- Sys.time() - start

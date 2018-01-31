@@ -162,5 +162,5 @@ stepB <- function(x, update.seqs = "no"){
   slog("\n\nSTEP B finished", file = logfile)
   td <- Sys.time() - start
   slog(" after", round(td, 2), attr(td, "units"), "\n", file = logfile)
-  dbProgress(x, "step_b", "success")
+  dbProgress(x, step = "step_b", status = "success")
 }

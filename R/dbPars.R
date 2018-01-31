@@ -84,7 +84,6 @@
                    "step_f text,",
                    "step_g text,",
                    "step_h text,",
-                   "step_i text,",
                    "CONSTRAINT progress_pk PRIMARY KEY (locus)",
                    ")")
       dbSendQuery(conn, SQL)

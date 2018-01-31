@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2018-01-23)
+## © C. Heibl 2016 (last update 2018-01-31)
 
 #' @title RMarkdown Report
 #' @description Creates a status report for a megaptera Project using RMarkdown.
@@ -109,13 +109,13 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
     ## create status table when stepB has been called
     ## at least once
     STATUS <- dbProgress(x, locus.wise = FALSE)
-    names(STATUS) <- c("Locus", LETTERS[2:9])
+    names(STATUS) <- c("Locus", LETTERS[2:8])
     ss <- STATUS
     ss[ss == "pending"] <- 1
     ss[ss == "success"] <- 2
     ss[ss == "failure"] <- 3
     ss[ss == "error"] <- 4
-    ss <- ss[order(ss[, 2], ss[, 3], ss[, 4], ss[, 5], ss[, 6], ss[, 7], ss[, 8], ss[, 9]), ]
+    ss <- ss[order(ss[, 2], ss[, 3], ss[, 4], ss[, 5], ss[, 6], ss[, 7], ss[, 8]), ]
     ss$Locus <- gsub("^_", "", ss$Locus)
     
     ss[ss == 1] <- '<div class="pending"></div>'
@@ -262,7 +262,7 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
   ## RAW SEQUENCES
   ## -------------
   ll <- dbReadLocus(x)
-  loci_genbank <- ll[, grep("gb_", names(ll)), drop = FALSE]
+  loci_genbank <- ll[grep("gb", names(ll))]
   loci_genbank[loci_genbank > 1] <- 1
   loci_genbank <- rowSums(loci_genbank)
   taxa_not_found <- names(loci_genbank)[loci_genbank == 0]
@@ -283,7 +283,7 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
          taxaNotFound, "",
          paste("## Number of", tip_rank, "per locus"),
          "```{r, echo=FALSE, message=FALSE}",
-         "gb <- checkSpecLocus(x, 'gb')",
+         "gb <- checkSpecLocus(x, 'retrieved')",
          "```", "")
   
   

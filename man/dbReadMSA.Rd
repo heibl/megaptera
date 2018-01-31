@@ -4,11 +4,15 @@
 \alias{dbReadMSA}
 \title{Read Sequences from Database}
 \usage{
-dbReadMSA(x, taxon, regex = TRUE, ignore.excluded = TRUE,
+dbReadMSA(x, locus, taxon, regex = TRUE, ignore.excluded = TRUE,
   blocks = "ignore")
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}
+
+\item{locus}{A vector of mode \code{"character"} giving a locus name. This
+argument is optional and, if specified, will override the locus definition in
+\code{x}.}
 
 \item{taxon}{A vector of mode \code{"character"} used to choose a subset of
 available taxa. This can be either one or more taxon names or a regular

@@ -8,7 +8,7 @@ dbWriteMSA <- function(megProj, dna,
                        status = "raw",
                        n, md5, score = FALSE){
   
-  gene <- megProj@locus@sql
+  locus <- megProj@locus@sql
   tip.rank <-megProj@taxon@tip.rank
   msa.tab <- paste(tip.rank, "sequence", sep = "_")
 
@@ -17,7 +17,7 @@ dbWriteMSA <- function(megProj, dna,
   ## Prepare data
   ## ------------
   dna <- DNAbin2pg(dna, score)
-  dna <- cbind(locus = gene, dna, status = status)
+  dna <- cbind(locus = locus, dna, status = status)
   if (!missing(n)) dna <- cbind(dna, n)
   if (!missing(md5)) dna <- cbind(dna, md5)
   dna$taxon <- gsub("_", " ", dna$taxon)
@@ -25,7 +25,7 @@ dbWriteMSA <- function(megProj, dna,
   ## Devide into present and new taxa
   ## ---------------------------------
   taxa_present <- paste("SELECT taxon FROM", msa.tab,
-                        "WHERE", wrapSQL(gene, "locus", "="))
+                        "WHERE", wrapSQL(locus, "locus", "="))
   taxa_present <- dbGetQuery(conn, taxa_present)$taxon
   taxa_present <- intersect(dna$taxon, taxa_present)
   taxa_new <- setdiff(dna$taxon, taxa_present)
@@ -59,7 +59,7 @@ dbWriteMSA <- function(megProj, dna,
     
     SQL <- paste("UPDATE", msa.tab, 
                  "SET", SQL, 
-                 "WHERE", wrapSQL(gene, "locus", "="),
+                 "WHERE", wrapSQL(locus, "locus", "="),
                  "AND", wrapSQL(tt$taxon, "taxon", "=", NULL))
     lapply(SQL, dbSendQuery, conn = conn)
   }
