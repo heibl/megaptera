@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2018-01-31)
+## © C. Heibl 2016 (last update 2018-02-26)
 
 #' @title Step H: Detect and Separate Unalignable Blocks
 #' @description Dependent on the substitution rate of the genomic region and the
@@ -153,14 +153,14 @@ stepH <- function(x, max.mad){
   mrca <- lapply(tips, taxdumpMRCA, x = x)
   names(tips) <- paste("block", 1:length(tips), mrca)
   tips <- lapply(tips, wrapSQL, term = "taxon", operator = "=", boolean = "OR")
-  tips <- lapply(tips, function(z) paste0("(", z, ")"))
+  # tips <- lapply(tips, function(z) paste0("(", z, ")")) ## moved to wrapSQL (Feb 2018)
   SQL <- paste("UPDATE", msa.tab,
                "SET", wrapSQL(names(tips), "status", "=", NULL),
                "WHERE", tips,
                "AND", wrapSQL(gene, "locus", "="))
   lapply(SQL, dbSendQuery, conn = conn)
   
-  ## summary of result
+  ## Summary of result
   ## -----------------
   blocks <- format(paste(sapply(a, nrow), "species"), justify = "right")
   blocks <- paste0("\n- ", format(names(tips)), blocks)

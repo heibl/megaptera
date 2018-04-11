@@ -90,7 +90,7 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
   dbMaxGIPerSpec(x)
   
   ## create and update relation <taxonomy>
-  dbUpdateTaxonomy(x) # handle species found in stepB 
+  dbUpdateTaxonomy(x, logfile = logfile) # handle species found in stepB X
   # that are not included in taxonomy table
   
   # summary

@@ -4,17 +4,13 @@
 \alias{addSingleTip}
 \title{Add Tips to a Phylogenetic Tree}
 \usage{
-addSingleTip(phy, tip, tip.rank = "spec", tax, insert = "crown",
+addSingleTip(phy, tip, tax, insert = "crown", ignore.monophyly,
   stem.edge = 0.5, quiet = FALSE)
 }
 \arguments{
 \item{phy}{An object of class \code{\link{phylo}}.}
 
 \item{tip}{A character string giving the name of the species to be added.}
-
-\item{tip.rank}{A character string giving the ranks of the 
-tips in \code{phy}; must be present as a column name in 
-\code{tax}.}
 
 \item{tax}{A data frame containing the taxonomic classification.}
 
@@ -23,6 +19,9 @@ species is to be inserted: \code{"crown"}, \code{"stem"},
 \code{"randomly"}, or any unambigous abbreviation of these. 
 This option will only have an effect if \code{phy} contains more than 
 one congeneric of \code{tip}.}
+
+\item{ignore.monophyly}{Logical, indicating if monophyly should be considered
+when selecting the anchor point for \code{tips}.}
 
 \item{stem.edge}{A real number greater than 0 and smaller than 1, which 
 gives the fraction of the terminal branch length that will be assigned to 

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-01-25)
+## © C. Heibl 2014 (last update 2018-02-26)
 
 # TO DO: marker-wise deletion of species (line 38)
 
@@ -9,8 +9,8 @@
 #' @param megProj An object of class \code{\link{megapteraProj}}.
 #' @param min.n.seq Numeric, the minimum number of sequences in any alignment
 #'   that is required to be included in the supermatrix.
-#' @param masked Logical, if \code{TRUE} masked (if available) alignments will
-#'   be concatenated; see \code{\link{stepH}}.
+#' @param reliability Numeric between 0 and 1, giving the minimum reliability
+#'   score for a column in an alignment.
 #' @param blocks A character string indicating how to handle alignment blocks:
 #'   \code{"split"} causes blocks to be returned as elements of a list.
 #'   \code{"concatenate"} means, blocks will be concatendated and returned as a
@@ -57,7 +57,7 @@
 #' @export
 
 supermatrix <- function(megProj, min.n.seq = 3, 
-                        masked = TRUE, blocks = "split", 
+                        reliability = 0, blocks = "split", 
                         partition, coverage.locus = 0.5,
                         subset.locus, subset.species,
                         exclude.locus, exclude.species,
@@ -111,12 +111,12 @@ supermatrix <- function(megProj, min.n.seq = 3,
   ## -------------------------------------
   cat("\nReading", length(tabs), "alignments ... ")
   if (missing(subset.species)){
-    x <- lapply(tabs, dbReadDNA, x = megProj, blocks = blocks, masked = masked)
+    x <- lapply(tabs, dbReadMSA, x = megProj, blocks = blocks, reliability = reliability)
   } else {
-    x <- lapply(tabs, dbReadDNA, x = megProj, taxon = subset.species, regex = FALSE, 
-                blocks = blocks, masked = masked)
+    x <- lapply(tabs, dbReadMSA, x = megProj, taxon = subset.species, regex = FALSE, 
+                blocks = blocks, reliability = reliability)
   }
-  cat("done")
+  cat("OK")
   if (any(sapply(x, is.null))) x <- x[!sapply(x, is.null)]
   
   ## Handle blocks
@@ -157,7 +157,7 @@ supermatrix <- function(megProj, min.n.seq = 3,
     a[cv, ]
   }
   x <- lapply(x, exclude.snippets, coverage.locus = coverage.locus)
-  cat("done")
+  
   ## any species lost?
   spec.set2 <- lapply(x, rownames)
   spec.set2 <- table(unlist(spec.set2))
@@ -168,19 +168,21 @@ supermatrix <- function(megProj, min.n.seq = 3,
   nb.lost <- length(lost)
   if (nb.lost){
     if (nb.lost > 12) lost <- c(head(lost), paste0("[", nb.lost - 12, " sequences]"), tail(lost))
-    cat("\nWARNING:", nb.lost, "species lost:",
-        paste("\n  -", lost))
+    cat("WARNING:", nb.lost, "species lost:",
+        paste("\n-", lost))
+  } else {
+    cat("OK")
   }
   
-  ## core set of species
-  ## -------------------
+  ## Core set of species (optional)
+  ## ------------------------------
   if (!missing(core.locus)){
     cat("\nMaking core dataset ... ")
     core.species <- lapply(x[core.locus], function(x) rownames(x))
     core.species <- unique(unlist(core.species))
     subset.alignment <- function(a, s) deleteEmptyCells(a[rownames(a) %in% s, ], quiet = TRUE)
     x <- lapply(x, subset.alignment, s = core.species)
-    cat("done")
+    cat("OK")
   }
   
   ## create partitions
@@ -198,9 +200,11 @@ supermatrix <- function(megProj, min.n.seq = 3,
   }
   ngene <- length(xx)
   p <- cbind(rep(1, length(x)), sapply(x, ncol))
-  for (i in 2:nrow(p)){
-    p[i, 1] <- p[i - 1, 2] + 1
-    p[i, 2] <- p[i, 1] + p[i, 2] -1
+  if (nrow(p) > 1){
+    for (i in 2:nrow(p)){
+      p[i, 1] <- p[i - 1, 2] + 1
+      p[i, 2] <- p[i, 1] + p[i, 2] -1
+    }
   }
   ## partitions in RAxML format:
   p <- paste0("DNA, ", rownames(p), " = ", p[, 1], "-", p[, 2])
@@ -209,7 +213,7 @@ supermatrix <- function(megProj, min.n.seq = 3,
   ## ------------------
   cat("\nConcatenating alignments ... ")
   x <- do.call(cbind.DNAbin, c(x, fill.with.gaps = TRUE))
-  cat("done")
+  cat("OK")
   
   ## exclude species by user decision
   ## --------------------------------
@@ -220,11 +224,11 @@ supermatrix <- function(megProj, min.n.seq = 3,
       cat("\nExcluding ", nes ," (", round(nes/nrow(x), 2), 
           "%) species by user decision ... ", sep = "")
       x <- x[!rownames(x) %in% exclude.species, ]
-      cat("done")
+      cat("OK")
     }
   }
   
-  ## create denser ingroup
+  ## Create denser ingroup
   if (best.sampled.congeneric){
     cat("\nKeeping only one best-sampled species per genus ... ")
     percentInformative <- function(z){
@@ -239,10 +243,10 @@ supermatrix <- function(megProj, min.n.seq = 3,
     bsc <- split(bsc, f = bsc$genus)
     bsc <- sapply(bsc, function(z) z$species[which.max(z$fraction)])
     x <- x[bsc, ]
-    cat("done")
+    cat("OK")
   }
   
-  ## outgroup
+  ## Outgroup
   ## --------
   tax <- dbReadTaxonomy(megProj)
   outgroup <- lapply(megProj@taxon@outgroup, taxdumpChildren,
@@ -262,12 +266,11 @@ supermatrix <- function(megProj, min.n.seq = 3,
     nn <- head(nn, -squeeze.outgroup)
     x <- x[!rownames(x) %in% names(nn), ]
     x <- deleteEmptyCells(x, quiet = TRUE)
-    cat("done")
+    cat("OK")
   }
   
   ## Make filenames (from here on 'x' does not change any more)
   ## ----------------------------------------------------------
-  masked <- ifelse(masked, "masked", "")
   fn <- paste("data/supermatrix", nrow(x), ngene, ncol(x), sep = "-")
   ext <- c("tre", "phy", "nex", "partitions", "outgroup")
   fns <- paste(fn, ext, sep = ".")
@@ -285,7 +288,7 @@ supermatrix <- function(megProj, min.n.seq = 3,
   gt <- comprehensiveGuidetree(megProj, 
                                tip.rank = tip.rank,
                                subset = x)
-  cat("done")
+  cat("OK")
   
   ## write outgroup + partitions files
   ## ---------------------------------

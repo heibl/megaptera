@@ -4,7 +4,7 @@
 \alias{stepMAFFT}
 \title{STEP G: MAFFT Alignment}
 \usage{
-stepMAFFT(x, method, maxiterate, op, ep, options)
+stepMAFFT(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0)
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}
@@ -27,10 +27,6 @@ alignment; default 1.53.}
 \item{ep}{A numeric giving the offset value, which works like \code{gap
 extension penalty}, for group-to-group alignment; default 0.0, but 0.123 is
 recommended if no long indels are expected.}
-
-\item{options}{A vector of mode character specifying addional arguments to
-MAFFT, that are not included in \code{\link{mafft}} such as, e.g.,
-\code{--adjustdirection}.}
 }
 \value{
 None, \code{stepMAFFT} is called for its side effect.

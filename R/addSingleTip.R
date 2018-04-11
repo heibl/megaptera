@@ -1,20 +1,19 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update: 2017-03-24)
+## © C. Heibl 2014 (last update: 2018-04-11)
 
 #' @title Add Tips to a Phylogenetic Tree
 #' @description Add tips (species) to a phylogenetic tree according 
 #' to their taxonomic classification.
 #' @param phy An object of class \code{\link{phylo}}.
 #' @param tip A character string giving the name of the species to be added.
-#' @param tip.rank A character string giving the ranks of the 
-#' tips in \code{phy}; must be present as a column name in 
-#' \code{tax}.
 #' @param tax A data frame containing the taxonomic classification.
 #' @param insert A character string indicating the positions where the 
 #' species is to be inserted: \code{"crown"}, \code{"stem"}, 
 #' \code{"randomly"}, or any unambigous abbreviation of these. 
 #' This option will only have an effect if \code{phy} contains more than 
 #' one congeneric of \code{tip}.
+#' @param ignore.monophyly Logical, indicating if monophyly should be considered
+#'   when selecting the anchor point for \code{tips}.
 #' @param stem.edge A real number greater than 0 and smaller than 1, which 
 #' gives the fraction of the terminal branch length that will be assigned to 
 #' the branch subtending the newly created MRCA of \code{tip} and its single 
@@ -32,37 +31,46 @@
 #' @export
 
  
-addSingleTip <- function(phy, tip, tip.rank = "spec", tax, 
-                         insert = "crown", stem.edge = 0.5,
+addSingleTip <- function(phy, tip, tax, 
+                         insert = "crown", 
+                         ignore.monophyly,
+                         stem.edge = 0.5,
                          quiet = FALSE){
   
-  ## check phylogeny
-  if ( !inherits(phy, "phylo") ) 
+  ## Check phylogeny
+  ## ---------------
+  if (!inherits(phy, "phylo")) 
     stop("'phy' is not of class 'phylo'")  
   tip <- gsub(" ", "_", tip)
   
-  if ( tip %in% phy$tip.label ) stop("'tip' is already contained in 'phy'")
+  if (tip %in% phy$tip.label) {
+    message("'tip' is already contained in 'phy'")
+    return(phy)
+  }
   insert <- match.arg(insert, c("crown", "stem", "randomly"))
   
-  # number of tips, internal nodes and edges:
+  ## Number of tips, internal nodes and edges:
+  ## ----------------------------------------
   nt <- Ntip(phy); ni <- Nnode(phy); ne <- Nedge(phy)
   
-  it <- ifelse(insert == "randomly", insert, paste("at", insert))
-  if ( !quiet ) cat(" add", it, "of ")
+  ## Identify anchor point
+  ## ---------------------
+  an <- whereToInsert(phy, tax, tip, ignore.monophyly, quiet)
+  if (is.null(an)) {
+    return(phy)
+  } 
   
-  an <- whereToInsert(phy, tax, tip, tip.rank, quiet)
-  
-  ## index 'lower' won't work when tip is inserted
+  ## Index 'lower' won't work when tip is inserted
   ## at node nt; rotating subtending node of nt
   ## circumvents this problem
-  if ( an == nt ){
+  if (an == nt){
     phy <- fixNodes(rotate(phy, phy$edge[phy$edge[, 2] == nt, 1]))
-    an <- whereToInsert(phy, tax, tip, tip.rank)
+    an <- whereToInsert(phy, tax, tip)
   }
   
-  if ( an <= nt ){
+  if (an <= nt){
     
-    ## add tip to one congeneric
+    ## Add tip to one congeneric
     ## -------------------------
     pretip <- an
     
@@ -70,9 +78,9 @@ addSingleTip <- function(phy, tip, tip.rank = "spec", tax,
     ## of the node where the new tip is to be inserted
     an <- phy$edge[phy$edge[, 2] == pretip, 1]
     
-    ## new internal node number
+    ## New internal node number
     newinternal <- descendants(phy, an, type = "i")
-    if ( length(newinternal) == 0 ){
+    if (length(newinternal) == 0){
       newinternal <- an + 2
     } else {
       newinternal <- max(descendants(phy, an, type = "i")) + 2
@@ -111,11 +119,11 @@ addSingleTip <- function(phy, tip, tip.rank = "spec", tax,
     
   } else {
     
-    ## add tip to more than one congenerics or a higher rank
+    ## Add tip to more than one congenerics or a higher rank
     ## -----------------------------------------------------    
-    if ( insert == "stem" ) an <- noi(phy, strip.spec(tip), 
+    if (insert == "stem") an <- noi(phy, strip.spec(tip), 
                                       regex = TRUE, stem = TRUE)
-    if ( insert == "randomly" ) {
+    if (insert == "randomly") {
       an <- descendants(phy, an, type = "i")
       an <- sample(an, 1)
     }
@@ -157,15 +165,15 @@ addSingleTip <- function(phy, tip, tip.rank = "spec", tax,
     ## be the *last* tip in the tree,
     ## (3) the general case of the new tip's number 
     ## being intermediate
-    if ( newtip == 1 ){
+    if (newtip == 1){
       phy$tip.label <- c(tip,
                          phy$tip.label[newtip:nt])
     } 
-    if ( newtip == nt ){ 
+    if (newtip == nt){ 
       phy$tip.label <- c(phy$tip.label[1:(newtip - 1)], 
                          tip)
     } 
-    if ( !newtip %in% c(1, nt) ) {
+    if (!newtip %in% c(1, nt)) {
       phy$tip.label <- c(phy$tip.label[1:(newtip - 1)], 
                          tip,
                          phy$tip.label[newtip:nt])

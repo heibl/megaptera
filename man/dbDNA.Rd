@@ -8,7 +8,7 @@
 \usage{
 dbReadDNA(x, tab.name, taxon, regex = TRUE, max.bp, min.identity,
   min.coverage, ignore.excluded = TRUE, subtree = FALSE,
-  blocks = "ignore", masked = FALSE)
+  blocks = "ignore", reliability = 0)
 
 dbWriteDNA(conn, tab.name, dna, enforce.binomial = TRUE, status)
 }
@@ -50,9 +50,8 @@ of a list. \code{"concatenate"} means, blocks will be concatendated and
 returned as a single alignment. In order to get a (potentially unaligned)
 list of sequences, choose \code{"ignore"}.}
 
-\item{masked}{Logical: if alignments have been masked in \code{\link{stepH}},
-setting \code{masked=TRUE} will render only the unmasked alignment
-positions.}
+\item{reliability}{A vector of mode \code{"numeric"} between 0 and 1 giving the
+minimum reliability score for each alignment column.}
 
 \item{conn}{A connection object as produced by \code{\link[DBI]{dbConnect}}.}
 

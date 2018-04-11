@@ -102,7 +102,7 @@ checkStatus <- function(x, locus){
   if (hh$count) obj["H"] <- TRUE
   
   ## stepI
-  ii <- dbReadDNA(x, msa.tab, masked = TRUE)
+  ii <- dbReadDNA(x, msa.tab)
   if ( !is.null(ii) ) obj["I"] <- TRUE
   
   dbDisconnect(conn)

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-11-29)
+## © C. Heibl 2017 (last update 2018-04-11)
 
 #' @title Read and Write DNA Sequences
 #' @description Read and write DNA Sequences from/to PostgreSQL Database.
@@ -35,10 +35,9 @@
 #'   of a list. \code{"concatenate"} means, blocks will be concatendated and
 #'   returned as a single alignment. In order to get a (potentially unaligned)
 #'   list of sequences, choose \code{"ignore"}.
+#' @param reliability A vector of mode \code{"numeric"} between 0 and 1 giving the
+#'   minimum reliability score for each alignment column.
 #' @param subtree Logical.
-#' @param masked Logical: if alignments have been masked in \code{\link{stepH}},
-#'   setting \code{masked=TRUE} will render only the unmasked alignment
-#'   positions.
 #' @name dbDNA
 
 NULL

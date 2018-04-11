@@ -4,8 +4,8 @@
 \alias{dbReadMSA}
 \title{Read Sequences from Database}
 \usage{
-dbReadMSA(x, locus, taxon, regex = TRUE, ignore.excluded = TRUE,
-  blocks = "ignore")
+dbReadMSA(x, locus, taxon, regex = TRUE, reliability = 0,
+  ignore.excluded = TRUE, blocks = "ignore")
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}
@@ -20,6 +20,9 @@ expression.}
 
 \item{regex}{Logical: if \code{TRUE}, the string given via \code{taxon} will
 be interpreted as a regular expression (see \code{\link{regex}}).}
+
+\item{reliability}{A vector of mode \code{"numeric"} between 0 and 1 giving the
+minimum reliability score for each alignment column.}
 
 \item{ignore.excluded}{\emph{Currently unused}.}
 

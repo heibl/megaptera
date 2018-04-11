@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-21)
+## © C. Heibl 2014 (last update 2018-02-21)
 
 ## when searching/reading x should be interpretable both as literal or regular expression
 ## when writing, x is literal and the operator must be the equal sign
@@ -24,11 +24,13 @@ wrapSQL <- function(x, term = "taxon", operator = "~", boolean = "OR", by = 500)
   }
   
   if (!is.null(term)) x <- paste0(term, operator, x)
-  if (!is.null(boolean)){
-    id <- seq(from = 1, to = length(x), by = 500)
+  if (!is.null(boolean) & length(x) > 1){
+    id <- seq(from = 1, to = length(x), by = by)
     id <- paste(id, c(id[-1] - 1, length(x)), sep = ":")
     id <- lapply(id, function(obj) eval(parse(text = obj)))
-    x <- sapply(id, function(obj, id) paste(obj[id], collapse = paste("", boolean, "")), obj = x)
+    x <- sapply(id, function(obj, id) paste0("(", 
+                                            paste(obj[id], collapse = paste("", boolean, "")),
+                                            ")"), obj = x)
   }
   x
 }

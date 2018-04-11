@@ -12,6 +12,7 @@
 
 checkSpecies <- function(megProj, spec){
   
+  spec <- gsub("_", " ", spec)
   conn <- dbconnect(megProj)
   
   ## A: TAXONOMY
@@ -20,23 +21,23 @@ checkSpecies <- function(megProj, spec){
   
   ## If not found, is it a synonym?
   ## ------------------------------
-  if (!nrow(tax)){
-    tax <- paste("SELECT spec FROM  taxonomy", 
-                 "WHERE", wrapSQL(spec, "synonym"))
-    tax <- dbGetQuery(conn, tax)$spec
-    
-    if (!length(tax)){
-      cat("\n'", spec, "' not present in 'taxonomy' table\n", sep = "")
-      dbDisconnect(conn)
-      return()
-    } else {
-      cat("NOTE:", spec, "is coded as synonym of", tax, "\n")
-      spec <- tax
-      tax <- paste <- paste("SELECT * FROM  taxonomy", 
-                            "WHERE", wrapSQL(tax))
-      tax <- dbGetQuery(conn, tax)
-    }
-  }
+  # if (!nrow(tax)){
+  #   tax <- paste("SELECT spec FROM  taxonomy", 
+  #                "WHERE", wrapSQL(spec, "synonym"))
+  #   tax <- dbGetQuery(conn, tax)$spec
+  #   
+  #   if (!length(tax)){
+  #     cat("\n'", spec, "' not present in 'taxonomy' table\n", sep = "")
+  #     dbDisconnect(conn)
+  #     return()
+  #   } else {
+  #     cat("NOTE:", spec, "is coded as synonym of", tax, "\n")
+  #     spec <- tax
+  #     tax <- paste <- paste("SELECT * FROM  taxonomy", 
+  #                           "WHERE", wrapSQL(tax))
+  #     tax <- dbGetQuery(conn, tax)
+  #   }
+  # }
   tax <- taxdumpLineage(tax, spec)
   if (is.null(tax)){
     cat("\n'", spec, "' not present in 'taxonomy' table\n", sep = "")

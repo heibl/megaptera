@@ -16,6 +16,7 @@
 \alias{alignSisterClades} % stepG
 \alias{alignSpecies} % stepC
 \alias{as.Linnean} % stepE
+\alias{boldLineage} % dbUpdateTaxonomy
 \alias{boxplotMSA}
 \alias{checkExcludedSpec}
 \alias{checkStatus}

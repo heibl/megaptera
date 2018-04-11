@@ -1,52 +1,54 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (2017-06-08)
+## © C. Heibl 2014 (2018-04-11)
 
 #' @title Add Tips to a Phylogenetic Tree
-#' @description Add tips (species) to a phylogenetic tree according 
-#' to their taxonomic classification.
+#' @description Add tips (species) to a phylogenetic tree according to their
+#'   taxonomic classification.
 #' @param phy An object of class \code{\link{phylo}}.
-#' @param tax A character string giving the name of the 
-#' species to be added.
-#' @param tip.rank A character string giving the ranks of the 
-#' tips in \code{phy}; must be present as a column name in 
-#' \code{tax}.
-#' @param tag \emph{To be added.}
-#' @param quiet Logical, indicating if screen output should be 
-#' suppressed.
+#' @param tax A data frame in parent-child format.
+#' @param tips A character string giving the names of the species to be added.
+#' @param insert A character string indicating the positions where the species
+#'   is to be inserted: \code{"crown"}, \code{"stem"}, \code{"randomly"}, or any
+#'   unambigous abbreviation of these. This option will only have an effect if
+#'   \code{phy} contains more than one congeneric of \code{tip}.
+#' @param ignore.monophyly Logical, indicating if monophyly should be considered
+#'   when selecting the anchor point.
+#' @param quiet Logical, indicating if screen output should be suppressed.
 #' @return An object of class \code{\link{phylo}}.
-#' @seealso \code{\link{dbReadTaxonomy}} for reading a taxonomy table 
-#' from the postgreSQL database.
-#' @examples 
+#' @seealso \code{\link{dbReadTaxonomy}} for reading a taxonomy table from the
+#'   postgreSQL database.
+#' @examples
 #' data(cetacea)
-#' tre <- addTips(cetacea$tree, cetacea$tax)
+#' # tre <- addTips(cetacea$tree, cetacea$tax) ## transform to parent-child-format!
 #' @export
 
-addTips <- function(phy, tax, tip.rank = "spec", tag = NULL, quiet = FALSE){
+addTips <- function(phy, tax, tips, insert, ignore.monophyly = FALSE, quiet = FALSE){
   
-  if ( !inherits(phy, "phylo") )
+  if (!inherits(phy, "phylo"))
     stop("'phy' is not of class 'phylo'")
   
-  ## there must be no synonym and tag columns
-  tax$synonym <- NULL
-  tax$tag <- NULL
-  
-  ## data frame containing species missing from phy
-  ## ----------------------------------------------
-  add <- tax[!tax[, tip.rank] %in% phy$tip.label, ]
-  if ( !quiet ) cat("\nNumber of species to add:", nrow(add))
-  
-  ## add via genus
-  add.tips <- union(add[, tip.rank], NULL) # union returns character!
-  for ( i in add.tips ){ 
-    if ( !quiet ) cat("\n.. ", i)
-    phy <- addSingleTip(phy, tip = i, tip.rank = tip.rank, 
-                        tax = tax, quiet = quiet)
+  ## Check if 'tax' contains all 'tips'
+  ## ----------------------------------
+  not <- setdiff(tips, tax$taxon)
+  if (length(not)){
+    if (!quiet) cat("\nWARNING: ", length(not), " elements of 'tips' not in 'tax'", 
+                    paste0("\n- ", not), sep = "")
+    tips <- setdiff(tips, not)
   }
   
-  ## append tag to randomly added species
-  if ( !is.null(tag) ){
-    id <- phy$tip.label %in% add.tips
-    phy$tip.label[id] <- paste(phy$tip.label[id], tag, sep = "_")
+  ## Create sub set of taxonomy that fits phylogeny
+  ## ----------------------------------------------
+  tax <- taxdumpSubset(tax, species = union(phy$tip.label, tips))
+  
+  if (!quiet) cat("\nNumber of species to add:", length(tips))
+  
+  ## Loop over species to add them to phylogeny; must be done like
+  ## this because the phylogeny changes at each addition of species
+  ## --------------------------------------------------------------
+  for (i in tips){ 
+    phy <- addSingleTip(phy, tip = i, insert = insert,
+                        ignore.monophyly = ignore.monophyly,
+                        tax = tax, quiet = quiet)
   }
   phy
 }

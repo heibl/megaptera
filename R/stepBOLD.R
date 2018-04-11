@@ -43,7 +43,7 @@ stepBOLD <- function(x, overwrite = TRUE){
   id <- names(markerSet) %in% c(x@locus@sql, x@locus@aliases)
   if (!any(id)) {
     ## locus is not available on BOLD
-    slog("\n\nSTEP BX finished", file = logfile)
+    slog("\n\nSTEP BOLD finished", file = logfile)
     td <- Sys.time() - start
     slog(" after", round(td, 2), attr(td, "units"), file = logfile)
     return() 

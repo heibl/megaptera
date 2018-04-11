@@ -4,20 +4,26 @@
 \alias{taxdumpAddNode}
 \title{Utilities for NCBI Taxdump}
 \usage{
-taxdumpAddNode(x, taxon, rank, parent)
+taxdumpAddNode(x, tab, rank = "species", taxon, parent)
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}
 
-\item{taxon}{A character string giving the name of the new taxon.}
+\item{tab}{A data frame in parent-child format.}
 
-\item{rank}{A character string giving the rank of the new taxon.}
+\item{rank}{A character string giving the rank of the new taxon, default is
+\code{"species"}.}
+
+\item{taxon}{A character string giving the name of the new taxon.}
 
 \item{parent}{A character string giving the name of the parent taxon.}
 }
 \value{
-None, \code{taxdumpAddNote} is called for its side effect of
-  inserting data in the underlying PostgreSQL database.
+Logical, \code{TRUE} if the taxon was already present or was added
+  successfully into the NCBI taxonomy, \code{FALSE} if the taxon could not be
+  inserted due to a missing anchor point. Obviously, \code{taxdumpAddNote} is
+  called for its side effect of inserting data in the underlying PostgreSQL
+  database.
 }
 \description{
 Insert a taxon as new node to the NCBI taxonomy.
@@ -26,7 +32,7 @@ Insert a taxon as new node to the NCBI taxonomy.
 \code{\link{ncbiTaxonomy}} for downloading the NCBI taxonomy and
   \code{\link{dbReadTaxonomy}} for reading the project taxonomy; other
   taxdump-related tools: \code{\link{taxdumpChildren}},
-  \code{\link{taxdumpDropTip}}, \code{\link{taxdumpHigherRank}}, \code{\link{taxdumpMRCA}},
-  \code{\link{taxdumpSubset}}, \code{\link{taxdump2phylo}} and
-  \code{\link{taxdump_isTerminal}}.
+  \code{\link{taxdumpDropTip}}, \code{\link{taxdumpHigherRank}},
+  \code{\link{taxdumpMRCA}}, \code{\link{taxdumpSubset}},
+  \code{\link{taxdump2phylo}} and \code{\link{taxdump_isTerminal}}.
 }

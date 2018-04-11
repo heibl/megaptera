@@ -4,16 +4,20 @@
 \alias{ncbiGenome}
 \title{Find Organelle Genomes on NCBI GenBank}
 \usage{
-ncbiGenome(x, organelle, n = 5)
+ncbiGenome(x, organelle, mrca = c("ingroup", "outgroup"), n = 5)
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}
 
-\item{organelle}{A character string, either \code{"mitochondrion"}, 
+\item{organelle}{A character string, either \code{"mitochondrion"},
 \code{"chloroplast"}, or any unambiguous abreviation of these.}
 
+\item{mrca}{A vector of mode \code{"character"}, can be \code{"ingroup"},
+\code{"outgroup"}, or both. In the latter case, reference genomes are
+searched for in all taxa descending from the MRCA of ingroup and outgroup.}
+
 \item{n}{Numeric, the maximum number of genomes that will be chosen. Depending
-on the classification of the taxon as returned by \code{\link{stepA}}, the 
+on the classification of the taxon as returned by \code{\link{stepA}}, the
 actual number of genomes returned can be less than \code{n}.}
 }
 \value{
@@ -22,22 +26,22 @@ a data frame with three columns: \item{taxon}{scientific name as Latin
  no longer be supported after august 2016!)}
 }
 \description{
-Finds the most representative organelle genomes of a given taxon 
+Finds the most representative organelle genomes of a given taxon
  for use as reference sequences.
 }
 \details{
-\code{ncbiGenome} uses a four-step algorithm to produce a 
- taxonomically balanced sample of reference organelle genomes: \enumerate{ 
+\code{ncbiGenome} uses a four-step algorithm to produce a
+ taxonomically balanced sample of reference organelle genomes: \enumerate{
  \item Determine the root taxon for both ingroup and outgroup. \item Find all
- organelle genomes present on NCBI GenBank for this taxa. \item Using the 
+ organelle genomes present on NCBI GenBank for this taxa. \item Using the
  taxonomic classifiaction, find the \code{n - x} basal lineages of the entire
- set of genomes; thereby \code{x} is often greater than 0 depending on the 
- branching pattern (topology) encoded by the classifiaction. \item For each 
+ set of genomes; thereby \code{x} is often greater than 0 depending on the
+ branching pattern (topology) encoded by the classifiaction. \item For each
  lineage, randomly choose one organelle genome and return the results as data
  frame (see \code{Value} section). }
 }
 \references{
-NCBI Orgenelle Genome Resources: 
+NCBI Orgenelle Genome Resources:
  \url{http://www.ncbi.nlm.nih.gov/genome/organelle/}
 }
 \seealso{

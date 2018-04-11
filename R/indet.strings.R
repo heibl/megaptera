@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-21)
+## © C. Heibl 2014 (last update 2018-02-02)
 
 #' @title Identify Undetermined Species
 #' @description Provides a set of regular expressions (\code{\link{regex}}) that
@@ -14,8 +14,9 @@
 
 indet.strings <- function(hybrids = TRUE, collapse = FALSE, SQL = FALSE){
   
-  obj <- c("( |_)sp[.]?( |-|_|$)", # Amanita_sp  Amanita_sp_xxx
-                                   # Amanita_sp. Amanita_sp._xxx Amanita_sp-53
+  obj <- c("^[[:upper:]][[:lower:]]+$", # "Luciola"
+           "( |_)sp[.]?( |-|_|$)", # Amanita_sp  Amanita_sp_xxx
+           # Amanita_sp. Amanita_sp._xxx Amanita_sp-53
            "spec$",
            "( |_)n[.]sp[.]", # Hydropsyche_n.sp._2006031401
            "( |_)nr[.]", # "near", e.g. Onthophagus nr. babirussa

@@ -35,9 +35,10 @@ stepGBLOCKS <- function(x){
     slog("\nNo data from upstream available - quitting", file = "")
     return()
   }
-  if (status$step_h == "success") {
-    dbProgress(x, "step_i", "error")
-  }
+  ## Currently progress end with stepH (2018-02-26)
+  # if (status$step_h == "success") {
+  #   dbProgress(x, "step_i", "error")
+  # }
   
   ## DEFINITIONS
   ## -----------
@@ -110,7 +111,7 @@ stepGBLOCKS <- function(x){
   
   ## read alignment
   ## --------------
-  slog("\n.. reading alignment", file = logfile)
+  slog("\nReading alignment", file = logfile)
   #   if ( x@params@parallel ){
   #     spec <- dbGetQuery(conn, paste("SELECT", tip.rank, "FROM", msa.tab))[, tip.rank]
   #     spec <- paste("^", spec, "$", sep = "")
@@ -140,15 +141,14 @@ stepGBLOCKS <- function(x){
   
   ## Masking of poorly aligned nucleotides
   ## -------------------------------------
-  slog("\nMasking poorly aligned regions ... ", file = logfile)
+  slog("\nMasking poorly aligned regions:", file = logfile)
   score <- gblocks(a, exec = gblocks.exe,
                    b1 = b1, b2 = b2, b3 = b3, b4 = b4, b5 = b5, 
                    target = "score") # with least conservative default
-  slog("done", file = logfile)
   
-  ## write to database 
-  ## -----------------
-  slog("\nWrite reliability scores to database", file = logfile)
+  ## Write scores to database 
+  ## ------------------------
+  slog("\nWrite reliability scores to database ...", file = logfile)
   dbWriteMSA(x, dna = a, score = score, status = "aligned")
   slog("done", file = logfile)
   

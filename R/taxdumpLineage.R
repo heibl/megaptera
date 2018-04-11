@@ -19,7 +19,14 @@ taxdumpLineage <- function(tax, taxon){
     tax <- dbReadTaxonomy(tax)
   }
   
-  taxon <- gsub("_", " ", taxon)
+  ## Determine which separater is used by 'tax' and impose it on 'taxon'
+  ## -------------------------------------------------------------------
+  underscore <- length(grep("_", tax$taxon)) > 0
+  if (underscore){
+    taxon <- gsub(" ", "_", taxon)
+  } else {
+    taxon <- gsub("_", " ", taxon)
+  }
   
   ## Try to guess root (DIRTY!)
   ## --------------------------
@@ -31,6 +38,8 @@ taxdumpLineage <- function(tax, taxon){
     root <- root$taxon[!root$rank %in% c("species", "genus")]
   }
   
+  ## Prepare data frame to hold lineage
+  ## ----------------------------------
   obj <- data.frame(stringsAsFactors = FALSE)
   pid <- tax[tax$taxon == taxon, c("parent_id", "id", "taxon", "rank")]
   obj <- rbind(obj, pid)

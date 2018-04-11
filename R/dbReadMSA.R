@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-01-30)
+## © C. Heibl 2014 (last update 2018-02-26)
 
 #' @title Read Sequences from Database
 #' @description Reads selected and assembled sequences (see \code{\link{stepF}}
@@ -14,6 +14,8 @@
 #'   expression.
 #' @param regex Logical: if \code{TRUE}, the string given via \code{taxon} will
 #'   be interpreted as a regular expression (see \code{\link{regex}}).
+##' @param reliability A vector of mode \code{"numeric"} between 0 and 1 giving the
+#'   minimum reliability score for each alignment column.
 #' @param ignore.excluded \emph{Currently unused}.
 #' @param blocks \emph{Currently unused}.
 #' @return An object of class \code{\link{DNAbin}}.
@@ -22,7 +24,8 @@
 #' @importFrom DBI dbDisconnect dbGetQuery
 #' @export
 
-dbReadMSA <- function(x, locus, taxon, regex = TRUE, 
+dbReadMSA <- function(x, locus, taxon, regex = TRUE,
+                      reliability = 0,
                       ignore.excluded = TRUE, 
                       blocks = "ignore"){
   
@@ -64,7 +67,7 @@ dbReadMSA <- function(x, locus, taxon, regex = TRUE,
     warning("no sequences for\n- ", paste(otaxon, collapse = "\n- "))
     return(NULL)
   }
-  seqs <- pg2DNAbin(seqs)
+  seqs <- pg2DNAbin(seqs, reliability = reliability)
   
   # ## split into blocks (if necessary)
   # ## --------------------------------

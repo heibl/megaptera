@@ -9,12 +9,12 @@
 \usage{
 dbReadTaxonomy(megProj, tip.rank, subset, tag, root = "tol")
 
-dbUpdateTaxonomy(megProj, taxonomy)
+dbUpdateTaxonomy(megProj, taxonomy, logfile = "")
 }
 \arguments{
 \item{megProj}{An object of class \code{\link{megapteraProj}}.}
 
-\item{tip.rank}{A character string giving the rank of the tips (e.g. 
+\item{tip.rank}{A character string giving the rank of the tips (e.g.
 \code{species}, \code{genus}, ...).}
 
 \item{subset}{A subset of species names (Latin binomials) to which the
@@ -33,6 +33,9 @@ option only makes sense in combination with \code{subset}.}
 
 \item{taxonomy}{A data frame containing a taxonomic classification of the
 study species.}
+
+\item{logfile}{A character string giving the names of a potential logfile; no
+logfile is written if this argument is left empty.}
 }
 \value{
 For \code{dbReadTable} an object of class \code{"data.frame"} holding

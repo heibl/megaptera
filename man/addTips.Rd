@@ -4,35 +4,37 @@
 \alias{addTips}
 \title{Add Tips to a Phylogenetic Tree}
 \usage{
-addTips(phy, tax, tip.rank = "spec", tag = NULL, quiet = FALSE)
+addTips(phy, tax, tips, insert, ignore.monophyly = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{phy}{An object of class \code{\link{phylo}}.}
 
-\item{tax}{A character string giving the name of the 
-species to be added.}
+\item{tax}{A data frame in parent-child format.}
 
-\item{tip.rank}{A character string giving the ranks of the 
-tips in \code{phy}; must be present as a column name in 
-\code{tax}.}
+\item{tips}{A character string giving the names of the species to be added.}
 
-\item{tag}{\emph{To be added.}}
+\item{insert}{A character string indicating the positions where the species
+is to be inserted: \code{"crown"}, \code{"stem"}, \code{"randomly"}, or any
+unambigous abbreviation of these. This option will only have an effect if
+\code{phy} contains more than one congeneric of \code{tip}.}
 
-\item{quiet}{Logical, indicating if screen output should be 
-suppressed.}
+\item{ignore.monophyly}{Logical, indicating if monophyly should be considered
+when selecting the anchor point.}
+
+\item{quiet}{Logical, indicating if screen output should be suppressed.}
 }
 \value{
 An object of class \code{\link{phylo}}.
 }
 \description{
-Add tips (species) to a phylogenetic tree according 
-to their taxonomic classification.
+Add tips (species) to a phylogenetic tree according to their
+  taxonomic classification.
 }
 \examples{
 data(cetacea)
-tre <- addTips(cetacea$tree, cetacea$tax)
+# tre <- addTips(cetacea$tree, cetacea$tax) ## transform to parent-child-format!
 }
 \seealso{
-\code{\link{dbReadTaxonomy}} for reading a taxonomy table 
-from the postgreSQL database.
+\code{\link{dbReadTaxonomy}} for reading a taxonomy table from the
+  postgreSQL database.
 }

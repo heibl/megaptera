@@ -9,7 +9,7 @@
 #'   study species.
 #' @param tag A character string used to tag the rows of \code{taxonomy} in the
 #'   postgreSQL table; this argument is mostly for internal use.
-#' @param tip.rank A character string giving the rank of the tips (e.g. 
+#' @param tip.rank A character string giving the rank of the tips (e.g.
 #'   \code{species}, \code{genus}, ...).
 #' @param subset A subset of species names (Latin binomials) to which the
 #'   taxonomy should be limited. Can be a DNA alignment of class \code{DNAbin},
@@ -20,6 +20,8 @@
 #'   to the root are included in the taxonomic classification, whereas
 #'   \code{"mrca"} means that only the MRCA will be included. Note that this
 #'   option only makes sense in combination with \code{subset}.
+#' @param logfile A character string giving the names of a potential logfile; no
+#'   logfile is written if this argument is left empty.
 #' @return For \code{dbReadTable} an object of class \code{"data.frame"} holding
 #'   the taxonomic classification of target species. \code{dbUpdateTaxonomy} is
 #'   called only for its side effect creating and extending the \code{taxonomy}

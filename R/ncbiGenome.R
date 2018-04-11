@@ -1,38 +1,41 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2018-01-11)
+## © C. Heibl 2016 (last update 2018-04-11)
 
 ## to do:
 ## extend outgroup to genus if it is a single species
 
 #'@title Find Organelle Genomes on NCBI GenBank
-#'@description Finds the most representative organelle genomes of a given taxon 
+#'@description Finds the most representative organelle genomes of a given taxon
 #'  for use as reference sequences.
 #'@param x An object of class \code{\link{megapteraProj}}.
-#'@param organelle A character string, either \code{"mitochondrion"}, 
+#'@param organelle A character string, either \code{"mitochondrion"},
 #'  \code{"chloroplast"}, or any unambiguous abreviation of these.
+#'@param mrca A vector of mode \code{"character"}, can be \code{"ingroup"},
+#'  \code{"outgroup"}, or both. In the latter case, reference genomes are
+#'  searched for in all taxa descending from the MRCA of ingroup and outgroup.
 #'@param n Numeric, the maximum number of genomes that will be chosen. Depending
-#'  on the classification of the taxon as returned by \code{\link{stepA}}, the 
+#'  on the classification of the taxon as returned by \code{\link{stepA}}, the
 #'  actual number of genomes returned can be less than \code{n}.
-#'@details \code{ncbiGenome} uses a four-step algorithm to produce a 
-#'  taxonomically balanced sample of reference organelle genomes: \enumerate{ 
+#'@details \code{ncbiGenome} uses a four-step algorithm to produce a
+#'  taxonomically balanced sample of reference organelle genomes: \enumerate{
 #'  \item Determine the root taxon for both ingroup and outgroup. \item Find all
-#'  organelle genomes present on NCBI GenBank for this taxa. \item Using the 
+#'  organelle genomes present on NCBI GenBank for this taxa. \item Using the
 #'  taxonomic classifiaction, find the \code{n - x} basal lineages of the entire
-#'  set of genomes; thereby \code{x} is often greater than 0 depending on the 
-#'  branching pattern (topology) encoded by the classifiaction. \item For each 
+#'  set of genomes; thereby \code{x} is often greater than 0 depending on the
+#'  branching pattern (topology) encoded by the classifiaction. \item For each
 #'  lineage, randomly choose one organelle genome and return the results as data
 #'  frame (see \code{Value} section). }
 #'@return a data frame with three columns: \item{taxon}{scientific name as Latin
 #'  binomial} \item{gb}{UID: GenBank number} \item{gi}{alternative UID (GIs will
 #'  no longer be supported after august 2016!)}
-#'@references NCBI Orgenelle Genome Resources: 
+#'@references NCBI Orgenelle Genome Resources:
 #'  \url{http://www.ncbi.nlm.nih.gov/genome/organelle/}
 #'@seealso \code{\link{locusRef}} to set reference sequences.
 #'@export
 #'@importFrom RCurl url.exists
 #'@import XML
 
-ncbiGenome <- function(x, organelle, n = 5){
+ncbiGenome <- function(x, organelle, mrca = c("ingroup", "outgroup"), n = 5){
   
   ## CHECKS
   ## ------
@@ -49,7 +52,8 @@ ncbiGenome <- function(x, organelle, n = 5){
   
   ## find common root of ingroup and outgroup
   ## ----------------------------------------
-  common.root <- findRoot(x, "both")
+  if (all(c("ingroup", "outgroup") %in% mrca)) mrca <- "both"
+  common.root <- findRoot(x, mrca)
   # common.root <- head(common.root$taxon, 1) ## slugs (2017-10-11)
   
   core <- function(this.root, organelle, fn){

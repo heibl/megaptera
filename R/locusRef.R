@@ -19,14 +19,14 @@
                        check = FALSE){
   
   aliases <- c(...)
-  if ( is.null(aliases) ) stop("empty '...' argument")
+  if (is.null(aliases)) stop("empty '...' argument")
   
   ## determine kind of DNA
   ## to be added when 'kind' is official argument
   
   ## intergenic spacer
   ## -----------------
-  if ( length(grep("IGS|intergenic spacer", aliases)) > 0 ){
+  if (length(grep("IGS|intergenic spacer", aliases)) > 0){
     kind <- "igs"
     id <- min(grep("IGS|intergenic spacer", aliases))
     adj <- gsub(" IGS|intergenic spacer", "", aliases[id])
@@ -43,7 +43,7 @@
   
   ## GenBank uses uppercase and lowercase spelling
   ## in the same places ...
-  if ( kind == "gene" ){
+  if (kind == "gene"){
     aliases <- unique(c(aliases, 
                         toupper(aliases),
                         tolower(aliases), 
@@ -51,12 +51,12 @@
                               substring(aliases, 2), sep = "")))
   }
   
-  if ( missing(not) ) not <- "not"
+  if (missing(not)) not <- "not"
   
   ## check if locus exists at GenBank
   ## --------------------------------
-  if ( check ){
-    cat("\n.. checking if locus exists on GenBank ..")
+  if (check){
+    cat("\nChecking if locus exists on GenBank ... ")
     #a <- paste("\"", aliases, "\"", sep = "")
     a <- gsub(" ", "+", aliases)
     url <- paste(a, collapse = " OR ")
@@ -73,11 +73,11 @@
     cat("\n.. found", x[1], "records")
   }
   
-  ## if GIs are given download  and
+  ## If GIs are given, download  and
   ## assemble reference sequences
   ## ----------------------------
   if (!inherits(reference, "DNAbin")){
-    cat("\n.. downloading and extracting reference sequence using GIs..")
+    cat("\nDownloading and extracting reference sequence using GIs ...")
     if (!is.vector(reference)) stop("'reference' must be an object of class 'DNAbin' or a vector of integers")
     xml <- EFetchXML(reference)
     if (kind == "igs"){

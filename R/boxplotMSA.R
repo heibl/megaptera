@@ -9,9 +9,9 @@ boxplotMSA <- function(x){
   
   tabs <- dbTableNames(x, x@taxon@tip.rank)
   
-  dbDistDNA <- function(msa, masked = TRUE, model = "JC69"){
+  dbDistDNA <- function(msa, model = "JC69"){
     
-    s <- dbReadDNA(x, msa, taxon = ".*", masked = masked)
+    s <- dbReadDNA(x, msa, taxon = ".*")
     if ( is.null(s) ) return(NULL)
     dist.dna(s, model = "raw", pairwise.deletion = TRUE)
   }

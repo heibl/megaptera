@@ -87,7 +87,7 @@ stepC <- function(x){
     return()
   }
   
-  ## mark single-sequence species in <status>
+  ## Mark single-sequence species in <status>
   ## ----------------------------------------
   singles <- tax$spec[tax$n == 1]
   slog("\n", nrow(tax), "species in table", acc.tab,
@@ -95,8 +95,8 @@ stepC <- function(x){
        "\n", nrow(tax) - length(singles), "species have > 1 accession",
        file = logfile)
   SQL <- paste("UPDATE", acc.tab,
-               "SET status = 'single'",
-               "WHERE", wrapSQL(singles, "taxon", "=", NULL),
+               "SET status='single'",
+               "WHERE", wrapSQL(singles, "taxon", "=", "OR"),
                "AND status !~ 'excluded'")
   lapply(SQL, dbSendQuery, conn = conn)
   
@@ -107,7 +107,7 @@ stepC <- function(x){
        file = logfile)
   SQL <- paste("UPDATE", acc.tab,
                "SET status = 'aligned'",
-               "WHERE", wrapSQL(aligned, "taxon", "=", NULL),
+               "WHERE", wrapSQL(aligned, "taxon", "=", "OR"),
                "AND status !~ 'excluded'")
   lapply(SQL, dbSendQuery, conn = conn)
   

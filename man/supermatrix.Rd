@@ -4,7 +4,7 @@
 \alias{supermatrix}
 \title{Retrieval and Concatentation of Multiple Sequence Alignments}
 \usage{
-supermatrix(megProj, min.n.seq = 3, masked = TRUE, blocks = "split",
+supermatrix(megProj, min.n.seq = 3, reliability = 0, blocks = "split",
   partition, coverage.locus = 0.5, subset.locus, subset.species,
   exclude.locus, exclude.species, core.locus, core.species,
   best.sampled.congeneric = FALSE, squeeze.outgroup)
@@ -15,8 +15,8 @@ supermatrix(megProj, min.n.seq = 3, masked = TRUE, blocks = "split",
 \item{min.n.seq}{Numeric, the minimum number of sequences in any alignment
 that is required to be included in the supermatrix.}
 
-\item{masked}{Logical, if \code{TRUE} masked (if available) alignments will
-be concatenated; see \code{\link{stepH}}.}
+\item{reliability}{Numeric between 0 and 1, giving the minimum reliability
+score for a column in an alignment.}
 
 \item{blocks}{A character string indicating how to handle alignment blocks:
 \code{"split"} causes blocks to be returned as elements of a list.

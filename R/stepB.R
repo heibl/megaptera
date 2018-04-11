@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-13)
+## © C. Heibl 2014 (last update 2018-02-02)
 
 #' @title Step B: Search and Download Sequences
 #' @description For any given project (see \code{\link{megapteraProj}}), 
@@ -138,7 +138,7 @@ stepB <- function(x, update.seqs = "no"){
   
   ## Update relation <taxonomy>
   ## Handle species found in stepB that are not included in taxonomy table
-  dbUpdateTaxonomy(x)
+  dbUpdateTaxonomy(x, logfile = logfile)
   
   # summary
   # -------

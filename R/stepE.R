@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-01-30)
+## © C. Heibl 2014 (last update 2018-02-22)
 
 #' @importFrom snow setDefaultClusterOptions
 #' @export
@@ -86,7 +86,7 @@ stepE <- function(x){
   ## ----------------------------------------
   if (inherits(x@locus, "locusRef")){
     
-    slog("\n.. user-defined reference sequences ..", 
+    slog("\nUser-defined reference sequences", 
          file = logfile)
     
     ## mark reference sequences
@@ -96,7 +96,7 @@ stepE <- function(x){
     
     ## table of species names + reference sequence
     ## -------------------------------------------
-    slog("\n.. reading species names: ", file = logfile)
+    slog("\nReading species names: ", file = logfile)
     tax <- paste("SELECT DISTINCT taxon",
                  "FROM", acc.tab, 
                  "WHERE status !~ 'excluded|too'",
@@ -104,7 +104,7 @@ stepE <- function(x){
                  "AND identity IS NULL",
                  "ORDER BY taxon")
     tax <- dbGetQuery(conn, tax)
-    slog(nrow(tax), "found ...", file = logfile)
+    slog("found", nrow(tax), file = logfile)
     
     ## Distance from reference -- either sequential or parallel
     ## --------------------------------------------------------

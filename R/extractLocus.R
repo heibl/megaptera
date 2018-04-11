@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-01-25)
+## © C. Heibl 2014 (last update 2018-02-26)
 
 #' @export
 
@@ -31,14 +31,12 @@ extractLocus <- function(xml, seqid, locus, kind = "gene"){
   
   GBlocus <- wrapSQL(loc, "GBQualifier_value", "=", "or")
   if (GBFeature_key == "gene") GBFeature_key <- c(GBFeature_key, "CDS")
-  GBFeature_key <- wrapSQL(GBFeature_key, term = "GBFeature_key", 
-                           operator = "=", boolean = "or")
-  xpath <- paste("//GBSeq[", UID, "]",
+  GBFeature_key <- wrapSQL(GBFeature_key, "GBFeature_key", "=", "or")
+  xpath <- paste0("//GBSeq[", UID, "]",
                  "//GBFeature[", GBFeature_key, "]", # or GBFeature_key='tRNA'
                  "//GBQualifier[", GBlocus, 
                  "]/../../GBFeature_intervals/GBInterval/",
-                 "GBInterval_", c("from", "to"), 
-                 sep = "")
+                 "GBInterval_", c("from", "to"))
   
   fromto <- data.frame(
     from = as.numeric(xpathSApply(xml, xpath[1], xmlValue)),

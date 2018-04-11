@@ -185,7 +185,7 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
     ingroup_coverage <- c(paste0("NCBI Taxonomy was searched for **", x@taxon@tip.rank, 
                                   "** of **", x@taxon@ingroup, "**."), "",
                            paste0("The search retrieved ", 
-                                  paste(paste(ingroup_tab, names(ingroup_tab)), collapse = " in ")), ":")
+                                  paste(paste(ingroup_tab, names(ingroup_tab)), collapse = " in ")), ".")
     if (ingroup_tab["species"] <= nmax) ingroup_coverage <- c(ingroup_coverage, "", 
                                                                 paste0("- *", sort(ingroup$taxon[ingroup$rank == x@taxon@tip.rank]), "*"))
   }

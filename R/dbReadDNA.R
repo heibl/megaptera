@@ -10,7 +10,7 @@
 dbReadDNA <- function(x, tab.name, taxon, regex = TRUE, 
                       max.bp, min.identity, min.coverage,
                       ignore.excluded = TRUE, subtree = FALSE,
-                      blocks = "ignore", masked = FALSE){
+                      blocks = "ignore", reliability = 0){
   
   ## Check and prepare input data
   ## ----------------------------
@@ -19,7 +19,6 @@ dbReadDNA <- function(x, tab.name, taxon, regex = TRUE,
   
   if (missing(taxon)) taxon <- ".+"
   otaxon <- taxon
-  dna <- ifelse(masked, "masked", "dna")
   blocks <- match.arg(blocks, c("ignore", "split", "concatenate"))
   
   ## Escape metacharacters in taxon names
@@ -88,7 +87,7 @@ dbReadDNA <- function(x, tab.name, taxon, regex = TRUE,
     } else {
       SQL <- paste("WHERE", wrapSQL(taxon, "taxon"), SQL)
     }
-    SQL <- paste("SELECT", paste(tr.sql, "status", dna, sep = ", "),
+    SQL <- paste("SELECT", paste(tr.sql, "status", "dna", sep = ", "),
                  "FROM", tab.name, SQL)
     # message(SQL)
     # if ( masked ) SQL <- paste(SQL, "AND status ~ 'masked'") # masking can drop species from alignments!
@@ -118,7 +117,7 @@ dbReadDNA <- function(x, tab.name, taxon, regex = TRUE,
 
   ## convert dataframe to list of class DNAbin
   block <- seqs[, 1:2]
-  seqs <- as.list(seqs[, dna])
+  seqs <- as.list(seqs[, "dna"])
   seqs <- lapply(seqs, seqinr::s2c)
   names(seqs) <- seqnames
   seqs <- as.DNAbin(seqs)

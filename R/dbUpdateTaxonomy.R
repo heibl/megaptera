@@ -1,11 +1,11 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update: 2017-11-21)
+## © C. Heibl 2014 (last update: 2018-02-21)
 
 #' @rdname dbTaxonomy
 #' @import DBI
 #' @export
 
-dbUpdateTaxonomy <- function(megProj, taxonomy){
+dbUpdateTaxonomy <- function(megProj, taxonomy, logfile = ""){
   
   tip.rank <- megProj@taxon@tip.rank
   conn <- dbconnect(megProj)
@@ -65,19 +65,21 @@ dbUpdateTaxonomy <- function(megProj, taxonomy){
       dbSendQuery(conn, sql)
     } 
   } else {
-  	cat("\nNo input taxonomy table")
+    slog("\nNo input taxonomy table", file = logfile)
   }
   
-  ## check consistency of taxonomy
-  
+  ################################
+  ## Check consistency of taxonomy
+  ################################
   
   ## 2. add species from acc_* tables
   ## --------------------------------
-  cat("\nSummarizing sequence names across loci ... ")
+  slog("\nSummarizing sequence names across loci ... ", file = logfile)
   tabnames <- dbTableNames(megProj, "acc")
   if (length(tabnames)){
     
-    ## unset 'excluded (unclassified)'
+    ## Unset 'excluded (unclassified)'
+    ## -------------------------------
     SQL <- paste("UPDATE", tabnames,
                  "SET status='raw'",
                  "WHERE status='excluded (unclassified)'")
@@ -89,27 +91,31 @@ dbUpdateTaxonomy <- function(megProj, taxonomy){
                 "WHERE status !~ 'excluded|too'",
                 collapse = " UNION ")
     tx <- paste0("(", tx, ") EXCEPT ", 
-                "SELECT taxon FROM taxonomy")
+                 "SELECT taxon FROM taxonomy ORDER BY taxon")
     tx <- dbGetQuery(conn, tx)$taxon
+    slog(length(tx), "are missing from taxonomy", file = logfile)
+    
     if (length(tx)){
-    	cat(length(tx), "are missing from taxonomy")
-      gen <- strip.spec(tx)
+      
+      gen <- strip.spec(tx) ## allow to contain duplicates
       s <- paste("SELECT * FROM taxonomy WHERE", 
-                 wrapSQL(gen, "taxon", "="))
-      s <- dbGetQuery(conn, s)
+                 wrapSQL(unique(gen), "taxon", "="),
+                 "AND", wrapSQL("genus", "rank", "="))
+      s <- lapply(s, dbGetQuery, conn = conn)
+      s <- do.call(rbind, s)
       if (!nrow(s)){ 
         exclude <- tx
       } else {
         id <- gen %in% s$taxon
         exclude <- tx[!id]
-        
-        ## add species to taxonomy table:
         add <- tx[id]
-      
+        
+        ## Add those species that have at least one
+        ## congener in taxonomy (genus is ancherage point)
+        ## -----------------------------------------------
         max_id <- "SELECT max(parent_id), max(id) FROM taxonomy"
         max_id <- dbGetQuery(conn, max_id)
         max_id <- max(max_id)
-        
         s <- data.frame(parent_id = s$id[match(strip.spec(add), s$taxon)],
                         id = max_id + (1:length(add)),
                         taxon = add,
@@ -117,74 +123,91 @@ dbUpdateTaxonomy <- function(megProj, taxonomy){
                         stringsAsFactors = FALSE)
         dbWriteTable(conn, "taxonomy", s, 
                      append = TRUE, row.names = FALSE)
-        cat("\n", paste(add, collapse = ", "), "added")
+        slog("\n", paste(add, collapse = ", "), "added", file = logfile)
       }
-      ## mark species as 'excluded (unclassified)'
-      ## -----------------------------------------
+      
+      ## Try to classify species using BOLD taxonomy
+      ## -------------------------------------------
+      slog("\nQuery BOLD for missing taxonomic information", file = logfile)
+      at_bold <- lapply(exclude, boldLineage)
+      names(at_bold) <- exclude
+      id <- sapply(at_bold, is.null)
+      exclude <- exclude[id]
+      at_bold <- at_bold[!id]
+      success <- sapply(at_bold, taxdumpAddNode, x = megProj)
+      exclude <- c(exclude, names(at_bold)[!success])
+      
+      
+      ## The remaining species cannot be inserted without external 
+      ## information and will be tagged as 'excluded (unclassified)'
+      ## -----------------------------------------------------------
       if (length(exclude)){
         SQL <- paste("UPDATE", tabnames,
                      "SET status='excluded (unclassified)'")
         SQL <- paste(SQL, "WHERE", wrapSQL(exclude, "taxon", "="))
         lapply(SQL, dbSendQuery, conn = conn)
-       # cat("\n", paste(exclude, collapse = ", "), "excluded")
+        write(exclude, file = "log/unclassified_species.txt")
+        n_exclude <- length(exclude)
+        if (n_exclude > 12) exclude <- c(head(exclude), "[...]", tail(exclude))
+        slog("\n", n_exclude, " species tagged as 'excluded (unclassified)':",
+             paste("\n-", exclude), file = logfile, sep = "")
+        slog("\nSee 'log/unclassified_species.txt' for the full list")
       } 
-    } else {
-    	cat("none are missing from taxonomy")
-    }
+    } 
   }
   
   ## 3. add higher ranks 
   ## -------------------
   # hr <- names(taxonomy)[1] # hr: highest rank
   # fam <- paste("SELECT DISTINCT fam",
-               # "FROM taxonomy", 
-               # "WHERE", wrapSQL("-", term = hr, operator = "="), 
-               # "OR", hr, "IS NULL") 
+  # "FROM taxonomy", 
+  # "WHERE", wrapSQL("-", term = hr, operator = "="), 
+  # "OR", hr, "IS NULL") 
   # fam <- dbGetQuery(conn, fam)$fam
   
   # if (length(fam)){
-    # cat("\nupdating higher ranks of ")
-    # for (i in fam){
-      # cat("\n -", i)
-      # s <- paste("SELECT * FROM taxonomy",
-                 # "WHERE", wrapSQL(i, term = "fam"))
-      # s <- dbGetQuery(conn, s)
-      # if (nrow(s) == 1){
-        # cat(": no information")
-        # next
-      # }
-      
-      # id <- 1:(which(names(s) == "fam") - 1)
-      # ## row index where all entries in colums 'id'
-      # ## are neither NA nor "-
-      # rid <- is.na(s[, id]) | s[, id] == "-"
-      # s <- unique(s[!apply(rid, 1, all), id])
-      # s <- paste(names(s),
-                 # paste( "'", unlist(s), "'", sep = ""),
-                 # sep = "=", collapse = ", ")
-      # s <- paste("UPDATE taxonomy",
-                 # "SET", s,
-                 # "WHERE", wrapSQL(i, term = "fam"))
-      # dbSendQuery(conn, s)
-      # cat(": done")
-    # }
+  # slog("\nupdating higher ranks of ", file = logfile)
+  # for (i in fam){
+  # slog("\n -", i, file = logfile)
+  # s <- paste("SELECT * FROM taxonomy",
+  # "WHERE", wrapSQL(i, term = "fam"))
+  # s <- dbGetQuery(conn, s)
+  # if (nrow(s) == 1){
+  # slog(": no information", file = logfile)
+  # next
+  # }
+  
+  # id <- 1:(which(names(s) == "fam") - 1)
+  # ## row index where all entries in colums 'id'
+  # ## are neither NA nor "-
+  # rid <- is.na(s[, id]) | s[, id] == "-"
+  # s <- unique(s[!apply(rid, 1, all), id])
+  # s <- paste(names(s),
+  # paste( "'", unlist(s), "'", sep = ""),
+  # sep = "=", collapse = ", ")
+  # s <- paste("UPDATE taxonomy",
+  # "SET", s,
+  # "WHERE", wrapSQL(i, term = "fam"))
+  # dbSendQuery(conn, s)
+  # slog(": done", file = logfile)
+  # }
   # }
   
   ## 4. delete undetermined species
   ##    (same set of tokens in stepB + stepBX)
   ## -----------------------------------------
-  cat("\nChecking for undetermined taxon names ... ")
+  slog("\nChecking for undetermined taxon names ... ", file = logfile)
   indet <- indet.strings(megProj@taxon@hybrids, TRUE, TRUE)
   indet <- paste("SELECT taxon FROM taxonomy", 
                  "WHERE", wrapSQL(indet, "taxon", "~", NULL),
                  "AND", wrapSQL(tip.rank, "rank", "="))
   n_indet <- nrow(dbGetQuery(conn, indet))
   if (n_indet){
-  	cat(n_indet, "found and removed")
-  	indet <- gsub("SELECT taxon", "DELETE", indet)
-  	dbSendQuery(conn, indet)
+    slog(n_indet, "found and removed", file = logfile)
+    indet <- gsub("SELECT taxon", "DELETE", indet)
+    dbSendQuery(conn, indet)
   } else {
-  	cat("none found")
+    slog("none found", file = logfile)
   }
   invisible(dbDisconnect(conn))
 }
