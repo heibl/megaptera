@@ -1,13 +1,13 @@
 ## This code is part of the megaptera package 
-##  © C. Heibl 2017 (last update 2018-01-15)
+##  © C. Heibl 2017 (last update 2018-09-24)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get subset of a taxonomy table in parent-child format.
 #' @param tax Either an object of class \code{\link{megapteraProj}} or a data
 #'   frame containing a taxonomy table in parent-child format as returned by
 #'   \code{\link{dbReadTaxonomy}}.
-#' @param id a vector of mode \code{"numeric"}, giving one or more IDs of a
-#'   terminal node (tip).
+#' @param id A vector of mode \code{"numeric"} or \code{"character"}, giving one
+#'   or more IDs or names of a terminal node (tip).
 #' @seealso \code{\link{ncbiTaxonomy}} for downloading the NCBI taxonomy and
 #'   \code{\link{dbReadTaxonomy}} for reading the project taxonomy; other
 #'   taxdump-related tools: \code{\link{taxdumpAddNode}},
@@ -18,6 +18,12 @@
 
 
 taxdumpDropTip <- function(tax, id){
+  
+  ## Get 'id' for taxon name
+  ## -----------------------
+  if (is.character(id)){
+    id <- tax$id[tax$taxon %in% id]
+  }
   
   ## Make sure that id is a terminal node
   ## ------------------------------------

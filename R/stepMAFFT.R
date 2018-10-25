@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2018-02-28)
+## © C. Heibl 2016 (last update 2018-05-15)
 
 #' @title STEP G: MAFFT Alignment
 #' @description Use MAFFT to align tip-rank-level sequences.
@@ -72,21 +72,21 @@ stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){
   
   ## check if previous step has been run
   ## -----------------------------------
-  status <- dbProgress(x)
-  if (status$step_f == "pending") {
-    stop("the previous step has not been called yet")
-  }
-  if (status$step_f == "error") {
-    stop("the previous step has terminated with an error")
-  }
-  if (status$step_f == "failure") {
-    slog("\nNo data from upstream available - quitting", file = "")
-    dbProgress(x, "step_g", "failure")
-    return()
-  }
-  if (status$step_f == "success") {
-    dbProgress(x, "step_g", "error")
-  }
+  # status <- dbProgress(x)
+  # if (status$step_f == "pending") {
+  #   stop("the previous step has not been called yet")
+  # }
+  # if (status$step_f == "error") {
+  #   stop("the previous step has terminated with an error")
+  # }
+  # if (status$step_f == "failure") {
+  #   slog("\nNo data from upstream available - quitting", file = "")
+  #   dbProgress(x, "step_g", "failure")
+  #   return()
+  # }
+  # if (status$step_f == "success") {
+  #   dbProgress(x, "step_g", "error")
+  # }
   
   ## PARAMETERS
   ## ----------

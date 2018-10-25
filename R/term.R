@@ -20,7 +20,7 @@ term <- function(organism, kingdom, locus) {
   aliases <- gsub(" ", "+", locus@aliases)
   
   ## add search fields *CURRENTLY DISABLED*
-  if ( FALSE ){
+  if (FALSE){
     aliases <- NCBI.wrap(aliases, field = locus@search.fields)
     not <- NCBI.wrap(not, field = locus@search.fields)
   }
@@ -28,20 +28,20 @@ term <- function(organism, kingdom, locus) {
   ## create URL using 'sgene' object
   ## -------------------------------
   URL <- vector(length = length(organism))
-  for ( i in seq_along(organism) ){
+  for (i in seq_along(organism)){
     url <- paste0(organism[i], "+AND+", aliases)
-    if ( !"not" %in% locus@not ){
+    if (!"not" %in% locus@not){
       not <- paste0("\"", locus@not, "\"")
       not <- paste(not, collapse = "+NOT+")
       url <- paste0(url, "+NOT+", not)
     }
-    if ( length(url) > 1 ){
+    if (length(url) > 1){
       url <- paste0("(", url, ")")
       url <- paste(url, collapse = "+OR+")
     }
     URL[i] <- url
   } # end of FOR-loop over i
-  if ( length(URL) > 1 ){
+  if (length(URL) > 1){
     URL <- paste0("(", URL, ")")
     URL <- paste(URL, collapse = "+OR+")
   }

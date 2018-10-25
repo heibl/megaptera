@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-01-31)
+## © C. Heibl 2014 (last update 2018-04-12)
 
 #' @importFrom DBI dbDisconnect dbGetQuery dbSendQuery
 #' @export
@@ -30,7 +30,7 @@ dbProgress <- function(megProj, step, status = "success", locus.wise = TRUE){
       SQL <- wrapSQL(c(gene, status, rep("pending", 6)), NULL, boolean = ",")
       SQL <- paste("INSERT INTO progress", 
                    "(locus, step_b, step_c, step_d, step_e, step_f, step_g, step_h)",
-                   "VALUES (", SQL, ")")
+                   "VALUES", SQL)
     }
     dbSendQuery(conn, SQL)
   }

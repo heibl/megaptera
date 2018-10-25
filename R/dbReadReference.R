@@ -7,9 +7,9 @@
 dbReadReference <- function(x, locus){
   
   conn <- dbconnect(x)
-  if ( missing(locus) ) locus <- x@locus@sql
+  if (missing(locus)) locus <- x@locus@sql
   
-  if ( !dbExistsTable(conn, "reference") ){
+  if (!dbExistsTable(conn, "reference")){
     dbDisconnect(conn)
     return(FALSE)
   }

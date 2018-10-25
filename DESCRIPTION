@@ -10,6 +10,7 @@ Imports:
     ape,
     bold,
     crul,
+    data.table,
     DBI,
     knitr,
     methods,
@@ -34,7 +35,7 @@ License: GPL (>= 2)
 LazyData: true
 VignetteBuilder: knitr
 Packaged: Wed Jan 31 13:49:07 2018
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 Collate: 
     'BOLD2megaptera.R'
     'DNAbin2pg.R'
@@ -141,6 +142,7 @@ Collate:
     'slog.R'
     'specCons.R'
     'speciesConsensus.R'
+    'speclist2taxdump.R'
     'splitAlignment.R'
     'splitGiTaxon.R'
     'splitNonoverlapping.R'
@@ -148,6 +150,7 @@ Collate:
     'sql.wrap.R'
     'stepA.R'
     'stepB.R'
+    'stepBLAST.R'
     'stepBOLD.R'
     'stepBX.R'
     'stepC.R'
@@ -166,11 +169,14 @@ Collate:
     'surrogateTips.R'
     'taxdump2phylo.R'
     'taxdumpAddNode.R'
+    'taxdumpChangeParent.R'
     'taxdumpChildren.R'
     'taxdumpDropTip.R'
     'taxdumpHigherRank.R'
     'taxdumpLineage.R'
     'taxdumpMRCA.R'
+    'taxdumpManageSynonym.R'
+    'taxdumpSanity.R'
     'taxdumpSubset.R'
     'taxdump_isTerminal.R'
     'taxon.R'

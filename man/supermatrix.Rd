@@ -4,9 +4,9 @@
 \alias{supermatrix}
 \title{Retrieval and Concatentation of Multiple Sequence Alignments}
 \usage{
-supermatrix(megProj, min.n.seq = 3, reliability = 0, blocks = "split",
-  partition, coverage.locus = 0.5, subset.locus, subset.species,
-  exclude.locus, exclude.species, core.locus, core.species,
+supermatrix(megProj, min.n.seq = 3, reliability = 0,
+  blocks = "split", partition, coverage.locus = 0.5, subset.locus,
+  subset.species, exclude.locus, exclude.species, core.locus, core.species,
   best.sampled.congeneric = FALSE, squeeze.outgroup)
 }
 \arguments{

@@ -1,5 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update: 2018-03-20)
+## © C. Heibl 2014 (last update: 2018-07-13)
+
+#' @export
 
 whereToInsert <- function(phy, tax, tip, ignore.monophyly, quiet = FALSE){
   

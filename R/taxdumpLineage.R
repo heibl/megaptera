@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-11-28)
+## © C. Heibl 2017 (last update 2018-06-13)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get all higher ranks including a given taxon.
@@ -13,15 +13,17 @@
 
 taxdumpLineage <- function(tax, taxon){
   
-  ## get taxonomy if necessary (i.e. tax is not a parent-child-table)
+  ## Get taxonomy if necessary (i.e. tax is not a parent-child-table)
   ## --------------------------------------------------------------
   if (inherits(tax, "megapteraProj")){
     tax <- dbReadTaxonomy(tax)
   }
   
-  ## Determine which separater is used by 'tax' and impose it on 'taxon'
+  ## Determine which separator is used by 'tax' and impose it on 'taxon'
   ## -------------------------------------------------------------------
-  underscore <- length(grep("_", tax$taxon)) > 0
+  ## Beware of evil strings like 'Tuberculina sp. Ru_hy-01'
+  test <- head(tax$taxon[tax$rank == "species"])
+  underscore <- length(grep("[[:upper:]][[:lower:]+]_[[:lower:]]", test)) > 0
   if (underscore){
     taxon <- gsub(" ", "_", taxon)
   } else {
@@ -41,13 +43,15 @@ taxdumpLineage <- function(tax, taxon){
   ## Prepare data frame to hold lineage
   ## ----------------------------------
   obj <- data.frame(stringsAsFactors = FALSE)
-  pid <- tax[tax$taxon == taxon, c("parent_id", "id", "taxon", "rank")]
+  # pid <- tax[tax$taxon == taxon, c("parent_id", "id", "taxon", "rank")]
+  pid <- tax[tax$taxon == taxon, ]
   obj <- rbind(obj, pid)
   
   if (!nrow(obj)) return(NULL)
 
   ## Subgenera can have the same name as genera
   ## e.g. Tabanus subg. Tabanus
+  ## --------------------------
   if (nrow(pid) == 2 & "subgenus" %in% pid$rank){
     pid <- pid[pid$rank != "subgenus", ]
     obj <- obj[obj$rank != "subgenus", ]
@@ -55,7 +59,8 @@ taxdumpLineage <- function(tax, taxon){
   
   # while (!any(c("root", "Root of life") %in% obj$taxon)){
   while (!any(root %in% obj$taxon)){
-    pid <- tax[tax$id == pid$parent_id, c("parent_id", "id", "taxon", "rank")]
+    # pid <- tax[tax$id == pid$parent_id, c("parent_id", "id", "taxon", "rank")]
+    pid <- tax[tax$id == pid$parent_id & tax$status == "scientific name", ]
     if (!nrow(pid)) stop(obj$taxon[nrow(obj)], " (id=", obj$id[nrow(obj)], ", pid=", 
                          obj$parent_id[nrow(obj)],") has no parent")
     obj <- rbind(obj, pid)

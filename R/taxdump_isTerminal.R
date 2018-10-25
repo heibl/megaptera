@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-01-15)
+## © C. Heibl 2017 (last update 2018-10-17)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Check if nodes are terminal, e.g. they are not parent nodes.
@@ -22,7 +22,7 @@ taxdump_isTerminal <- function(tax, id){
   if (!is.data.frame(tax)){
     stop("'tax' is not a data frame")
   }
-  if (!all(names(tax) %in% c("parent_id", "id", "taxon", "rank"))){
+  if (!all(c("parent_id", "id", "taxon", "rank") %in% names(tax))){
     stop("'tax' is not a valid parent-child table")
   }
   

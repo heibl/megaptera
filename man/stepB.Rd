@@ -7,7 +7,7 @@
 stepB(x, update.seqs = "no")
 }
 \arguments{
-\item{x}{An object of class \code{\link{megapteraProj}}}
+\item{x}{An object of class \code{\link{megapteraProj}}.}
 
 \item{update.seqs}{A character string determining the behaviour of 
 \code{stepB} when it is run repeatedly on the same locus/taxon 

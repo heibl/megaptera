@@ -4,8 +4,8 @@
 \alias{taxdumpChildren}
 \title{Utilities for NCBI Taxdump}
 \usage{
-taxdumpChildren(tax, taxon, immediate = FALSE, tip.rank = "species",
-  indet = indet.strings(), quiet = FALSE)
+taxdumpChildren(tax, taxon, immediate = FALSE, query.rank = "any",
+  tip.rank = "species", indet = indet.strings(), quiet = FALSE)
 }
 \arguments{
 \item{tax}{Either an object of class \code{\link{megapteraProj}} or a data
@@ -16,6 +16,10 @@ frame as returned by \code{\link{dbReadTaxonomy}}.}
 \item{immediate}{Logical, if \code{TRUE}, only the immediate children of
 \code{taxon} will be returned. The default (\code{FALSE}) return all
 children.}
+
+\item{query.rank}{A character string giving the name of a rank that
+\code{"taxon"} must belong to. The default (\code{"any"}) does not imply
+any restriction on the rank of the taxon queried.}
 
 \item{tip.rank}{A character string giving the name a rank. This rank will be
 treated as tip rank, i.e. all taxa of lower rank will be dicarded.}

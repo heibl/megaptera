@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-10)
+## © C. Heibl 2014 (last update 2018-05-11)
 
 #' @title Limit Numbers of Sequences per Species
 #' @description Some species (e.g. model organism) have thousands or more
@@ -27,7 +27,7 @@
 #' @export
 
 
-dbMaxGIPerSpec <- function(megProj, max.gi.per.spec = 10, prefer = "longest", taxon){
+dbMaxGIPerSpec <- function(megProj, max.gi.per.spec, prefer = "longest", taxon){
   
   ## PARAMETERS
   ## -----------
@@ -41,6 +41,20 @@ dbMaxGIPerSpec <- function(megProj, max.gi.per.spec = 10, prefer = "longest", ta
     max.gi.per.spec <- megProj@params@max.gi.per.spec
   
   conn <- dbconnect(megProj@db)
+  
+  ## Delete entries from previous runs
+  ## ---------------------------------
+  SQL <- paste("UPDATE", acc.tab,
+               "SET status='raw'",
+               "WHERE status='excluded (max.gi)'")
+  if (!missing(taxon)) {
+    SQL <- paste(SQL, "AND", wrapSQL(gsub("_", " ", taxon), "taxon", "="))
+  }
+  dbSendQuery(conn, SQL)
+  
+  
+  ## Exclude accession (if necessary)
+  ## --------------------------------
   tax <- paste("SELECT gi, taxon, npos", 
                  "FROM", acc.tab,
                  "WHERE status != 'excluded (indet)'",
@@ -49,8 +63,7 @@ dbMaxGIPerSpec <- function(megProj, max.gi.per.spec = 10, prefer = "longest", ta
   ## handle only a subset of taxa
   ## ----------------------------
   if (!missing(taxon)) {
-    taxon <- gsub("_", " ", taxon)
-    tax <- paste(tax, "AND", wrapSQL(taxon, "taxon", "="))
+    tax <- paste(tax, "AND", wrapSQL(gsub("_", " ", taxon), "taxon", "="))
   }
   
   tax <- dbGetQuery(conn, tax)

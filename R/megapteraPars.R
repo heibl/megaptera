@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-01-11)
+## © C. Heibl 2014 (last update 2018-05-11)
 
 #' @title Create an Object of Class "megapteraPars"
 #' @description S4 Class for parameters of a megaptera project pipeline, as
@@ -23,7 +23,7 @@
 #'   \item{\code{max.gi.per.spec}}{Numeric, giving the maximum number of
 #'   sequences that will be used per species. Can be used to avoid model
 #'   organism (e.g., rice, \emph{Drosophila}, ...) cluttering up the pipeline
-#'   with thousands of sequences (default: 10).} \item{\code{max.bp}}{Numeric,
+#'   with thousands of sequences (default: 1000).} \item{\code{max.bp}}{Numeric,
 #'   the maximal length of DNA sequences in base pairs to be included in the
 #'   alignment. The upper limit is determined by the alignment program and the
 #'   specific alignment and can only be determined by trial-and-error (default:
@@ -77,7 +77,7 @@
                  cluster.type = "none",
                  update.seqs = "all", 
                  retmax = 500,
-                 max.gi.per.spec = 10, 
+                 max.gi.per.spec = 1000, 
                  max.bp = 5000, 
                  reference.max.dist = 0.25,
                  min.seqs.reference = 10,

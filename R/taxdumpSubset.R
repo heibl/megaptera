@@ -1,14 +1,15 @@
 ## This code is part of the megaptera package 
-##  © C. Heibl 2017 (last update 2018-03-21)
+##  © C. Heibl 2017 (last update 2018-09-18)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get subset of a taxonomy table in parent-child format.
 #' @param tax Either an object of class \code{\link{megapteraProj}} or a data
 #'   frame containing a taxonomy table in parent-child format as returned by
 #'   \code{\link{dbReadTaxonomy}}.
-#' @param mrca A character string giving the most revent common ancestor (mrca)
+#' @param mrca A character string giving the most recent common ancestor (MRCA)
 #'   of the subset.
-#' @param species A vector of mode \code{"character"} giving subset.
+#' @param species A vector of mode \code{"character"} giving a subset of species
+#'   names.
 #' @param root A character string choosing between \code{"mrca"} and
 #'   \code{"tol"} (tree of life).
 #' @seealso \code{\link{dbReadTaxonomy}},
@@ -48,6 +49,8 @@ taxdumpSubset <- function(tax, mrca, species, root = "tol"){
     ## 'tax' is data frame in parent-child format
     #############################################
     
+    # c("parent_id", "id", "taxon", "rank", "status")
+    
     ## Get subset if species are given
     ## -------------------------------
     if (!missing(species)){
@@ -55,8 +58,9 @@ taxdumpSubset <- function(tax, mrca, species, root = "tol"){
       ## Determine which separator is used by 'tax' 
       ## and impose it on 'species'
       ## --------------------------
-      underscore <- length(grep("_", tax$taxon)) > 0
-      if (underscore){
+      underscore <- length(grep("_", tax$taxon[tax$rank == "species"]))
+      space <- length(grep(" ", tax$taxon[tax$rank == "species"]))
+      if (underscore > space){
         species <- gsub(" ", "_", species)
       } else {
         species <- gsub("_", " ", species)
@@ -75,14 +79,15 @@ taxdumpSubset <- function(tax, mrca, species, root = "tol"){
       ## -------------
       id <- all_ids <- tax[tax$taxon %in% species, "id"]
       while (length(id) > 1) {
-        id <- unique(tax[tax$id %in% id, "parent_id"])
+        id <- unique(tax$parent_id[tax$id %in% id & tax$status == "scientific name"])
         all_ids <- c(all_ids, id)
       }
-      tax <- tax[tax$id %in% all_ids, c("parent_id", "id", "taxon", "rank")]
+      # tax <- tax[tax$id %in% all_ids, c("parent_id", "id", "taxon", "rank")]
+      tax <- tax[tax$id %in% all_ids, ]
     }
     
-    ## Delete tree-of-life root "tail"
-    ## -------------------------------
+    ## Delete tree-of-life root "tail" if desired
+    ## ------------------------------------------
     if (root == "mrca") {
       id <- tax$id[tax$taxon == "cellular organisms"]
       repeat {
@@ -94,7 +99,7 @@ taxdumpSubset <- function(tax, mrca, species, root = "tol"){
         id <- c(new_id, id)
       }
       tax <- tax[!tax$id %in% id, ]
-    } ## end of IF (line 81)
+    } ## end of IF (line 87)
     
     ## Get subset if MRCA is given
     ## ---------------------------
@@ -107,7 +112,7 @@ taxdumpSubset <- function(tax, mrca, species, root = "tol"){
       }
       ## add tree-of-life root "tail"
       if (root == "tol") all_ids <- unique(c(all_ids, taxdumpLineage(tax, mrca)$id))
-      tax <- tax[tax$id %in% all_ids, c("parent_id", "id", "taxon", "rank")]
+      tax <- tax[tax$id %in% all_ids, ]
     }
   }
   tax

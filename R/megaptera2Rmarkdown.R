@@ -144,35 +144,50 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
   ## ------------------
   tax <- dbReadTaxonomy(x)
   
+  ## Formatting of species lists
+  ## ---------------------------
+  frmt <- function(z){
+    z <- paste0("*", z, "*")
+    if (length(z) > 1){
+      z <- paste(z[1], paste0("(", paste(z[-1], collapse = ", "), ")"))
+    }
+    paste("-", z)
+  }
+  
   ## ingroup
   ## -------
   if (ingroup_speclist){
-    ingroup_queried <- sapply(x@taxon@ingroup, head, n = 1)
-    ingroup_received  <- intersect(ingroup_queried, tax$taxon)
+    received  <- lapply(x@taxon@ingroup, intersect, tax$taxon)
+    received <- sapply(received, length) > 0
+    ingroup_received <- x@taxon@ingroup[received]
     n_ingroup_received <- length(ingroup_received)
-    ingroup_missing <- setdiff(ingroup_queried, ingroup_received)
+    ingroup_missing <- x@taxon@ingroup[!received]
     n_ingroup_missing <- length(ingroup_missing)
-    ingroup_false <- setdiff(ingroup_received, ingroup_queried)
+    # ingroup_false <- setdiff(ingroup_received, x@taxon@ingroup)
     
     ingroup_coverage <- c(
       "Query of the NCBI Taxonomy Database gave these results:", "",
       paste0("**", n_ingroup_received, "** ingroup species (of ",
-             length(ingroup_queried), " = ",
-             round(n_ingroup_received / length(ingroup_queried) * 100, 2),
+             length(x@taxon@ingroup), " = ",
+             round(n_ingroup_received / length(x@taxon@ingroup) * 100, 2),
              "%) could be retrieved"))
-    if (n_ingroup_received <= nmax) ingroup_coverage <- c(ingroup_coverage, "", paste0("- *", ingroup_queried, "*"))
+    if (n_ingroup_received <= nmax){
+      ingroup_coverage <- c(ingroup_coverage, "", sapply(ingroup_received, frmt))
+    }
     if (n_ingroup_missing){
       ingroup_coverage <- c(ingroup_coverage, "",
                         paste0("**", n_ingroup_missing, "** ingroup species (",
-                               round(n_ingroup_missing / length(ingroup_queried) * 100, 2),
+                               round(n_ingroup_missing / length(x@taxon@ingroup) * 100, 2),
                                "%) were missing"))
-      if (n_ingroup_missing <= nmax) ingroup_coverage <- c(ingroup_coverage, "", paste0("- *", ingroup_missing, "*"))
-      
+      if (n_ingroup_missing <= nmax) {
+        ingroup_coverage <- c(ingroup_coverage, "", sapply(ingroup_missing, frmt))
+      }
+      save(ingroup_missing, file = "report/ingroup-missing-taxonomy.rda")
     }
-    if (length(ingroup_false)){
-      ingroup_coverage <- c(ingroup_coverage, "",
-                        paste0("- **WARNING**: *", ingroup_false, "* falsely as ingroup classified"))
-    }
+    # if (length(ingroup_false)){
+    #   ingroup_coverage <- c(ingroup_coverage, "",
+    #                     paste0("- **WARNING**: *", ingroup_false, "* falsely as ingroup classified"))
+    # }
   } else {
     ranks <- data.frame(sg = c("species", "genus", "family", "order"),
                         pl = c("species", "genera", "families", "orders"),
@@ -194,32 +209,37 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
   ## outgroup
   ## -------
   if (outgroup_speclist){
-    outgroup_queried <- sapply(x@taxon@outgroup, head, n = 1)
-    outgroup_received  <- intersect(outgroup_queried, tax$taxon)
+    received  <- lapply(x@taxon@outgroup, intersect, tax$taxon)
+    received <- sapply(received, length) > 0
+    outgroup_received <- x@taxon@outgroup[received]
     n_outgroup_received <- length(outgroup_received)
-    outgroup_missing <- setdiff(outgroup_queried, outgroup_received)
+    outgroup_missing <- x@taxon@outgroup[!received]
     n_outgroup_missing <- length(outgroup_missing)
-    outgroup_false <- setdiff(outgroup_received, outgroup_queried)
+    # outgroup_false <- setdiff(outgroup_received, x@taxon@outgroup)
     
     outgroup_coverage <- c(
       "Query of the NCBI Taxonomy Database gave these results:", "",
       paste0("**", n_outgroup_received, "** outgroup species (of ",
-             length(outgroup_queried), " = ",
-             round(n_outgroup_received / length(outgroup_queried) * 100, 2),
+             length(x@taxon@outgroup), " = ",
+             round(n_outgroup_received / length(x@taxon@outgroup) * 100, 2),
              "%) could be retrieved"))
-    if (n_outgroup_received <= nmax) outgroup_coverage <- c(outgroup_coverage, "", paste0("- *", outgroup_queried, "*"))
+    if (n_outgroup_received <= nmax){
+      outgroup_coverage <- c(outgroup_coverage, "", sapply(outgroup_received, frmt))
+    }
     if (n_outgroup_missing){
       outgroup_coverage <- c(outgroup_coverage, "",
                             paste0("**", n_outgroup_missing, "** outgroup species (",
-                                   round(n_outgroup_missing / length(outgroup_queried) * 100, 2),
+                                   round(n_outgroup_missing / length(x@taxon@outgroup) * 100, 2),
                                    "%) were missing"))
-      if (n_outgroup_missing <= nmax) outgroup_coverage <- c(outgroup_coverage, "", paste0("- *", outgroup_missing, "*"))
+      if (n_outgroup_missing <= nmax) {
+        outgroup_coverage <- c(outgroup_coverage, "", sapply(outgroup_missing, frmt))
+      }
       
     }
-    if (length(outgroup_false)){
-      outgroup_coverage <- c(outgroup_coverage, "",
-                            paste0("- **WARNING**: *", outgroup_false, "* falsely as outgroup classified"))
-    }
+    # if (length(outgroup_false)){
+    #   outgroup_coverage <- c(outgroup_coverage, "",
+    #                     paste0("- **WARNING**: *", outgroup_false, "* falsely as outgroup classified"))
+    # }
   } else {
     ranks <- data.frame(sg = c("species", "genus", "family", "order"),
                         pl = c("species", "genera", "families", "orders"),
@@ -269,6 +289,7 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
   n_taxa_not_found <- length(taxa_not_found)
   n_taxa_found <- nrow(ll) - n_taxa_not_found
   if (length(taxa_not_found)){
+    write(taxa_not_found, "report/species-without-sequences.txt")
     taxaNotFound <- c(
       paste("##", Tip_rank ,"without any sequences"),
       paste0(n_taxa_not_found, " ", tip_rank, " (of ", nrow(ll), " available = ",

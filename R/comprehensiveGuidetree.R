@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-02-21)
+## © C. Heibl 2014 (last update 2018-10-25)
 
 #' @title Comprehensive Guide Tree
 #' @description Creates a complete (or comprehensive) guide tree for the
@@ -38,6 +38,10 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
   } else {
     tax <- dbReadTaxonomy(megProj, tip.rank = tip.rank, subset = subset, root = "mrca")
   }
+  tax <- tax[tax$status == "scientific name", ]
+  # setdiff(ingroup_accepted, tax$taxon[tax$rank == "species"])
+  # setdiff(tax$taxon[tax$rank == "species"], ingroup_accepted)
+  tax$taxon <- gsub(" ", "_", tax$taxon)
   
   ## get outgroup taxa
   ## -----------------
@@ -67,7 +71,14 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
     ## ----------------------
     drop_from_guidetree <- setdiff(gt$tip.label, tax$taxon)
     if (length(drop_from_guidetree)){
-      gt <- drop.tip(gt, drop_from_guidetree)
+      ## If MRCA of subset is of lower rank than tips of 
+      ## guidetree, it cannot be used
+      if (!length(intersect(tax$taxon, gt$tip.label))) {
+        warning("guidetree and taxon subset do not overlap")
+        return(taxdump2phylo(tax, tip.rank))
+      } else {
+        gt <- drop.tip(gt, drop_from_guidetree)
+      }
     }
     
     ## create subtrees that will be plotted onto the guide
@@ -81,33 +92,16 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
     multi.gen <- which(!single.gen)
     single.gen <- which(single.gen)
     
-    ## check if subtrees contain all focal species/genera
+    ## Check if subtrees contain all focal species/genera
     ## This check could be done earlier, eg. after step A
     ## ---------------------------------------------------
     test_present <- c(unlist(subtrees[single.gen]),
                       unlist(lapply(subtrees[multi.gen], function(z) z$tip.label)))
     test_required <- tax$taxon[tax$rank == tip.rank]
-    test_missing <- setdiff(test_required, gsub("_", " ", test_present))
+    test_missing <- setdiff(test_required, test_present)
     test_missing <- setdiff(test_missing, og) ## do not consider outgroup as missing
     if (length(test_missing)) stop("there is no anchorage in user-defined guide tree for\n- ", 
                                    paste(test_missing, collapse = "\n -"))
-    
-    ## add ingroup clade if nessesary
-    ## ------------------------------
-    # ingroup <- megProj@taxon@ingroup
-    # ingroup <- sapply(ingroup, function(z) z[1]) # strip synonoms
-    # ingroup <- gsub(" ", "_", ingroup)
-    # ig.rank.id <- unique(which(ingroup == tax, arr.ind = TRUE)[, "col"])
-    # ig <- unique(tax[tax[, ig.rank.id] %in% ingroup, rank.id])
-    # ig <- ig[!ig %in% gt$tip.label]
-    # if ( length(ig) > 0 ){
-    #   ig.phylo <- ifelse(length(ig) == 1, 
-    #                      ig,
-    #                      paste("(", paste(ig, collapse = ","), ")", sep = ""))
-    #   ig.phylo <- paste("(", ig.phylo, ");", sep = "")
-    #   ig.phylo <- read.tree(text = ig.phylo)
-    #   gt <- bind.tree(gt, ig.phylo, "root")
-    # }
     
     ## graft subtrees onto guide tree
     ## ------------------------------
@@ -143,14 +137,13 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
     
   } else {
     
-  ## B: no user-defined guidetree given, turn
-  ## classification into guidetree
-  ## -----------------------------
+    ## B: no user-defined guidetree given, turn
+    ## classification into guidetree
+    ## -----------------------------
     # gt <- findRoot(megProj, "both")
     # gt <- taxdumpChildren(tax, tail(gt$taxon, 1), tip.rank)
     # gt <- taxdump2phylo(gt, tip.rank)
     gt <- taxdump2phylo(tax, tip.rank)
-    }
-  gt$tip.label <- gsub(" ", "_", gt$tip.label)
+  }
   gt
 }

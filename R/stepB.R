@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-02-02)
+## © C. Heibl 2014 (last update 2018-05-02)
 
 #' @title Step B: Search and Download Sequences
 #' @description For any given project (see \code{\link{megapteraProj}}), 
@@ -8,7 +8,7 @@
 #' @details All accessions are stored under their species name as appearing 
 #' in the \emph{organism} field at GenBank, but information about infrageneric 
 #' ranks is stripped off the taxon names before they are stored in the database.
-#' @param x An object of class \code{\link{megapteraProj}}
+#' @param x An object of class \code{\link{megapteraProj}}.
 #' @param update.seqs A character string determining the behaviour of 
 #' \code{stepB} when it is run repeatedly on the same locus/taxon 
 #' combination: \code{"no"} means that only sequences that have been made 
@@ -78,6 +78,7 @@ stepB <- function(x, update.seqs = "no"){
                  "status text,",
                  "genom text,",
                  "npos integer NOT NULL,", 
+                 "e_value real,",
                  "identity real,",
                  "coverage real,",
                  "dna text NOT NULL,",
