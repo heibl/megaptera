@@ -99,6 +99,7 @@ Collate:
     'extractIGS.R'
     'extractLocus.R'
     'findRoot.R'
+    'frmt.R'
     'fuzzy.match.R'
     'getLineage.R'
     'giConsensus.R'

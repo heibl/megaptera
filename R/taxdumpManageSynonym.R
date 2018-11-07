@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-10-25)
+## © C. Heibl 2017 (last update 2018-11-07)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Manage Synonyms
@@ -8,10 +8,13 @@
 #'   names. The first name is considered to be the accepted name, the.
 #' @param keep.syn Logical, should synonyms present in \code{tax} be kept?
 #' @param add.syn Logical, should synonyms not present in \code{tax} be added?
-#' @param quiet Logical, if \code{FALSE}, progress is printed on screen for debugging.
+#' @param quiet Logical, if \code{FALSE}, progress is printed on screen for
+#'   debugging.
 #' @seealso \code{\link{taxdumpAddNode}}, \code{\link{taxdumpChildren}},
 #'   \code{\link{taxdumpMRCA}}, \code{\link{taxdumpSubset}},
 #'   \code{\link{taxdump2phylo}}
+#' @note \code{add.syn} is only partly implemented and not tested, because under
+#'   the current use (adding synonyms to NCBI taxonomy) it does not make sense.
 #' @export
 
 taxdumpManageSynonym <- function(tax, binomials, keep.syn = TRUE, add.syn = FALSE, quiet = TRUE){
@@ -46,20 +49,45 @@ taxdumpManageSynonym <- function(tax, binomials, keep.syn = TRUE, add.syn = FALS
     cat("ADDED AS", parent, "\n")
   } else {
     tax$status[tax$taxon == binomials[1]] <- "scientific name"
+    
+    ## Let's check if the name is tied to the right genus name
+    ## -------------------------------------------------------
+    genus <- taxdumpHigherRank(tax, binomials[1], "genus")
+    current_genus <- strip.spec(binomials[1])
+    if (genus != current_genus){
+      ## The corresponding genus name is a synonym and has to be "resurrected"
+      if (nrow(tax[tax$taxon %in% current_genus & tax$rank %in% "genus", ])){
+        if (tax$status[tax$taxon %in% current_genus & tax$rank %in% "genus"] == "scientific name"){
+          new_parent_id  <- tax$id[tax$taxon %in% current_genus & tax$rank %in% "genus"]
+        } else {
+          tax$status[tax$taxon %in% current_genus & tax$rank %in% "genus"] <- "scientific name"
+          new_parent_id <- max(tax[, c("id", "parent_id")]) + 1
+          tax$id[tax$taxon %in% current_genus & tax$rank %in% "genus"] <- new_parent_id
+        }
+        tax$parent_id[tax$taxon == binomials[1]] <- new_parent_id
+      } else {
+        stop("implement me!")
+      }
+    }
     cat("OK\n")
   }
   
-  ## 2. Set ID of synonyms to ID of accepted name
-  ## --------------------------------------------
-  tax$id[tax$taxon %in% binomials[id]] <- tax$id[tax$taxon == binomials[1]]
+  ## 2. Set ID/PARENT_ID of synonyms to ID/PARENT_ID of accepted name
+  ## ----------------------------------------------------------------
+  tax_id <- tax$id[tax$taxon == binomials[1]]
+  tax$id[tax$taxon %in% binomials[id]] <- tax_id
+  tax$parent_id[tax$id == tax_id] <- tax$id[tax$taxon == strip.spec(binomials[1])]
   
-  ## 3. Manage synonyms
+  ## 3. Make sure that all other names (also those coming from 'tax')
+  ##    will be marked 'synonym'
+  ## ---------------------------
+  syn <- tax$taxon[tax$id == tax_id]
+  syn <- setdiff(syn, binomials[1])
+  tax$status[tax$taxon %in% syn] <- "synonym"
+  
+  ## 4. Manage synonyms
   ## ------------------
   if (keep.syn){
-    
-    ## Set status to "synonym"
-    tax$status[tax$taxon %in% binomials[id[id > 1]]] <- "synonym"
-    
     if (add.syn){
      syn_to_add <- binomials[-id]
      if (length(syn_to_add)){
@@ -69,6 +97,8 @@ taxdumpManageSynonym <- function(tax, binomials, keep.syn = TRUE, add.syn = FALS
          ## CAUTION: Will set status to "scientific name"
        }
      }
+    } else {
+      
     }
   } else {
     

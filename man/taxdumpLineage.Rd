@@ -4,13 +4,16 @@
 \alias{taxdumpLineage}
 \title{Utilities for NCBI Taxdump}
 \usage{
-taxdumpLineage(tax, taxon)
+taxdumpLineage(tax, taxon, highest.rank)
 }
 \arguments{
 \item{tax}{Either an object of class \code{\link{megapteraProj}} or a data
 frame as returned by \code{\link{dbReadTaxonomy}}.}
 
 \item{taxon}{A character string giving the name of the taxon.}
+
+\item{highest.rank}{A character string giving the highest rank returned; if
+missing (default) the highest rank returned is the root.}
 }
 \description{
 Get all higher ranks including a given taxon.

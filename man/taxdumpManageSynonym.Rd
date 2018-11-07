@@ -17,10 +17,15 @@ names. The first name is considered to be the accepted name, the.}
 
 \item{add.syn}{Logical, should synonyms not present in \code{tax} be added?}
 
-\item{quiet}{Logical, if \code{FALSE}, progress is printed on screen for debugging.}
+\item{quiet}{Logical, if \code{FALSE}, progress is printed on screen for
+debugging.}
 }
 \description{
 Manage Synonyms
+}
+\note{
+\code{add.syn} is only partly implemented and not tested, because under
+  the current use (adding synonyms to NCBI taxonomy) it does not make sense.
 }
 \seealso{
 \code{\link{taxdumpAddNode}}, \code{\link{taxdumpChildren}},

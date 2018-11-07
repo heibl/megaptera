@@ -5,7 +5,8 @@
 \title{Utilities for NCBI Taxdump}
 \usage{
 taxdumpChildren(tax, taxon, immediate = FALSE, query.rank = "any",
-  tip.rank = "species", indet = indet.strings(), quiet = FALSE)
+  tip.rank = "species", status = "scientific name",
+  indet = indet.strings(), quiet = FALSE)
 }
 \arguments{
 \item{tax}{Either an object of class \code{\link{megapteraProj}} or a data
@@ -23,6 +24,10 @@ any restriction on the rank of the taxon queried.}
 
 \item{tip.rank}{A character string giving the name a rank. This rank will be
 treated as tip rank, i.e. all taxa of lower rank will be dicarded.}
+
+\item{status}{A character string defining the status of the taxon names to be
+returned, e.g. \code{"scientific name"} will return only currently
+accepted names, while \code{"all"} will return synonyms in addition.}
 
 \item{indet}{A vector of character strings containing regular expressions
 (see Examples).}

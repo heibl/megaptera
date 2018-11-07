@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-01-15)
+## © C. Heibl 2017 (last update 2018-10-25)
 
 #' @rdname dbTaxonomy
 #' @import DBI
@@ -34,12 +34,12 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
   
   ## Step 1: Remove all nodes below tip.rank
   ## ---------------------------------------
-  id <- tax[tax$rank == tip.rank, "id"]
+  id <- tax$id[tax$rank == tip.rank & tax$status == "scientific name"]
   tdDescendants <- function(tax, id){
     all_ids <- vector()
     gain <- length(id)
     while (gain > 0){
-      id <- tax[tax$parent_id %in% id, "id"]
+      id <- tax$id[tax$parent_id %in% id & tax$status == "scientific name"]
       all_ids <- c(all_ids, id)
       gain <- length(id)
     }
@@ -55,7 +55,7 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
   ## These lineages will be dropped entirely.
   ## ----------------------------------------
   tn <- taxdump_isTerminal(tax)
-  id <- tax$id[tn & tax$rank != tip.rank]
+  id <- tax$id[tn & tax$rank != tip.rank & tax$status != "synonym"]
   if (length(id)){
     warning(length(id)," terminal taxa without a taxon of rank '", tip.rank, 
             "' in their lineage were removed:",

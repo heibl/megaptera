@@ -6,17 +6,25 @@
 #' @param tax Either an object of class \code{\link{megapteraProj}} or a data
 #'   frame as returned by \code{\link{dbReadTaxonomy}}.
 #' @param taxon A character string giving the name of the taxon.
+#' @param highest.rank A character string giving the highest rank returned; if
+#'   missing (default) the highest rank returned is the root.
 #' @seealso \code{\link{taxdumpAddNode}}, \code{\link{taxdumpChildren}},
 #'   \code{\link{taxdumpMRCA}}, \code{\link{taxdumpSubset}},
 #'   \code{\link{taxdump2phylo}}
 #' @export
 
-taxdumpLineage <- function(tax, taxon){
+taxdumpLineage <- function(tax, taxon, highest.rank){
   
   ## Get taxonomy if necessary (i.e. tax is not a parent-child-table)
   ## --------------------------------------------------------------
   if (inherits(tax, "megapteraProj")){
     tax <- dbReadTaxonomy(tax)
+  }
+  
+  ## If given, 'highest.rank' must be available
+  ## ------------------------------------------
+  if (!missing(highest.rank)) {
+    if (!(any(tax$rank %in% highest.rank))) stop("'highest.rank' not available")
   }
   
   ## Determine which separator is used by 'tax' and impose it on 'taxon'
@@ -57,13 +65,17 @@ taxdumpLineage <- function(tax, taxon){
     obj <- obj[obj$rank != "subgenus", ]
   }
   
-  # while (!any(c("root", "Root of life") %in% obj$taxon)){
+  i <- 1 ## control for unexitable loops
   while (!any(root %in% obj$taxon)){
-    # pid <- tax[tax$id == pid$parent_id, c("parent_id", "id", "taxon", "rank")]
+    if (i > 100) stop("loop without exit")
     pid <- tax[tax$id == pid$parent_id & tax$status == "scientific name", ]
     if (!nrow(pid)) stop(obj$taxon[nrow(obj)], " (id=", obj$id[nrow(obj)], ", pid=", 
                          obj$parent_id[nrow(obj)],") has no parent")
     obj <- rbind(obj, pid)
+    if (!missing(highest.rank)){
+      if (highest.rank %in% obj$rank) break
+    }
+    i <- i + 1
   }
   obj
 }

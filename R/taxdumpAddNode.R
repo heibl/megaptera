@@ -3,7 +3,8 @@
 
 #' @title Utilities for NCBI Taxdump
 #' @description Insert a taxon as new node to the NCBI taxonomy.
-#' @param x An object of class \code{\link{megapteraProj}}.
+#' @param x An object of class \code{\link{megapteraProj}} or a data frame in
+#'   parent-child format.
 #' @param tab A data frame in parent-child format.
 #' @param rank A character string giving the rank of the new taxon, default is
 #'   \code{"species"}.
@@ -30,7 +31,7 @@ taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent){
   #########################################
   ## MODE 1: changes in postgreSQL database
   #########################################
-  if (inherits(tab, "megapteraProj")){
+  if (inherits(x, "megapteraProj")){
     
     if (!missing(tab)){
       id <- which(tab$rank == rank)

@@ -14,6 +14,9 @@
 #'   any restriction on the rank of the taxon queried.
 #' @param tip.rank A character string giving the name a rank. This rank will be
 #'   treated as tip rank, i.e. all taxa of lower rank will be dicarded.
+#' @param status A character string defining the status of the taxon names to be
+#'   returned, e.g. \code{"scientific name"} will return only currently
+#'   accepted names, while \code{"all"} will return synonyms in addition.
 #' @param indet A vector of character strings containing regular expressions
 #'   (see Examples).
 #' @param quiet Logical, use \code{quiet = TRUE} to suppress warning messages.
@@ -29,8 +32,9 @@
 #' indet.strings()
 #' @export
 
-taxdumpChildren <- function(tax, taxon, immediate = FALSE, query.rank = "any", tip.rank = "species", 
-                             indet = indet.strings(), quiet = FALSE){
+taxdumpChildren <- function(tax, taxon, immediate = FALSE, query.rank = "any", tip.rank = "species",
+                            status = "scientific name", indet = indet.strings(), 
+                            quiet = FALSE){
   
   ## checks
   ## ------
@@ -42,7 +46,9 @@ taxdumpChildren <- function(tax, taxon, immediate = FALSE, query.rank = "any", t
     tax <- dbReadTaxonomy(tax)
   }
   
-  tax <- tax[tax$status == "scientific name", ]
+  if (status == "scientific name"){
+    tax <- tax[tax$status == "scientific name", ]
+  }
   
   ## Determine which separator is used by 'tax' and impose it on 'taxon'
   ## -------------------------------------------------------------------

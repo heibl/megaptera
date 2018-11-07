@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-10-25)
+## © C. Heibl 2014 (last update 2018-11-07)
 
 #' @title Step A: Creating a Project Taxonomy
 #' @description Creates a project taxonomy from the NCBI taxonomy (see
@@ -60,19 +60,6 @@ stepA <- function(x){
   ## -----------------------------
   tax <- taxdumpSubset(tax, mrca = x@taxon@kingdom)
   
-  ## Formatting of species lists (see also megaptera2Rmarkdown)
-  ## ---------------------------
-  frmt <- function(z, n.syn = 3){
-    if (length(z) > 1){
-      if (length(z) > n.syn + 1){
-        z <- z[1:(n.syn + 2)]
-        z[n.syn + 2] <- "..."
-      } 
-      z <- paste(z[1], paste0("(syn. ", paste(z[-1], collapse = ", "), ")"))
-    }
-    paste("\n-", z)
-  }
-  
   ## INGROUP
   ## -------
   ig <- x@taxon@ingroup
@@ -84,7 +71,7 @@ stepA <- function(x){
     if (!all(a)){
       missing_ig <- ig[!a]
       slog("\n", length(missing_ig), " ingroup taxa not in NCBI Taxonomy database:", 
-           sapply(missing_ig, frmt), sep = "", file = logfile)
+           formatSpecList(missing_ig), sep = "", file = logfile)
       if (x@params@debug.level > 1){
         write.table(missing_ig, file = "data/ingroup-not-NCBI-taxonomy.txt",
                     quote = FALSE, row.names = FALSE, col.names = "INGROUP" )
@@ -100,9 +87,11 @@ stepA <- function(x){
   ## Adjust accepted names/synonyms as user-defined
   ## ----------------------------------------------
   # tax2 <- tax
+  ## ig[which(sapply(ig, function(x, y) x %in% y, x = "Hypocrea gelatinosa"))]
   for (i in seq_along(ig)[]){
     # cat(i)
     tax <- taxdumpManageSynonym(tax, binomials = ig[[i]], quiet = FALSE, keep.syn = TRUE)
+    # if (!taxdumpSanity(tax)) break
   }
   
   if (unique(sapply(unlist(ig), is.Linnean))){
@@ -125,7 +114,7 @@ stepA <- function(x){
     if (!all(a)){
       missing_og <- og[!a]
       slog("\n", length(missing_og), " outgroup taxa not in NCBI Taxonomy database:", 
-           sapply(missing_og, frmt), sep = "", file = logfile)
+           formatSpecList(missing_og), sep = "", file = logfile)
       if (x@params@debug.level > 1){
         write.table(missing_og, file = "data/outgroup-not-NCBI-taxonomy.txt",
                     quote = FALSE, row.names = FALSE, col.names = "OUTGROUP" )

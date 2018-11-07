@@ -15,3 +15,10 @@ Logical
 \description{
 Does several sanity checks for taxonomic tables in parent-child format.
 }
+\details{
+\code{taxdumpSanity} checks, if
+\enumerate{
+\item synonyms have the same parent as their corresponding accepted name
+\item accepted species names the corresponding genus name assigned
+}
+}

@@ -7,7 +7,8 @@
 taxdumpAddNode(x, tab, rank = "species", taxon, parent)
 }
 \arguments{
-\item{x}{An object of class \code{\link{megapteraProj}}.}
+\item{x}{An object of class \code{\link{megapteraProj}} or a data frame in
+parent-child format.}
 
 \item{tab}{A data frame in parent-child format.}
 
