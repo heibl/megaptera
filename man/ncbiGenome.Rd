@@ -38,7 +38,10 @@ Finds the most representative organelle genomes of a given taxon
  set of genomes; thereby \code{x} is often greater than 0 depending on the
  branching pattern (topology) encoded by the classifiaction. \item For each
  lineage, randomly choose one organelle genome and return the results as data
- frame (see \code{Value} section). }
+ frame (see \code{Value} section). } Because the \code{n} genomes are choosen
+ randomly from the available genomes, for cases where the number of available
+ genomes exceeds \code{n}, any two calls of \code{ncbiGenome} will return
+ different results.
 }
 \references{
 NCBI Orgenelle Genome Resources:

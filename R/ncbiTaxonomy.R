@@ -1,11 +1,13 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-01-30)
+## © C. Heibl 2014 (last update 2018-12-20)
 
 #' @title NCBI Taxonomy Database
 #' @description Retrieve taxonomic classification from the taxonomy database at
 #'   the National Center for Biotechnology Information (NCBI).
 #' @param x Database connection parameters, either as object of class
 #'   \code{\link{dbPars}} or \code{\link{megapteraProj}}.
+#' @param quiet Logical, indicating if diagnostic messages should be printed on
+#'   screen.
 #' @details The NCBI taxonomy database will be downloaded via FTP in "taxdump"
 #'   format, unpacked, and translated into data frames. In a second step, the
 #'   data frames will be stored in a postgreSQL database called
@@ -26,9 +28,9 @@
 #' @importFrom utils read.table untar
 #' @export
 
-ncbiTaxonomy <- function(x){
+ncbiTaxonomy <- function(x, quiet = FALSE){
   
-  ## check input object
+  ## Check input object
   ## ------------------
   if (!inherits(x, c("dbPars", "megapteraProj"))){
     stop("x is not of classes 'dbPars' or 'megapteraProj'")
@@ -37,7 +39,7 @@ ncbiTaxonomy <- function(x){
     x <- x@db
   }
   
-  ## check if database exists ...
+  ## Check if database exists ...
   ## ----------------------------
   conn <- dbConnect(RPostgreSQL::PostgreSQL(),
                     host = x@host,
@@ -47,11 +49,11 @@ ncbiTaxonomy <- function(x){
   sql <- paste("SELECT 1 FROM pg_database WHERE",
                wrapSQL("ncbitaxonomy", "datname", "="))
   if (nrow(dbGetQuery(conn, sql)) == 1){
-    cat("\nDatabase 'ncbitaxonomy' exists and will be updated")  
+    if (!quiet) cat("\nDatabase 'ncbitaxonomy' exists and will be updated")  
   } else {
     ## .. and create if it does not exist
     ## ----------------------------------
-    cat("\nDatabase 'ncbitaxonomy' created") 
+    if (!quiet) cat("\nDatabase 'ncbitaxonomy' created") 
     sql <- paste("CREATE DATABASE ncbitaxonomy",
                  "WITH ENCODING='UTF8'",
                  "CONNECTION LIMIT=-1;")
@@ -59,7 +61,18 @@ ncbiTaxonomy <- function(x){
   }
   dbDisconnect(conn)
   
-  ## connect to 'ncbitaxonomy'
+  ## Download and decompress taxdump
+  ## -------------------------------
+  if (!quiet) cat("\nDownloading 'taxdump' via FTP ... ")
+  unlink("taxdump.tar.gz")
+  unlink("taxdump", recursive = TRUE)
+  system("curl -OL ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz", 
+         ignore.stderr = TRUE, wait = TRUE)
+  if (!quiet) cat("done\nDecompressing 'taxdump.tar.gz' ... ")
+  untar("taxdump.tar.gz", exdir = "taxdump")
+  if (!quiet) cat("done")
+  
+  ## Connect to 'ncbitaxonomy'
   ## -------------------------
   conn <- dbConnect(RPostgreSQL::PostgreSQL(),
                     host = x@host,
@@ -68,16 +81,9 @@ ncbiTaxonomy <- function(x){
                     password = x@password,
                     dbname = "ncbitaxonomy")
   
-  ## download and decompress taxdump
-  ## -------------------------------
-  unlink("taxdump.tar.gz")
-  unlink("taxdump", recursive = TRUE)
-  system("curl -OL ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz", 
-         ignore.stderr = TRUE, wait = TRUE)
-  untar("taxdump.tar.gz", exdir = "taxdump")
-  
   ## 1. nodes: the hierarchical structure of the classification
   ## ----------------------------------------------------------
+  if (!quiet) cat("\nReading table 'nodes' ...")
   nodes <- read.table("taxdump/nodes.dmp", sep = "|", strip.white = TRUE, stringsAsFactors = FALSE)
   names(nodes) <- c("id", "parent_id", "rank", "embl_code", "division_id",
                     "inherited_div_flag", "genetic_code_id", "inherited_gc_flag",
@@ -85,6 +91,7 @@ ncbiTaxonomy <- function(x){
                     "hidden_subtree_root_flag", "comments")
   nodes <- nodes[, 1:3]
   
+  if (!quiet) cat("done\nWriting table 'nodes' to postgreSQL database 'ncbitaxonomy' ... ")
   dbRemoveTable(conn, "nodes")
   SQL <- paste("CREATE TABLE public.nodes(",
                "id integer NOT NULL,",
@@ -94,17 +101,30 @@ ncbiTaxonomy <- function(x){
   dbSendQuery(conn, SQL)
   dbWriteTable(conn, "nodes", nodes, append = TRUE, row.names = FALSE)
   remove(nodes)
+  if (!quiet) cat("done")
   
   ## 2. names: taxon names
   ## ---------------------
+  if (!quiet) cat("\nReading table 'names' ... ")
   # taxnames <- read.table("taxdump/names.dmp", sep = "|", strip.white = TRUE, stringsAsFactors = FALSE)
-  taxnames <- scan("taxdump/names.dmp", sep = "\n", what = "c", strip.white = TRUE)
+  taxnames <- scan("taxdump/names.dmp", sep = "\n", what = "c", strip.white = TRUE, quiet = TRUE)
   taxnames <- lapply(taxnames, function(z) unlist(strsplit(z, "\t[|]\t|\t[|]")))
   id <- sapply(taxnames, length)
   if (all(id == 4)) taxnames <- do.call(rbind, taxnames)
   taxnames <- as.data.frame(taxnames, stringsAsFactors = FALSE)
   names(taxnames) <- c("id", "taxon", "unique_name", "name_class")
+  if (!quiet) cat("done")
   
+  ## Check for duplicate entries
+  d <- duplicated(taxnames)
+  if (any(d)){
+    dd <- taxnames[d, ]
+    if (!quiet) cat("\nRemoving", nrow(dd), "duplicate", ifelse(nrow(dd) == 1, "entry","entries"),
+                    "from 'names':", formatDF(dd))
+    taxnames <- taxnames[!d, ]
+  }
+  
+  if (!quiet) cat("\nWriting table 'names' to postgreSQL database 'ncbitaxonomy' ... ")
   dbRemoveTable(conn, "names")
   SQL <- paste("CREATE TABLE public.names(",
                "id integer NOT NULL,",
@@ -115,10 +135,13 @@ ncbiTaxonomy <- function(x){
   dbSendQuery(conn, SQL)
   dbWriteTable(conn, "names", taxnames, append = TRUE, row.names = FALSE)
   remove(taxnames)
+  if (!quiet) cat("done")
   
-  ## disconnect and eliminate traces
+  ## Disconnect and eliminate traces
   ## -------------------------------
+  if (!quiet) cat("\nCleaning up ... ")
   dbDisconnect(conn)
   unlink("taxdump.tar.gz")
   unlink("taxdump", recursive = TRUE)
+  if (!quiet) cat("done")
 }

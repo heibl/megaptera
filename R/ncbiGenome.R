@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2018-04-11)
+## © C. Heibl 2016 (last update 2018-12-13)
 
 ## to do:
 ## extend outgroup to genus if it is a single species
@@ -24,7 +24,10 @@
 #'  set of genomes; thereby \code{x} is often greater than 0 depending on the
 #'  branching pattern (topology) encoded by the classifiaction. \item For each
 #'  lineage, randomly choose one organelle genome and return the results as data
-#'  frame (see \code{Value} section). }
+#'  frame (see \code{Value} section). } Because the \code{n} genomes are choosen
+#'  randomly from the available genomes, for cases where the number of available
+#'  genomes exceeds \code{n}, any two calls of \code{ncbiGenome} will return
+#'  different results.
 #'@return a data frame with three columns: \item{taxon}{scientific name as Latin
 #'  binomial} \item{gb}{UID: GenBank number} \item{gi}{alternative UID (GIs will
 #'  no longer be supported after august 2016!)}
@@ -39,10 +42,12 @@ ncbiGenome <- function(x, organelle, mrca = c("ingroup", "outgroup"), n = 5){
   
   ## CHECKS
   ## ------
+  if (!inherits(x, "megapteraProj"))
+    stop("'x' is not of class 'megapteraProj'")
   if (!url.exists("https://eutils.ncbi.nlm.nih.gov"))
-    stop("internet coection required for ncbiGenome")
+    stop("internet connection required for ncbiGenome")
   
-  ## set organelle
+  ## Set organelle
   ## -------------
   fn <- ifelse(dir.exists("results"), "log/ncbiGenome.log", "")
   organelle <- match.arg(organelle, c("mitochondrion", "chloroplast"))
@@ -50,12 +55,13 @@ ncbiGenome <- function(x, organelle, mrca = c("ingroup", "outgroup"), n = 5){
   ## tag can either be 'mitochondrion' or 'mitochondrial DNA'
   organelle <- gsub("drion", "dri*", organelle)
   
-  ## find common root of ingroup and outgroup
+  ## Find common root of ingroup and outgroup
   ## ----------------------------------------
   if (all(c("ingroup", "outgroup") %in% mrca)) mrca <- "both"
-  common.root <- findRoot(x, mrca)
-  # common.root <- head(common.root$taxon, 1) ## slugs (2017-10-11)
+  common_root <- findRoot(x, mrca)
+  # common_root <- head(common_root$taxon, 1) ## slugs (2017-10-11)
   
+  ## This is the core function
   core <- function(this.root, organelle, fn){
     ## query ENTREZ and save history on server
     ## ---------------------------------------
@@ -84,11 +90,11 @@ ncbiGenome <- function(x, organelle, mrca = c("ingroup", "outgroup"), n = 5){
     list(webEnv = webEnv, queryKey = queryKey, nn = nn)
   }
   
-  ## search iteratively beginning from the MRCA down to the root-of-life
+  ## Search iteratively beginning from the MRCA down to the root-of-life
   ## -------------------------------------------------------------------
-  for (i in 1:nrow(common.root)){
+  for (i in 1:nrow(common_root)){
     
-    this.root <- common.root$taxon[i] ## slugs (2017-10-11)
+    this.root <- common_root$taxon[i] ## slugs (2017-10-11)
     slog("\n.. common root   :", this.root, file = fn) 
     out <- core(this.root, organelle, fn)
     if (!out$nn){
@@ -98,7 +104,7 @@ ncbiGenome <- function(x, organelle, mrca = c("ingroup", "outgroup"), n = 5){
     }
   }
   
-  ## loop over sliding window
+  ## Loop over sliding window
   ## ------------------------
   retmax <- 50
   sw <- seq(from = 0, to = out$nn, by = retmax)

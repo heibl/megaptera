@@ -1,11 +1,19 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-10-25)
+## © C. Heibl 2017 (last update 2018-12-14)
 
 #' @rdname dbTaxonomy
 #' @import DBI
 #' @export
 
 dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
+  
+  ## CHECKs
+  if (!inherits(megProj, "megapteraProj"))
+    stop("'megProj' is not of class 'megapteraProj'")
+  if (!missing(subset)){
+    if (megProj@locus@kind == "undefined" & length(subset) == 1) ## i.e. subset == "species_sequence"
+      stop("locus must be defined for subsetting based on table 'species_sequence'")
+  }
   
   if (missing(tip.rank)) tip.rank <- megProj@taxon@tip.rank
   root <- match.arg(root, c("tol", "mrca"))
@@ -15,7 +23,7 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
   if (!dbExistsTable(conn, "taxonomy"))
     stop("no taxonomy table - see ?dbUpdateTaxonomy for help")
   
-  ## read taxonomy table
+  ## Read taxonomy table
   ## -------------------
   if (missing(tag)){
     tax <- dbGetQuery(conn, "SELECT * FROM taxonomy")
@@ -63,14 +71,14 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
     tax <- taxdumpDropTip(tax, id)
   }
   
-  ## subsetting taxonomy ..
+  ## Subsetting taxonomy ..
   ## ----------------------
   if (!missing(subset)){
     
     ## .. based on sequence names or ..
     ## --------------------------------
     if (is.character(subset)) {
-      ## .. based on MAS table or ..
+      ## .. based on MSA table or ..
       ## ---------------------------
       if (length(grep("^[genus]|[species]_", subset))){
         tip.rank <- gsub("_.+$", "", subset)
@@ -127,7 +135,7 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
     }
   }
   
-  ## remove tree-of-life-root (if necessary, see 2nd condition)
+  ## Remove tree-of-life-root (if necessary, see 2nd condition)
   ## ----------------------------------------------------------
   if (root == "mrca" & 1 %in% tax$parent_id){
     nodes <- 1

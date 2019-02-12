@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-11-07)
+## © C. Heibl 2017 (last update 2018-12-18)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Manage Synonyms
@@ -20,7 +20,7 @@
 taxdumpManageSynonym <- function(tax, binomials, keep.syn = TRUE, add.syn = FALSE, quiet = TRUE){
   
   ## Assume that first element of 'binomials' is
-  ## the accepted name, all others are synonms
+  ## the accepted name, all others are synonyms
   
   if (!quiet){
     cat("Accepted name:", binomials[1], ".. ")
@@ -49,11 +49,18 @@ taxdumpManageSynonym <- function(tax, binomials, keep.syn = TRUE, add.syn = FALS
     cat("ADDED AS", parent, "\n")
   } else {
     tax$status[tax$taxon == binomials[1]] <- "scientific name"
+    ## Convert rank from subsp. to sp. if necessary
+    if (grep("^[[:upper:]][[:lower:]-]+ [[:lower:]-]+$", tax$taxon[tax$taxon == binomials[1]])){
+      tax$rank[tax$taxon == binomials[1]] <- "species"
+    }
+    
+    accepted <- tax[tax$taxon == binomials[1], ]
     
     ## Let's check if the name is tied to the right genus name
     ## -------------------------------------------------------
     genus <- taxdumpHigherRank(tax, binomials[1], "genus")
     current_genus <- strip.spec(binomials[1])
+    current_parent <- tax$taxon[tax$id == accepted$parent_id & tax$status == "scientific name"]
     if (genus != current_genus){
       ## The corresponding genus name is a synonym and has to be "resurrected"
       if (nrow(tax[tax$taxon %in% current_genus & tax$rank %in% "genus", ])){
@@ -69,6 +76,11 @@ taxdumpManageSynonym <- function(tax, binomials, keep.syn = TRUE, add.syn = FALS
         stop("implement me!")
       }
     }
+    if (current_parent != current_genus){
+      ## The corresponding genus name is a synonym and has to be "resurrected"
+      new_parent_id  <- tax$id[tax$taxon %in% current_genus & tax$rank %in% "genus"]
+      tax$parent_id[tax$taxon == accepted$taxon] <- new_parent_id 
+    }
     cat("OK\n")
   }
   
@@ -76,7 +88,12 @@ taxdumpManageSynonym <- function(tax, binomials, keep.syn = TRUE, add.syn = FALS
   ## ----------------------------------------------------------------
   tax_id <- tax$id[tax$taxon == binomials[1]]
   tax$id[tax$taxon %in% binomials[id]] <- tax_id
-  tax$parent_id[tax$id == tax_id] <- tax$id[tax$taxon == strip.spec(binomials[1])]
+  # tax$parent_id[tax$id == tax_id] <- tax$id[tax$taxon == strip.spec(binomials[1])]
+  # The line above only works when there are now homonymic subgenera (e.g., 
+  # Equus = genus and subgenus), in this case, do:
+  tax$parent_id[tax$id == tax_id] <- tax$parent_id[tax$taxon == binomials[1]]
+  
+  
   
   ## 3. Make sure that all other names (also those coming from 'tax')
   ##    will be marked 'synonym'

@@ -1,4 +1,4 @@
-## This code is part of the megaptera package
+ ## This code is part of the megaptera package
 ## © C. Heibl 2014 (last update: 2018-01-29)
 
 #' @export

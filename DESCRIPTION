@@ -14,6 +14,7 @@ Imports:
     DBI,
     knitr,
     methods,
+    parallel,
     RCurl,
     rmarkdown,
     RPostgreSQL,
@@ -35,7 +36,7 @@ License: GPL (>= 2)
 LazyData: true
 VignetteBuilder: knitr
 Packaged: Wed Jan 31 13:49:07 2018
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 Collate: 
     'BOLD2megaptera.R'
     'DNAbin2pg.R'
@@ -99,6 +100,7 @@ Collate:
     'extractIGS.R'
     'extractLocus.R'
     'findRoot.R'
+    'formatDF.R'
     'frmt.R'
     'fuzzy.match.R'
     'getLineage.R'
@@ -159,6 +161,7 @@ Collate:
     'stepE.R'
     'stepF.R'
     'stepGBLOCKS.R'
+    'stepGUIDANCE.R'
     'stepH.R'
     'stepMAFFT.R'
     'stepPASTA.R'
@@ -177,6 +180,7 @@ Collate:
     'taxdumpLineage.R'
     'taxdumpMRCA.R'
     'taxdumpManageSynonym.R'
+    'taxdumpRankOrder.R'
     'taxdumpSanity.R'
     'taxdumpSubset.R'
     'taxdump_isTerminal.R'

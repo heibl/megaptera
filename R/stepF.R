@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-10-25)
+## © C. Heibl 2014 (last update 2019-02-06)
 
 #' @title Step F: Select Sequences and Assemble FASTA file
 #' @description In \code{stepF} FASTA files will be assembled selecting all
@@ -61,23 +61,6 @@ stepF <- function(x, update){
        "\nSTEP F: construct", tip.rank, "consensus sequences\n", 
        file = logfile)
   
-  ## set threshold values
-  ## --------------------
-  # min.identity <- x@locus@min.identity
-  # if (min.identity < 0){
-  #   min.identity <- optimizeIdentity(x, quiet = TRUE)
-  #   min.identity <- min.identity$suggested - 1e-06
-  # }
-  # slog("\nThreshold of minimum identity:", min.identity, 
-  #      file = logfile)
-  # min.coverage <- x@locus@min.coverage
-  # if (min.coverage < 0){
-  #   min.coverage <- optimizeCoverage(x, quiet = TRUE)
-  #   min.coverage <- min.coverage$suggested - 1e-06
-  # }
-  # slog("\nThreshold of minimum coverage:", min.coverage, 
-  #      file = logfile)
-  
   ## open database connection
   conn <- dbconnect(x)
   
@@ -89,14 +72,14 @@ stepF <- function(x, update){
     dbSendQuery(conn, SQL)
   } 
   
-  ## Select accessions that comply with Expect value threshold
-  ## ---------------------------------------------------------
-  SQL <- paste("SELECT taxon, gi, e_value, identity",
+  ## Select accessions that have an Expect value of at least 11
+  ## and a coverage of al least 20%
+  ## -----------------------------------------------------------
+  SQL <- paste("SELECT taxon, gi, npos, e_value, coverage",
                "FROM", acc.tab, 
                "WHERE npos <=", max.bp,
                "AND e_value <= 11",
-               # "AND identity >=", min.identity,
-               # "AND coverage >=", min.coverage,
+               "AND coverage >= 20",
                "AND status !~ 'excluded|too'",
                "ORDER BY (taxon, gi)")
   taxa <- dbGetQuery(conn, SQL)
@@ -114,8 +97,9 @@ stepF <- function(x, update){
   }
   chooseAcc <- function(tab, spec){
     tab <- tab[tab$taxon == spec, ]
-    tab <- tab[tab$e_value == min(tab$e_value), ]
-    if (nrow(tab) > 1) tab <- tab[tab$identity == min(tab$identity), ]
+    tab <- tab[tab$e_value == min(tab$e_value), ] # lowest E-value and
+    tab <- tab[tab$coverage == max(tab$coverage), ] # greatest coverage
+    tab <- tab[tab$npos == max(tab$npos), ] # longest sequence
     tab[1, ]
   }
   choosen_acc <- lapply(unique(taxa$taxon), chooseAcc, tab = taxa)

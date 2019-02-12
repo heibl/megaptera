@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-28)
+## © C. Heibl 2014 (last update 2018-12-13)
 
 #' @export
 
@@ -117,7 +117,7 @@ stepD <- function(x){
       return()
     } 
     
-    ## which species have more than 1 accession?
+    ## Which species have more than 1 accession?
     ## -----------------------------------------
     id <- tax$n > 1
     if (!nrow(tax[id, ])) {
@@ -132,7 +132,7 @@ stepD <- function(x){
       slog("\n..", length(id), "species have > 1 sequence", file = logfile)
     }
     
-    ## determine reference clades (refc)
+    ## Determine reference clades (refc)
     ## ---------------------------------
     rr <- x@taxon@reference.rank
     if (rr == "auto"){

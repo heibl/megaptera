@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update: 2018-02-21)
+## © C. Heibl 2014 (last update: 2018-12-18)
 
 #' @rdname dbTaxonomy
 #' @import DBI
@@ -56,7 +56,6 @@ dbUpdateTaxonomy <- function(megProj, taxonomy, logfile = ""){
       #   }
       #   taxonomy <- taxonomy[!taxonomy$id %in% d, ]
       # }
-      
       
       ## Write data frame to taxonomy table of SQL database
       ## --------------------------------------------------

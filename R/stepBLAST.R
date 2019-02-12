@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2018 (last update 2018-04-12)
+## © C. Heibl 2018 (last update 2019-02-03)
 
 #' @title stepBLASTN: Filter Homologous Sequences
 #' @description Filters homologous sequences using the BLASTB tool
@@ -29,44 +29,60 @@ stepBLAST <- function(x){
   
   ## Create BLAST database
   ## ---------------------
-  seqs <- dbReadDNA(x, acc.tab)
-  write.fas(seqs, dbn)
+  write.fas(x@locus@reference, refn)
   cmd <- paste("/usr/local/ncbi/blast/bin/makeblastdb", 
-               "-in", dbn, 
+               "-in", refn, 
                "-dbtype nucl",
                "-parse_seqids")
   system(cmd)
   
-  ## Prepare References
+  ## Prepare Sequences
   ## ------------------
-  write.fas(x@locus@reference, refn)
+  seqs <- dbReadDNA(x, acc.tab)
+  write.fas(seqs, dbn)
   
   ## Do the BLAST
   ## ------------
-  cls <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
-           "gapopen", "qstart", "qend", "sstart", "send", 
-           "evalue", "bitscore")
+  cls <- c("qseqid", "sseqid", 
+           "length", 
+           "mismatch", 
+           "qstart", "qend", "sstart", "send",
+           # "gapopen", # Number of gap openings
+           "qcovs", # Query Coverage Per Subject
+           "pident", # Percentage of identical matches
+           "evalue", 
+           "bitscore", 
+           "sstrand")
   outfmt <- paste0("-outfmt '", paste(c(6, cls), collapse = " "), "'")
   cmd <- paste("/usr/local/ncbi/blast/bin/blastn",
-               "-db", dbn,
-               "-query", refn,
-               "-task blastn-short",
+               "-db", refn,
+               "-query", dbn,
+               "-task blastn", ## traditional BLASTN requiring an exact match of 11
                "-evalue 1000",
+               "-max_hsps 1", ## maximum number of HSPs per subject sequence to save for each query
                "-max_target_seqs 10000",
                outfmt,
                "-out", outn)
   system(cmd)
   
-  ## Parse output and update database
-  ## --------------------------------
+  ## Parse output 
+  ## ------------
   res <- fread(outn)
   names(res) <- cls
-  res <- cbind(splitGiTaxon(res$sseqid), res)
+  ## For every species select hit with lowest E-value
+  res <- by(res, res$qseqid, function(z) z[which.min(z$evalue),])
+  res <- do.call(rbind, res)
+  res <- cbind(splitGiTaxon(res$qseqid), res)
   
+  # test <- res[grep("Miniopterus_pallidus", res$qseqid), ]
+  # test <- res[grep("Balae", res$qseqid), ]
+  
+  ## Update database
+  ## ---------------
   SQL <- paste("UPDATE", acc.tab,
                "SET", wrapSQL(round(res$evalue, 10), "e_value", "=", NULL),
                 ",", wrapSQL(res$pident, "identity", "=", NULL),
-                ",", wrapSQL(res$length, "coverage", "=", NULL),
+                ",", wrapSQL(res$qcovs, "coverage", "=", NULL),
                "WHERE", wrapSQL(res$gi, "gi", "=", NULL))
   conn <- dbconnect(x)
   lapply(SQL, dbSendQuery, conn = conn)

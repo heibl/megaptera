@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-02-26)
+## © C. Heibl 2014 (last update 2019-02-06)
 
 # TO DO: marker-wise deletion of species (line 38)
 
@@ -58,7 +58,8 @@
 
 supermatrix <- function(megProj, min.n.seq = 3, 
                         reliability = 0, blocks = "split", 
-                        partition, coverage.locus = 0.5,
+                        partition, trim.ends = 0,
+                        coverage.locus = 0.5,
                         subset.locus, subset.species,
                         exclude.locus, exclude.species,
                         core.locus, core.species,
@@ -133,11 +134,17 @@ supermatrix <- function(megProj, min.n.seq = 3,
       }
       ali
     }
-    cat("\nKeeping only blocks >", min.n.seq[2], "sequences")
+    cat("\nKeeping only blocks >", min.n.seq[2], "sequence")
     x[block.id] <- lapply(x[block.id], concatenateBlocks, n = min.n.seq[2])
   }
   
-  # x <- lapply(x, trimEnds, min.n.seq = min.n.seq)
+  ## Trim tapering ends of alignment
+  ## -------------------------------
+  cat("\nTrimming alignment ends (columns with <", 
+      round(trim.ends * 100, 1), "% sequence information) ... ")
+  n <- sapply(x, ncol)
+  x <- lapply(x, trimEnds, min.n.seq = trim.ends)
+  cat(sum(n - sapply(x, ncol)), "columns deleted")
   
   names(x) <- gsub(paste0("^", tip.rank, "_"), "", tabs)
   spec.set <- lapply(x, rownames)
@@ -229,6 +236,7 @@ supermatrix <- function(megProj, min.n.seq = 3,
   }
   
   ## Create denser ingroup
+  ## ---------------------
   if (best.sampled.congeneric){
     cat("\nKeeping only one best-sampled species per genus ... ")
     percentInformative <- function(z){
@@ -265,7 +273,8 @@ supermatrix <- function(megProj, min.n.seq = 3,
     outgroup <- names(tail(nn, squeeze.outgroup))
     nn <- head(nn, -squeeze.outgroup)
     x <- x[!rownames(x) %in% names(nn), ]
-    x <- deleteEmptyCells(x, quiet = TRUE)
+    ## This is a bug, because it changes partitions!
+    # x <- deleteEmptyCells(x, quiet = TRUE)
     cat("OK")
   }
   

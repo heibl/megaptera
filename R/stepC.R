@@ -1,11 +1,9 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-02-22)
+## © C. Heibl 2014 (last update 2018-12-20)
 
 #' @export
 #' @import DBI
-#' @import snow
-#' @import snowfall
-#' @importFrom snow setDefaultClusterOptions
+#' @importFrom parallel clusterEvalQ clusterExport makeCluster parLapply stopCluster
 
 stepC <- function(x){
   
@@ -117,23 +115,20 @@ stepC <- function(x){
   slog("\n", length(spec), "species need to be aligned\n\n", 
        file = logfile)
   
-  ## aligning -- either sequential or parallel
+  ## Aligning -- either sequential or parallel
   ## -----------------------------------------
-  if ( length(spec) > 0 ) {
-    cpus <- x@params@cpus
-    if ( length(spec) < cpus | !x@params@parallel ){
+  if (length(spec)) {
+    if (length(spec) < x@params@cpus | !x@params@parallel){
       lapply(spec, alignSpecies, megProj = x)
     } else {
-      sfInit(parallel = TRUE, cpus = cpus, 
-                       type = x@params@cluster.type)
-      sfLibrary("megaptera", character.only = TRUE)
-      megProj <- x
-      sfExport("spec", "megProj", "acc.tab", 
-                         "max.bp", "align.exe", "logfile")
-      sfLapply(x = spec, fun = alignSpecies, megProj = megProj)
-      sfStop()
+      cl <- makeCluster(x@params@cpus)
+      clusterEvalQ(cl, library(megaptera))
+      clusterExport(cl, "x")
+      parLapply(cl, X = spec, fun = alignSpecies, megProj = x)
+      stopCluster(cl)
     }
-  } 
+  }
+  
   dbDisconnect(conn)
   
   slog("\n\nSTEP C finished", file = logfile)

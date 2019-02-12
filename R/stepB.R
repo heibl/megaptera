@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-05-02)
+## © C. Heibl 2014 (last update 2018-12-18)
 
 #' @title Step B: Search and Download Sequences
 #' @description For any given project (see \code{\link{megapteraProj}}), 
@@ -39,7 +39,7 @@ stepB <- function(x, update.seqs = "no"){
     stop("internet connection required for stepB")
   
   
-  ## open database connection
+  ## Open database connection
   ## ------------------------
   conn <- dbconnect(x)
   
@@ -86,7 +86,7 @@ stepB <- function(x, update.seqs = "no"){
     dbSendQuery(conn, SQL)
   }
   
-  ## list of species or higher taxa to be be searched for
+  ## List of species or higher taxa to be be searched for
   ## ----------------------------------------------------
   slog("\nAssembling taxon search list", file = logfile)
   ingroup <- x@taxon@ingroup
@@ -99,7 +99,7 @@ stepB <- function(x, update.seqs = "no"){
   }
   search.tax <- c(ingroup, outgroup)
   
-  ## search and download sequences
+  ## Search and download sequences
   ## -----------------------------
   lapply(search.tax, downloadSequences, x = x)
   

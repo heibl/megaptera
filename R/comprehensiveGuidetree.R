@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-10-25)
+## © C. Heibl 2014 (last update 2018-12-13)
 
 #' @title Comprehensive Guide Tree
 #' @description Creates a complete (or comprehensive) guide tree for the
@@ -31,7 +31,7 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
   ## ------------------------------------------
   if (missing(tip.rank)) tip.rank <- megProj@taxon@tip.rank
   
-  ## read taxonomy table
+  ## Read taxonomy table
   ## -------------------
   if (missing(subset)){
     tax <- dbReadTaxonomy(megProj, tip.rank = tip.rank, root = "mrca")
@@ -45,7 +45,7 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
   
   ## get outgroup taxa
   ## -----------------
-  og <- unlist(megProj@taxon@outgroup)
+  og <- gsub(" ", "_", unlist(megProj@taxon@outgroup))
   if (tip.rank == "genus" & all(is.Linnean(og))) og <- strip.spec(og)
   og <- intersect(og, tax$taxon) ## actual subset of outgroup
   
@@ -66,7 +66,7 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
     gt <- megProj@taxon@guide.tree
     gt$edge.length <- NULL
     
-    ## check if any tips of the guide tree are not part of
+    ## Check, if any tips of the guide tree are not part of
     ## the project's taxonomy
     ## ----------------------
     drop_from_guidetree <- setdiff(gt$tip.label, tax$taxon)
@@ -81,7 +81,7 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
       }
     }
     
-    ## create subtrees that will be plotted onto the guide
+    ## Create subtrees that will be plotted onto the guide
     ## tree's tips
     ## -----------
     subtrees <- lapply(gt$tip.label, taxdumpChildren, tax = tax, tip.rank = tip.rank)
@@ -92,7 +92,7 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
     multi.gen <- which(!single.gen)
     single.gen <- which(single.gen)
     
-    ## Check if subtrees contain all focal species/genera
+    ## Check, if subtrees contain all focal species/genera
     ## This check could be done earlier, eg. after step A
     ## ---------------------------------------------------
     test_present <- c(unlist(subtrees[single.gen]),
@@ -118,7 +118,7 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
       }
     }
     
-    ## add outgroup if nessesary
+    ## Add outgroup if nessesary
     ## -------------------------
     cond1 <- any(tax[tax$rank == tip.rank, "taxon"] %in% og)
     cond2 <- !all(og %in% gt$tip.label)

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-11-07)
+## © C. Heibl 2017 (last update 2018-12-18)
 
 #' @title Sanity Check for Parent-Child Taxonomic Tables
 #' @description Does several sanity checks for taxonomic tables in parent-child format.
@@ -23,29 +23,75 @@ taxdumpSanity <- function(tax){
   with_syn <- length(unique(tax$id[tax$status == "synonym"]))
   cat("\nNumber of taxon concepts with synonyms:", with_syn)
   
+  cat("\n\nMake sure that ...")
+  
   ## 1. Do synonyms have same parent as accepted taxa?
   ## -------------------------------------------------
+  cat("\n... accepted taxa and their synonyms share the same parent ...")
   parents <- tapply(tax$parent_id, tax$id, function(z) length(unique(z)))
   parents <- names(parents)[parents > 1]
   if (length(parents)){
-    cat("\nFATAL:", length(parents), "taxon concepts have more than one parent:", 
-        formatSpecList(parents, n.element = 6))
+    cat("\nFATAL:", length(parents), "taxon", ifelse(n == 1, "concept has", "concepts have"), 
+        "more than one parent:", formatSpecList(parents, n.element = 6))
     is_sane <- FALSE
+  } else {
+    cat(" OK")
   }
   
-  ## 2. Find accepted species linked to the wrong genus. This may happen,
-  ##    when recombination is done
-  ## -----------------------------
-  accepted_species <- tax$taxon[tax$rank == "species" & tax$status == "scientific name"]
-  genus <- sapply(accepted_species, taxdumpHigherRank, x = tax, rank = "genus")
-  id <- genus == strip.spec(accepted_species)
-  if (!all(id)){
-    n <- length(accepted_species[!id])
+  ## 2. Find taxon names that are linked to a name of the same rank
+  ## --------------------------------------------------------------
+  cat("\n... accepted taxa are not linked to parent taxa of the same rank ...")
+  test <- tax[tax$status == "scientific name", ]
+  test$parent_rank <- test$rank[match(test$parent_id, test$id)] 
+  test <- test[test$rank != "no rank" & test$parent_rank != "no rank", ]
+  id <- test$rank == test$parent_rank
+  if (any(id)){
+    n <- nrow(test[id, ])
+    p <- test[match(test$parent_id[id], test$id), c("taxon", "rank")]
+    p <- data.frame(test$taxon[id], p, stringsAsFactors = FALSE)
+    names(p)  <- c("child", "parent", "shared rank")
+    cat("\nFATAL:", n, "accepted taxon", ifelse(n == 1, "name is", "names are"), 
+        "linked to a taxon name of the same rank:", formatDF(p))
+
+    return(FALSE)
+  } else {
+    cat(" OK")
+  }
+  
+  ## 3. Find accepted species linked to the wrong genus. This may happen,
+  ##    when recombination was done
+  ## ------------------------------
+  cat("\n... accepted species are linked to the correct genus name ...")
+  accepted <- tax[tax$status == "scientific name", ]
+  children <- accepted[accepted$rank == "species", c("parent_id", "id", "taxon")]
+  children <- children[-grep(indet.strings(collapse = TRUE), children$taxon), ]
+  parents <- accepted[match(children$parent_id, accepted$id), c("id", "taxon", "rank", "status")]
+  test <- cbind(parents, children[, -1])
+  names(test) <- c("parent_id", "parent_taxon", "parent_rank", "parent_status","child_id", "child_taxon")
+  genus <- test[test$parent_rank == "genus", c("parent_taxon", "child_taxon")]
+  genus$genus <- strip.spec(genus$child_taxon, mode = "regex")
+  id <- genus$parent_taxon != genus$genus
+  # head(genus[id, ])
+  if (any(id)){
+    n <- length(genus$child_taxon[id])
+    genus <- genus[id, c("parent_taxon", "child_taxon")]
+    names(genus) <- c("genus", "species")
     cat("\nFATAL:", n, "accepted species", ifelse(n == 1, "name is", "names are"), 
         "linked to a non-corresponding genus name:", 
-        formatSpecList(accepted_species[!id]))
+        formatDF(genus))
     is_sane <- FALSE
+  } else {
+    cat(" OK")
   }
+  test <- test[test$parent_rank != "genus", ]
+  if (nrow(test)){
+    cat("\nNOTE:", nrow(test), 
+        "accepted species are not direktly linked to a genus,", 
+        "but to one of these ranks", 
+        formatSpecList(sort(unique(test))))
+  }
+  remove(test)
+  
   
   cat("\n")
   is_sane

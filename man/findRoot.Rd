@@ -9,13 +9,14 @@ findRoot(x, what)
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}
 
-\item{what}{A character string, either \code{"ingroup"}, \code{"outgroup"}, or \code{"both"}.}
+\item{what}{A character string, either \code{"ingroup"}, \code{"outgroup"},
+or \code{"both"}.}
 }
 \value{
-A data frame with three columns:
- \item{id}{the unique identifier of the taxon}
- \item{taxon}{the scientific name of the taxon}
- \item{rank}{the rank of the taxon}
+A data frame with three columns: \item{id}{the unique identifier of
+  the taxon} \item{taxon}{the scientific name of the taxon} \item{rank}{the
+  rank of the taxon} The row order is from lower to higher ranked taxa, i.e.
+  backwards into evolutionary time.
 }
 \description{
 Finds the lineage from one taxon, or the most recent common

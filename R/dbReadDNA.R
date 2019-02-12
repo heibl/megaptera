@@ -8,7 +8,8 @@
 #' @export
 
 dbReadDNA <- function(x, tab.name, taxon, regex = TRUE, 
-                      max.bp, min.identity, min.coverage,
+                      max.bp, max.evalue, 
+                      min.identity, min.coverage,
                       ignore.excluded = TRUE, subtree = FALSE,
                       blocks = "ignore", reliability = 0){
   
@@ -59,6 +60,7 @@ dbReadDNA <- function(x, tab.name, taxon, regex = TRUE,
     SQL <- paste("SELECT taxon, gi, dna FROM ", tab.name, 
                  " WHERE taxon ~ '", taxon, "'", sep = "")
     SQL <- paste(SQL, "AND npos <=", max.bp)
+    if (!missing(max.evalue)) SQL <- paste(SQL, "AND e_value <=", max.evalue)
     if (!missing(min.identity)) SQL <- paste(SQL, "AND identity >=", min.identity)
     if (!missing(min.coverage)) SQL <- paste(SQL, "AND coverage >=", min.coverage)
     if (ignore.excluded) SQL <- paste(SQL, "AND status !~ 'excluded|too'")
