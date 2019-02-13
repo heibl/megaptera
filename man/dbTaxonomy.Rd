@@ -19,8 +19,8 @@ dbUpdateTaxonomy(megProj, taxonomy, logfile = "")
 
 \item{subset}{A subset of species names (Latin binomials) to which the
 taxonomy should be limited. Can be a DNA alignment of class \code{DNAbin},
-a phylogenetic tree of class \code{phylo}, the name of a \code{spec_*}
-database table (as created by \code{\link{stepF}}), or a character vector.}
+a phylogenetic tree of class \code{phylo},\code{species_sequence} (see
+Details), or a character vector.}
 
 \item{tag}{A character string used to tag the rows of \code{taxonomy} in the
 postgreSQL table; this argument is mostly for internal use.}
@@ -32,7 +32,7 @@ to the root are included in the taxonomic classification, whereas
 option only makes sense in combination with \code{subset}.}
 
 \item{taxonomy}{A data frame containing a taxonomic classification of the
-study species.}
+study species. It will \bold{replace any existing} taxonomy in the database.}
 
 \item{logfile}{A character string giving the names of a potential logfile; no
 logfile is written if this argument is left empty.}
@@ -46,6 +46,11 @@ For \code{dbReadTable} an object of class \code{"data.frame"} holding
 \description{
 Create, extend and read the \code{taxonomy} table of a
   \code{megaptera} project.
+}
+\details{
+If step \code{\link{stepF}} has been run, \code{dbReadTaxonomy} can
+  be called with \code{subset = "species_sequence"}. In that case all species
+  names with sequence data for the current locus will be used for subsetting.
 }
 \seealso{
 \code{\link{ncbiTaxonomy}} for retrieval of taxonomies from the

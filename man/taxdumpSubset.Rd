@@ -11,10 +11,11 @@ taxdumpSubset(tax, mrca, species, root = "tol")
 frame containing a taxonomy table in parent-child format as returned by
 \code{\link{dbReadTaxonomy}}.}
 
-\item{mrca}{A character string giving the most revent common ancestor (mrca)
+\item{mrca}{A character string giving the most recent common ancestor (MRCA)
 of the subset.}
 
-\item{species}{A vector of mode \code{"character"} giving subset.}
+\item{species}{A vector of mode \code{"character"} giving a subset of species
+names.}
 
 \item{root}{A character string choosing between \code{"mrca"} and
 \code{"tol"} (tree of life).}

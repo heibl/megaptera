@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-02-26)
+## © C. Heibl 2014 (last update 2019-02-13)
 
 #' @title Read Sequences from Database
 #' @description Reads selected and assembled sequences (see \code{\link{stepF}}
@@ -7,15 +7,17 @@
 #'   'species_sequences'.
 #' @param x An object of class \code{\link{megapteraProj}}.
 #' @param locus A vector of mode \code{"character"} giving a locus name. This
-#'   argument is optional and, if specified, will override the locus definition in
-#'   \code{x}.
+#'   argument is optional and, if specified, will override the locus definition
+#'   in \code{x}.
 #' @param taxon A vector of mode \code{"character"} used to choose a subset of
-#'   available taxa. This can be either one or more taxon names or a regular
+#'   vailable taxa. This can be either one or more taxon names or a regular
 #'   expression.
 #' @param regex Logical: if \code{TRUE}, the string given via \code{taxon} will
 #'   be interpreted as a regular expression (see \code{\link{regex}}).
-##' @param reliability A vector of mode \code{"numeric"} between 0 and 1 giving the
-#'   minimum reliability score for each alignment column.
+#' @param reliability A vector of mode \code{"numeric"} between 0 and 1 giving
+#'   the minimum reliability score for each alignment column. Note that
+#'   reliability/confidence scores are returned as an attribute and can be
+#'   accessed by \code{attr(obj, "cs")}.
 #' @param ignore.excluded \emph{Currently unused}.
 #' @param blocks \emph{Currently unused}.
 #' @return An object of class \code{\link{DNAbin}}.

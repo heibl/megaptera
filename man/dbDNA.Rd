@@ -6,8 +6,8 @@
 \alias{dbWriteDNA}
 \title{Read and Write DNA Sequences}
 \usage{
-dbReadDNA(x, tab.name, taxon, regex = TRUE, max.bp, min.identity,
-  min.coverage, ignore.excluded = TRUE, subtree = FALSE,
+dbReadDNA(x, tab.name, taxon, regex = TRUE, max.bp, max.evalue,
+  min.identity, min.coverage, ignore.excluded = TRUE, subtree = FALSE,
   blocks = "ignore", reliability = 0)
 
 dbWriteDNA(conn, tab.name, dna, enforce.binomial = TRUE, status)
@@ -30,6 +30,9 @@ be interpreted as a regular expression (see \code{\link{regex}}).}
 \item{max.bp}{An integer, only sequences equal or shorter than \code{max.bp}
 will be returned.}
 
+\item{max.evalue}{A positive real number giving the highest accepted Expectation
+value (E-value).}
+
 \item{min.identity}{A real number between 0 and 1, only sequences with a
 fraction of at least \code{min.identity} nucleotides that are identical
 with the reference sequence will be returned.}
@@ -50,8 +53,8 @@ of a list. \code{"concatenate"} means, blocks will be concatendated and
 returned as a single alignment. In order to get a (potentially unaligned)
 list of sequences, choose \code{"ignore"}.}
 
-\item{reliability}{A vector of mode \code{"numeric"} between 0 and 1 giving the
-minimum reliability score for each alignment column.}
+\item{reliability}{A vector of mode \code{"numeric"} between 0 and 1 giving
+the minimum reliability score for each alignment column.}
 
 \item{conn}{A connection object as produced by \code{\link[DBI]{dbConnect}}.}
 

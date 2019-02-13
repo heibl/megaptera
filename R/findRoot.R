@@ -1,20 +1,28 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-11-06)
+## © C. Heibl 2017 (last update 2018-12-12)
 
 #' @title Lineage Down to the Root
 #' @description Finds the lineage from one taxon, or the most recent common
 #'   ancestor of several taxa, down to the root of the Tree of Life.
 #' @param x An object of class \code{\link{megapteraProj}}.
-#' @param what A character string, either \code{"ingroup"}, \code{"outgroup"}, or \code{"both"}.
-#' @return A data frame with three columns:
-#'  \item{id}{the unique identifier of the taxon}
-#'  \item{taxon}{the scientific name of the taxon}
-#'  \item{rank}{the rank of the taxon}
+#' @param what A character string, either \code{"ingroup"}, \code{"outgroup"},
+#'   or \code{"both"}.
+#' @return A data frame with three columns: \item{id}{the unique identifier of
+#'   the taxon} \item{taxon}{the scientific name of the taxon} \item{rank}{the
+#'   rank of the taxon} The row order is from lower to higher ranked taxa, i.e.
+#'   backwards into evolutionary time.
 #' @importFrom methods slot
 #' @export
 
 findRoot <- function(x, what){
   
+  ## CHECKS
+  ## ------
+  if (!inherits(x, "megapteraProj"))
+    stop("'x' is not of class 'megapteraProj'")
+  
+  ## Determine scope
+  ## ---------------
   what <- match.arg(what, c("ingroup", "outgroup", "both"))
   if (what == "both"){
     tax <- c(x@taxon@ingroup, x@taxon@outgroup)
@@ -22,20 +30,25 @@ findRoot <- function(x, what){
     tax <- unlist(slot(x@taxon, what))
   }
   
+  ## CASE 1: species list
+  ## --------------------
   if (all(is.Linnean(unlist(tax)))){
     
-    ## read taxonomy from database
+    ## Read taxonomy from database
     tax <- dbReadTaxonomy(x, subset = tax)
     id <- all_ids <- 1
     id <- setdiff(tax[tax$parent_id == id, "id"], id)
     
     while (length(id) == 1){
       all_ids <- c(all_ids, id)
-      id <- tax[tax$parent_id == id, "id"]
+      id <- unique(tax$id[tax$parent_id == id])
     }
     
-    r <- tax[match(rev(all_ids), tax$id), c("parent_id", "id", "taxon", "rank")]
+    r <- tax[match(rev(all_ids), tax$id), c("parent_id", "id", "taxon", "rank", "status")]
   } else {
+    
+    ## CASE 2: higher rank taxa
+    ## ------------------------
     r <- dbReadTaxonomy(x)
     r <- lapply(tax, taxdumpLineage, tax = r)
     r <- r[!sapply(r, is.null)]

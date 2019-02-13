@@ -1,7 +1,8 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-29)
+## © C. Heibl 2014 (last update 2017-12-13)
 
 #' @import DBI
+#' @export
 
 alignSpecies <- function(megProj, spec){
   

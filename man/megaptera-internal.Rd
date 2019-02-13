@@ -50,6 +50,8 @@
 \alias{filter.alignment}
 \alias{fixTaxonomy} % deserves explicit doc
 \alias{force.mp}
+\alias{formatDF} % nacbiTaxonomy, taxdumpSanity
+\alias{formatSpecList} % stepA
 \alias{fuzzy.match}
 \alias{getGeneRange}
 \alias{getLineage}

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-01-29)
+## © C. Heibl 2014 (last update 2018-12-18)
 
 #' @title Detect Homology Uncertainty in Alingment
 #' @description Use GBLOCKS to detect positions of uncertain homology and remove
@@ -81,30 +81,34 @@ stepGBLOCKS <- function(x){
     return()
   }
   
-  ## check if at least 3 species/genera are available
-  ## -----------------------------------------
-  n <- paste("SELECT count(taxon) FROM", msa.tab)
+  ## check if at least 3 (ingroup) species are available
+  ## ---------------------------------------------------
+  n <- paste("SELECT count(taxon)",
+             "FROM", msa.tab,
+             "WHERE", wrapSQL(gene, "locus", "="))
   n <- dbGetQuery(conn, n)$count
   if (n < 3){
     dbDisconnect(conn)
-    slog("\nWARNING: only", n, "taxa available, no masking possible\n", 
-         file = logfile)
+    slog("\nWARNING: only", n, "species available, no alignment possible\n", 
+         file = logfile, megProj = x)
     td <- Sys.time() - start
-    slog("\nSTEP I finished after", round(td, 2), attr(td, "units"), 
-         "\n", file = logfile)
+    slog("\nSTEP GG finished after", round(td, 2), attr(td, "units"), 
+         "\n", file = logfile, megProj = x)
+    dbProgress(x, "step_g", "failure")
     return()
   }
   if (n < 100){ # 100 is arbitrary
-    n <- paste("SELECT taxon FROM", msa.tab)
-    n <- dbGetQuery(conn, n)
+    n <- dbGetQuery(conn, paste("SELECT taxon FROM", msa.tab,
+                                "WHERE", wrapSQL(gene, "locus", "=")))
     n <- which(is.ingroup(x, n$taxon))
     if (length(n) < 3){
       dbDisconnect(conn)
-      slog("\nWARNING:", length(n), "ingroup taxa available,", 
-           "no masking possible\n", file = logfile)
+      slog("\nWARNING:", length(n), "ingroup species available, no alignment possible\n", 
+           file = logfile, megProj = x)
       td <- Sys.time() - start
       slog("\nSTEP GG finished after", round(td, 2), attr(td, "units"), 
-           "\n", file = logfile)
+           "\n", file = logfile, megProj = x)
+      dbProgress(x, "step_g", "failure")
       return()
     }
   }

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2018-01-31)
+## © C. Heibl 2016 (last update 2019-02-06)
 
 #' @title Summarize and Plot Aligment Blocks
 #' @description Summarize and visualize alignment blocks with a barplot.
@@ -14,15 +14,18 @@
 #' @importFrom graphics barplot
 #' @export
 
-checkBlocks <- function(x, plot = TRUE, col, subset){
+checkBlocks <- function(x, plot = TRUE, col, subset = NULL){
   
   if (!missing(subset)){
-    subset <- gsub("_", " ", subset)
-    subset <- paste0("^", subset, "$")
-    subset <- paste(subset, collapse = "|")
-    subset <- wrapSQL(subset)
-    subset <- paste("AND", subset)
-    
+    if (!is.null(subset)){
+      subset <- gsub("_", " ", subset)
+      subset <- paste0("^", subset, "$")
+      subset <- paste(subset, collapse = "|")
+      subset <- wrapSQL(subset)
+      subset <- paste("AND", subset)
+    } else {
+      subset <- ""
+    }
   } else {
     subset <- ""
   }

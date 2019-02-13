@@ -7,7 +7,8 @@
 taxdumpAddNode(x, tab, rank = "species", taxon, parent)
 }
 \arguments{
-\item{x}{An object of class \code{\link{megapteraProj}}.}
+\item{x}{An object of class \code{\link{megapteraProj}} or a data frame in
+parent-child format.}
 
 \item{tab}{A data frame in parent-child format.}
 
@@ -19,14 +20,19 @@ taxdumpAddNode(x, tab, rank = "species", taxon, parent)
 \item{parent}{A character string giving the name of the parent taxon.}
 }
 \value{
-Logical, \code{TRUE} if the taxon was already present or was added
-  successfully into the NCBI taxonomy, \code{FALSE} if the taxon could not be
-  inserted due to a missing anchor point. Obviously, \code{taxdumpAddNote} is
-  called for its side effect of inserting data in the underlying PostgreSQL
-  database.
+See Details section.
 }
 \description{
 Insert a taxon as new node to the NCBI taxonomy.
+}
+\details{
+\code{taxdumpAddNode} can be used in two ways: (1) If \code{x} is an
+  object of class \code{"megapteraProj"}, the changes are made in the
+  underlying postgreSQL database and \code{TRUE} or \code{FALSE} is returned
+  indicating success or failure. (2) If \code{x} is a data frame in
+  parent-child format, the changes are made to this table, which is then
+  returned; in case of failure a warning is issued and the unchanged table is
+  returned.
 }
 \seealso{
 \code{\link{ncbiTaxonomy}} for downloading the NCBI taxonomy and

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update: 2018-02-21)
+## © C. Heibl 2014 (last update: 2018-12-18)
 
 #' @rdname dbTaxonomy
 #' @import DBI
@@ -19,7 +19,7 @@ dbUpdateTaxonomy <- function(megProj, taxonomy, logfile = ""){
     if (!dbExistsTable(conn, "taxonomy")){
       
       dbWriteTable(conn, "taxonomy", taxonomy, row.names = FALSE)
-      sql <- "ALTER TABLE taxonomy ADD PRIMARY KEY (taxon)"
+      sql <- "ALTER TABLE taxonomy ADD PRIMARY KEY (taxon, rank)"
       dbSendQuery(conn, sql)
       
       ## UPDATE EXISTING TAXONOMY TABLE
@@ -40,28 +40,28 @@ dbUpdateTaxonomy <- function(megProj, taxonomy, logfile = ""){
       
       ## Restrict taxonomy to those tip taxa
       ## that are already present in the database
+      ## What the heck? Why did I programm this?
       ## ----------------------------------------
-      present <- dbReadTable(conn, "taxonomy")
-      present_tips <- present$taxon[present$rank == tip.rank]
-      delete_tips <- setdiff(taxonomy$taxon[taxonomy$rank == tip.rank], 
-                             present_tips)
-      delete_tips <- taxonomy$id[taxonomy$taxon %in% delete_tips]
-      for (i in delete_tips){
-        d <- i
-        repeat {
-          pid <- taxonomy$parent_id[taxonomy$id == d[1]]
-          if (length(taxonomy$id[taxonomy$parent_id == pid]) > 1) break ## there is another taxon of same rank!
-          d <- c(pid, d)
-        }
-        taxonomy <- taxonomy[!taxonomy$id %in% d, ]
-      }
-      
+      # present <- dbReadTable(conn, "taxonomy")
+      # present_tips <- present$taxon[present$rank == tip.rank]
+      # delete_tips <- setdiff(taxonomy$taxon[taxonomy$rank == tip.rank], 
+      #                        present_tips)
+      # delete_tips <- taxonomy$id[taxonomy$taxon %in% delete_tips]
+      # for (i in delete_tips){
+      #   d <- i
+      #   repeat {
+      #     pid <- taxonomy$parent_id[taxonomy$id == d[1]]
+      #     if (length(taxonomy$id[taxonomy$parent_id == pid]) > 1) break ## there is another taxon of same rank!
+      #     d <- c(pid, d)
+      #   }
+      #   taxonomy <- taxonomy[!taxonomy$id %in% d, ]
+      # }
       
       ## Write data frame to taxonomy table of SQL database
       ## --------------------------------------------------
       dbRemoveTable(conn, "taxonomy")
       dbWriteTable(conn, "taxonomy", taxonomy, row.names = FALSE)
-      sql <- "ALTER TABLE taxonomy ADD PRIMARY KEY (taxon)"
+      sql <- "ALTER TABLE taxonomy ADD PRIMARY KEY (taxon, rank)"
       dbSendQuery(conn, sql)
     } 
   } else {

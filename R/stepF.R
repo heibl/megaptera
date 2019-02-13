@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-06)
+## © C. Heibl 2014 (last update 2019-02-06)
 
 #' @title Step F: Select Sequences and Assemble FASTA file
 #' @description In \code{stepF} FASTA files will be assembled selecting all
@@ -27,12 +27,12 @@ stepF <- function(x, update){
   ## check if previous step has been run
   ## -----------------------------------
   status <- dbProgress(x)
-  if (status$step_e == "pending") {
-    stop("the previous step has not been called yet")
-  }
-  if (status$step_e == "error") {
-    stop("the previous step has terminated with an error")
-  }
+  # if (status$step_e == "pending") {
+  #   stop("the previous step has not been called yet")
+  # }
+  # if (status$step_e == "error") {
+  #   stop("the previous step has terminated with an error")
+  # }
   if (status$step_e == "failure") {
     slog("\nNo data from upstream available - quitting", file = "")
     dbProgress(x, "step_f", "failure")
@@ -61,23 +61,6 @@ stepF <- function(x, update){
        "\nSTEP F: construct", tip.rank, "consensus sequences\n", 
        file = logfile)
   
-  ## set threshold values
-  ## --------------------
-  min.identity <- x@locus@min.identity
-  if (min.identity < 0){
-    min.identity <- optimizeIdentity(x, quiet = TRUE)
-    min.identity <- min.identity$suggested - 1e-06
-  }
-  slog("\nThreshold of minimum identity:", min.identity, 
-       file = logfile)
-  min.coverage <- x@locus@min.coverage
-  if (min.coverage < 0){
-    min.coverage <- optimizeCoverage(x, quiet = TRUE)
-    min.coverage <- min.coverage$suggested - 1e-06
-  }
-  slog("\nThreshold of minimum coverage:", min.coverage, 
-       file = logfile)
-  
   ## open database connection
   conn <- dbconnect(x)
   
@@ -89,36 +72,48 @@ stepF <- function(x, update){
     dbSendQuery(conn, SQL)
   } 
   
-  ## UNDER DEVOLOPMENT: check if update necessary
-  ## --------------------------------------------
-  SQL <- paste("SELECT taxon, gi",
+  ## Select accessions that have an Expect value of at least 11
+  ## and a coverage of al least 20%
+  ## -----------------------------------------------------------
+  SQL <- paste("SELECT taxon, gi, npos, e_value, coverage",
                "FROM", acc.tab, 
                "WHERE npos <=", max.bp,
-               "AND identity >=", min.identity,
-               "AND coverage >=", min.coverage,
+               "AND e_value <= 11",
+               "AND coverage >= 20",
                "AND status !~ 'excluded|too'",
                "ORDER BY (taxon, gi)")
   taxa <- dbGetQuery(conn, SQL)
   if (!nrow(taxa)) {
     dbDisconnect(conn)
-    slog(paste("\n.. WARNING: no sequences comply with min.identity=", 
-               min.identity, " and min.coverage=", min.coverage, sep = ""), 
-         file = logfile)
+    # slog(paste("\n.. WARNING: no sequences comply with min.identity=", 
+    #            min.identity, " and min.coverage=", min.coverage, sep = ""), 
+    #      file = logfile)
+    slog("\n.. WARNING: no sequences available", file = logfile)
     dbProgress(x, "step_f", "failure")
     return()
   }
   if (tip.rank == "genus"){
     taxa$taxon <- strip.spec(taxa$taxon)
   }
-  taxa <- split(taxa$gi, f = taxa$taxon)
-  n <- sapply(taxa, length)
-  taxa <- lapply(taxa, md5)
-  taxa <- do.call(rbind, taxa)
-  colnames(taxa) <- "md5"
-  taxa <- data.frame(taxon = rownames(taxa), n, taxa, stringsAsFactors = FALSE)
-  slog(paste("\n", nrow(taxa), " species found in table '", 
-             acc.tab, "'", sep = ""), file = logfile)
+  chooseAcc <- function(tab, spec){
+    tab <- tab[tab$taxon == spec, ]
+    tab <- tab[tab$e_value == min(tab$e_value), ] # lowest E-value and
+    tab <- tab[tab$coverage == max(tab$coverage), ] # greatest coverage
+    tab <- tab[tab$npos == max(tab$npos), ] # longest sequence
+    tab[1, ]
+  }
+  choosen_acc <- lapply(unique(taxa$taxon), chooseAcc, tab = taxa)
+  choosen_acc <- do.call(rbind, choosen_acc)$gi
   
+  # taxa <- split(taxa$gi, f = taxa$taxon)
+  # n <- sapply(taxa, length)
+  # taxa <- lapply(taxa, md5)
+  # taxa <- do.call(rbind, taxa)
+  # colnames(taxa) <- "md5"
+  # taxa <- data.frame(taxon = rownames(taxa), n, taxa, stringsAsFactors = FALSE)
+  # slog(paste("\n", nrow(taxa), " species found in table '", 
+  #            acc.tab, "'", sep = ""), file = logfile)
+  # 
   # if (dbExistsTable(conn, msa.tab)){
   #   
   #   ## stepF was run before, now check 
@@ -217,31 +212,62 @@ stepF <- function(x, update){
   #     return()
   #   }
   # } else {
-    
-    slog("\nRunning step F for the first time", file = logfile)
-    ## create table
   
-   
+  # slog("\nRunning step F for the first time", file = logfile)
+  ## create table
+  
+  
   # }
   
-  slog("\nCalculate majority-rule consensus sequences ..", 
-       file = logfile)
-  
-  ## consensus -- either sequential or parallel
-  ## ------------------------------------------
-  if (nrow(taxa)) {
-    cpus <- x@params@cpus
-    if (nrow(taxa) < cpus | !x@params@parallel){
-      apply(taxa, 1, speciesConsensus, megProj = x)
-    } else {
-      sfInit(parallel = TRUE, cpus = cpus, 
-             type = x@params@cluster.type)
-      sfLibrary("megaptera", character.only = TRUE) 
-      sfExport("x", "taxa")
-      sfApply(taxa, speciesConsensus, margin = 1, megProj = x)
-      sfStop()
-    }
+  ## Check for existing sequences and delete them
+  ## --------------------------------------------
+  in_tab <- paste("SELECT count(taxon)",
+                  "FROM", msa.tab,
+                  "WHERE", wrapSQL(gene, "locus", "="))
+  in_tab <- dbGetQuery(conn, in_tab)$count
+  if (in_tab){
+    slog("\nDelete", in_tab, "sequences from previous runs of stepF", 
+              file = logfile)
+    in_tab <- paste("DELETE FROM", msa.tab,
+                    "WHERE", wrapSQL(gene, "locus", "="))
+    dbSendQuery(conn, in_tab)
   }
+  
+  # slog("\nCalculate majority-rule consensus sequences ..", 
+  #      file = logfile)
+  # 
+  # ## consensus -- either sequential or parallel
+  # ## ------------------------------------------
+  # if (nrow(taxa)) {
+  #   cpus <- x@params@cpus
+  #   if (nrow(taxa) < cpus | !x@params@parallel){
+  #     apply(taxa, 1, speciesConsensus, megProj = x)
+  #   } else {
+  #     sfInit(parallel = TRUE, cpus = cpus, 
+  #            type = x@params@cluster.type)
+  #     sfLibrary("megaptera", character.only = TRUE) 
+  #     sfExport("x", "taxa")
+  #     sfApply(taxa, speciesConsensus, margin = 1, megProj = x)
+  #     sfStop()
+  #   }
+  # }
+  
+  ## Write choosen accessions to MSA table
+  ## -------------------------------------
+  SQL <- paste("SELECT taxon, dna",
+               "FROM", acc.tab,
+               "WHERE", wrapSQL(choosen_acc, "gi", "=", "OR"))
+  seqs <- dbGetQuery(conn, SQL)
+  SQL <- paste(wrapSQL(gene, term = NULL, boolean = NULL),
+               wrapSQL(seqs$taxon, term = NULL, boolean = NULL),
+               "'raw'",
+               wrapSQL(seqs$dna, term = NULL, boolean = NULL),
+               sep = ", ") 
+  SQL <- paste("INSERT INTO species_sequence",
+               "(locus, taxon, status, sequence)",
+               "VALUES (", SQL, ")")
+  lapply(SQL, dbSendQuery, conn = conn)
+  
   
   ## write to FASTA files
   ## ---------------------

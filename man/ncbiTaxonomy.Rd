@@ -4,11 +4,14 @@
 \alias{ncbiTaxonomy}
 \title{NCBI Taxonomy Database}
 \usage{
-ncbiTaxonomy(x)
+ncbiTaxonomy(x, quiet = FALSE)
 }
 \arguments{
 \item{x}{Database connection parameters, either as object of class
 \code{\link{dbPars}} or \code{\link{megapteraProj}}.}
+
+\item{quiet}{Logical, indicating if diagnostic messages should be printed on
+screen.}
 }
 \value{
 \code{ncbiTaxonomy} is called for its side effect (see Details).

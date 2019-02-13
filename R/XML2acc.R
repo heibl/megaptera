@@ -116,6 +116,7 @@ XML2acc <- function(x, xml, taxon){
                      status = status,
                      genom = topology,
                      npos = sapply(dna, nchar),
+                     e_value = NA,
                      identity = NA,
                      coverage = NA,
                      dna = dna,

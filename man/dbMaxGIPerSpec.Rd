@@ -4,7 +4,7 @@
 \alias{dbMaxGIPerSpec}
 \title{Limit Numbers of Sequences per Species}
 \usage{
-dbMaxGIPerSpec(megProj, max.gi.per.spec = 10, prefer = "longest", taxon)
+dbMaxGIPerSpec(megProj, max.gi.per.spec, prefer = "longest", taxon)
 }
 \arguments{
 \item{megProj}{An object of class \code{\link{megapteraProj}}.}

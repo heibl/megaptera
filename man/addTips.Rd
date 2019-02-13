@@ -4,19 +4,25 @@
 \alias{addTips}
 \title{Add Tips to a Phylogenetic Tree}
 \usage{
-addTips(phy, tax, tips, insert, ignore.monophyly = FALSE, quiet = FALSE)
+addTips(phy, tips, sister, tax, insert = "crown",
+  ignore.monophyly = FALSE, quiet = FALSE)
 }
 \arguments{
 \item{phy}{An object of class \code{\link{phylo}}.}
 
-\item{tax}{A data frame in parent-child format.}
+\item{tips}{A vector of mode \code{"character"} giving the names of the
+species to be added.}
 
-\item{tips}{A character string giving the names of the species to be added.}
+\item{sister}{A vector of mode \code{"character"} giving the names of the
+species to which \code{tips} should be added as sister species.}
+
+\item{tax}{A data frame in parent-child format.}
 
 \item{insert}{A character string indicating the positions where the species
 is to be inserted: \code{"crown"}, \code{"stem"}, \code{"randomly"}, or any
-unambigous abbreviation of these. This option will only have an effect if
-\code{phy} contains more than one congeneric of \code{tip}.}
+unambigous abbreviation of these. This option will only have an effect for
+species that have in the phylogeny more than one sister taxon of the rank
+at which the are inserted.}
 
 \item{ignore.monophyly}{Logical, indicating if monophyly should be considered
 when selecting the anchor point.}
@@ -27,12 +33,20 @@ when selecting the anchor point.}
 An object of class \code{\link{phylo}}.
 }
 \description{
-Add tips (species) to a phylogenetic tree according to their
-  taxonomic classification.
+Add tips (i.e. species) to a phylogenetic tree according to
+  their taxonomic classification.
+}
+\details{
+If only a species list is given with \code{tips}, the species are
+  inserted based on the position of congeneric species in the phylogeney. As
+  a consequence, species that have no congeners in the phylogeny cannot be
+  inserted without giving information on the taxonomy of higher ranks, which
+  can be done with \code{tax}.
 }
 \examples{
 data(cetacea)
-# tre <- addTips(cetacea$tree, cetacea$tax) ## transform to parent-child-format!
+missing_species <- setdiff(cetacea$tax$spec, cetacea$tree$tip.label)
+tre <- addTips(phy = cetacea$tree, tips = missing_species, insert = "crown")
 }
 \seealso{
 \code{\link{dbReadTaxonomy}} for reading a taxonomy table from the

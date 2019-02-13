@@ -37,7 +37,7 @@
   
   dbname <- tolower(dbname)
   
-  ## check if database exists ...
+  ## Check if database exists ...
   ## ----------------------------
   conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), 
                          dbname = "postgres",
@@ -58,68 +58,69 @@
                  "WITH ENCODING='UTF8'",
                  "CONNECTION LIMIT=-1;")
     dbSendQuery(conn, sql)
-    
-    ## Connect to new database
-    ## -----------------------
-    conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), 
-                           dbname = dbname,
-                           host = host,
-                           user = user, 
-                           port = port, 
-                           password = password)
-    
-    
-    
-    ## Create relation 'progress' if necessary
-    ## ---------------------------------------
-    if (!dbExistsTable(conn, "progress")) {
-      cat("\nCreate relation 'progress'")
-      SQL <- paste("CREATE TABLE progress",
-                   "(",
-                   "locus text NOT NULL,",
-                   "step_b text,",
-                   "step_c text,",
-                   "step_d text,",
-                   "step_e text,",
-                   "step_f text,",
-                   "step_g text,",
-                   "step_h text,",
-                   "CONSTRAINT progress_pk PRIMARY KEY (locus)",
-                   ")")
-      dbSendQuery(conn, SQL)
-    }
-    
-    ## Create relation 'reference' if necessary
-    ## ----------------------------------------
-    cat("\nCreate relation 'reference'")
-    if (!dbExistsTable(conn, "reference")) {
-      SQL <- paste("CREATE TABLE reference",
-                   "(gene character varying NOT NULL,",
-                   "taxon character varying NOT NULL,",
-                   "reference character varying NOT NULL,",
-                   "CONSTRAINT reference_pk PRIMARY KEY (gene, taxon))")
-      dbSendQuery(conn, SQL)
-    }
-    
-    ## Create relation 'species_sequences' if necessary
-    ## ------------------------------------------------
-    msa.tab <- "species_sequence"
-    if (!dbExistsTable(conn, msa.tab)) {
-      cat("\nCreate relation 'species_sequence'")
-      SQL <- paste0(msa.tab, "_pk")
-      SQL <- paste("CREATE TABLE", msa.tab, 
-                   "(locus character varying NOT NULL,",
-                   "taxon character varying  NOT NULL,",
-                   "n integer,",
-                   "md5 character(32),",
-                   "status  character varying,",
-                   "sequence character varying,",
-                   "reliability character varying,",
-                   "CONSTRAINT", SQL, "PRIMARY KEY (locus, taxon))")
-      dbSendQuery(conn, SQL)
-      dbDisconnect(conn)
-    }
+    dbDisconnect(conn)
   }
+    
+  ## Connect to new database
+  ## -----------------------
+  conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(), 
+                         dbname = dbname,
+                         host = host,
+                         user = user, 
+                         port = port, 
+                         password = password)
+    
+  ## Create relation 'progress' if necessary
+  ## ---------------------------------------
+  if (!dbExistsTable(conn, "progress")) {
+    cat("\nCreate relation 'progress'")
+    SQL <- paste("CREATE TABLE progress",
+                 "(",
+                 "locus text NOT NULL,",
+                 "step_b text,",
+                 "step_c text,",
+                 "step_d text,",
+                 "step_e text,",
+                 "step_f text,",
+                 "step_g text,",
+                 "step_h text,",
+                 "CONSTRAINT progress_pk PRIMARY KEY (locus)",
+                 ")")
+    dbSendQuery(conn, SQL)
+  }
+  
+  ## Create relation 'reference' if necessary
+  ## ----------------------------------------
+  if (!dbExistsTable(conn, "reference")) {
+    cat("\nCreate relation 'reference'")
+    SQL <- paste("CREATE TABLE reference",
+                 "(gene character varying NOT NULL,",
+                 "taxon character varying NOT NULL,",
+                 "reference character varying NOT NULL,",
+                 "CONSTRAINT reference_pk PRIMARY KEY (gene, taxon))")
+    dbSendQuery(conn, SQL)
+  }
+  
+  ## Create relation 'species_sequences' if necessary
+  ## ------------------------------------------------
+  msa.tab <- "species_sequence"
+  if (!dbExistsTable(conn, msa.tab)) {
+    cat("\nCreate relation 'species_sequence'")
+    SQL <- paste0(msa.tab, "_pk")
+    SQL <- paste("CREATE TABLE", msa.tab, 
+                 "(locus character varying NOT NULL,",
+                 "taxon character varying  NOT NULL,",
+                 "n integer,",
+                 "md5 character(32),",
+                 "status  character varying,",
+                 "sequence character varying,",
+                 "reliability character varying,",
+                 "CONSTRAINT", SQL, "PRIMARY KEY (locus, taxon))")
+    dbSendQuery(conn, SQL)
+    dbDisconnect(conn)
+  }
+
+  dbDisconnect(conn)
   
   new("dbPars", 
       host = host, port = port, 

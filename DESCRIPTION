@@ -1,8 +1,8 @@
 Package: megaptera
 Type: Package
 Title: MEGAPhylogeny Techniques in R
-Version: 1.1.5
-Date: 2018-01-31
+Version: 1.1.6
+Date: 2019-02-13
 Authors@R: person("Christoph", "Heibl", 
   email = "christoph.heibl@gmx.net",
   role = c("aut", "cre"))
@@ -10,9 +10,11 @@ Imports:
     ape,
     bold,
     crul,
+    data.table,
     DBI,
     knitr,
     methods,
+    parallel,
     RCurl,
     rmarkdown,
     RPostgreSQL,
@@ -25,16 +27,17 @@ Depends:
     R (>= 3.1),
     ips
 Suggests:
-    viper,
-    testthat
+    rGUIDANCE,
+    testthat,
+    viper
 Encoding: UTF-8
 Description: Given a set of taxa and markers, the goal is build a complete and
     correct sequence alignment for phylogenetic analysis.
 License: GPL (>= 2)
 LazyData: true
 VignetteBuilder: knitr
-Packaged: Wed Jan 31 13:49:07 2018
-RoxygenNote: 6.0.1
+Packaged: Wed Feb 13 14:47:54 2019
+RoxygenNote: 6.1.1
 Collate: 
     'BOLD2megaptera.R'
     'DNAbin2pg.R'
@@ -98,6 +101,8 @@ Collate:
     'extractIGS.R'
     'extractLocus.R'
     'findRoot.R'
+    'formatDF.R'
+    'frmt.R'
     'fuzzy.match.R'
     'getLineage.R'
     'giConsensus.R'
@@ -141,6 +146,7 @@ Collate:
     'slog.R'
     'specCons.R'
     'speciesConsensus.R'
+    'speclist2taxdump.R'
     'splitAlignment.R'
     'splitGiTaxon.R'
     'splitNonoverlapping.R'
@@ -148,6 +154,7 @@ Collate:
     'sql.wrap.R'
     'stepA.R'
     'stepB.R'
+    'stepBLAST.R'
     'stepBOLD.R'
     'stepBX.R'
     'stepC.R'
@@ -155,6 +162,7 @@ Collate:
     'stepE.R'
     'stepF.R'
     'stepGBLOCKS.R'
+    'stepGUIDANCE.R'
     'stepH.R'
     'stepMAFFT.R'
     'stepPASTA.R'
@@ -166,11 +174,15 @@ Collate:
     'surrogateTips.R'
     'taxdump2phylo.R'
     'taxdumpAddNode.R'
+    'taxdumpChangeParent.R'
     'taxdumpChildren.R'
     'taxdumpDropTip.R'
     'taxdumpHigherRank.R'
     'taxdumpLineage.R'
     'taxdumpMRCA.R'
+    'taxdumpManageSynonym.R'
+    'taxdumpRankOrder.R'
+    'taxdumpSanity.R'
     'taxdumpSubset.R'
     'taxdump_isTerminal.R'
     'taxon.R'

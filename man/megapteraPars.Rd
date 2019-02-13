@@ -40,7 +40,7 @@ The pipeline's verbosity can be fine-tuned with \code{debug.level}:
   \item{\code{max.gi.per.spec}}{Numeric, giving the maximum number of
   sequences that will be used per species. Can be used to avoid model
   organism (e.g., rice, \emph{Drosophila}, ...) cluttering up the pipeline
-  with thousands of sequences (default: 10).} \item{\code{max.bp}}{Numeric,
+  with thousands of sequences (default: 1000).} \item{\code{max.bp}}{Numeric,
   the maximal length of DNA sequences in base pairs to be included in the
   alignment. The upper limit is determined by the alignment program and the
   specific alignment and can only be determined by trial-and-error (default:

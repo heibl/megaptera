@@ -4,7 +4,7 @@
 \alias{checkBlocks}
 \title{Summarize and Plot Aligment Blocks}
 \usage{
-checkBlocks(x, plot = TRUE, col, subset)
+checkBlocks(x, plot = TRUE, col, subset = NULL)
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-02-02)
+## © C. Heibl 2014 (last update 2018-12-18)
 
 #' @title Step B: Search and Download Sequences
 #' @description For any given project (see \code{\link{megapteraProj}}), 
@@ -8,7 +8,7 @@
 #' @details All accessions are stored under their species name as appearing 
 #' in the \emph{organism} field at GenBank, but information about infrageneric 
 #' ranks is stripped off the taxon names before they are stored in the database.
-#' @param x An object of class \code{\link{megapteraProj}}
+#' @param x An object of class \code{\link{megapteraProj}}.
 #' @param update.seqs A character string determining the behaviour of 
 #' \code{stepB} when it is run repeatedly on the same locus/taxon 
 #' combination: \code{"no"} means that only sequences that have been made 
@@ -39,7 +39,7 @@ stepB <- function(x, update.seqs = "no"){
     stop("internet connection required for stepB")
   
   
-  ## open database connection
+  ## Open database connection
   ## ------------------------
   conn <- dbconnect(x)
   
@@ -78,6 +78,7 @@ stepB <- function(x, update.seqs = "no"){
                  "status text,",
                  "genom text,",
                  "npos integer NOT NULL,", 
+                 "e_value real,",
                  "identity real,",
                  "coverage real,",
                  "dna text NOT NULL,",
@@ -85,7 +86,7 @@ stepB <- function(x, update.seqs = "no"){
     dbSendQuery(conn, SQL)
   }
   
-  ## list of species or higher taxa to be be searched for
+  ## List of species or higher taxa to be be searched for
   ## ----------------------------------------------------
   slog("\nAssembling taxon search list", file = logfile)
   ingroup <- x@taxon@ingroup
@@ -98,7 +99,7 @@ stepB <- function(x, update.seqs = "no"){
   }
   search.tax <- c(ingroup, outgroup)
   
-  ## search and download sequences
+  ## Search and download sequences
   ## -----------------------------
   lapply(search.tax, downloadSequences, x = x)
   

@@ -4,7 +4,7 @@
 \alias{addSingleTip}
 \title{Add Tips to a Phylogenetic Tree}
 \usage{
-addSingleTip(phy, tip, tax, insert = "crown", ignore.monophyly,
+addSingleTip(phy, tip, sister, tax, insert = "crown", ignore.monophyly,
   stem.edge = 0.5, quiet = FALSE)
 }
 \arguments{
@@ -12,34 +12,36 @@ addSingleTip(phy, tip, tax, insert = "crown", ignore.monophyly,
 
 \item{tip}{A character string giving the name of the species to be added.}
 
+\item{sister}{A character string giving the name of the species or genus to
+which \code{tip} shuold be added as sister; this argument overrides
+\code{tax}.}
+
 \item{tax}{A data frame containing the taxonomic classification.}
 
-\item{insert}{A character string indicating the positions where the 
-species is to be inserted: \code{"crown"}, \code{"stem"}, 
-\code{"randomly"}, or any unambigous abbreviation of these. 
-This option will only have an effect if \code{phy} contains more than 
-one congeneric of \code{tip}.}
+\item{insert}{A character string indicating the positions where the species
+is to be inserted: \code{"crown"}, \code{"stem"}, \code{"randomly"}, or any
+unambigous abbreviation of these. This option will only have an effect if
+\code{phy} contains more than one congeneric of \code{tip}.}
 
 \item{ignore.monophyly}{Logical, indicating if monophyly should be considered
 when selecting the anchor point for \code{tips}.}
 
-\item{stem.edge}{A real number greater than 0 and smaller than 1, which 
-gives the fraction of the terminal branch length that will be assigned to 
-the branch subtending the newly created MRCA of \code{tip} and its single 
-congeneric species in \code{phy}. Will have no effect if \code{phy} 
+\item{stem.edge}{A real number greater than 0 and smaller than 1, which gives
+the fraction of the terminal branch length that will be assigned to the
+branch subtending the newly created MRCA of \code{tip} and its single
+congeneric species in \code{phy}. Will have no effect if \code{phy}
 contains more than one congeneric of \code{tip}.}
 
-\item{quiet}{Logical, indicating if screen output should be 
-suppressed.}
+\item{quiet}{Logical, indicating if screen output should be suppressed.}
 }
 \value{
 An object of class \code{\link{phylo}}.
 }
 \description{
-Add tips (species) to a phylogenetic tree according 
-to their taxonomic classification.
+Add tips (species) to a phylogenetic tree according to their
+  taxonomic classification.
 }
 \seealso{
-\code{\link{dbReadTaxonomy}} for reading a taxonomy table 
-from the postgreSQL database.
+\code{\link{dbReadTaxonomy}} for reading a taxonomy table from the
+  postgreSQL database.
 }

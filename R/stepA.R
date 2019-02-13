@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-20)
+## © C. Heibl 2014 (last update 2018-12-18)
 
 #' @title Step A: Creating a Project Taxonomy
 #' @description Creates a project taxonomy from the NCBI taxonomy (see
@@ -47,10 +47,12 @@ stepA <- function(x){
   ## ------------------------
   conn <- dbConnect(PostgreSQL(), dbname = "ncbitaxonomy", host = "localhost", 
                     port = 5432, user = "postgres", password = x@db@password)
-  SQL <- paste("SELECT *",
+  SQL <- paste("SELECT parent_id, id, taxon, rank, name_class AS status",
                "FROM nodes",
                "JOIN names USING (id)",
-               "WHERE name_class = 'scientific name'")
+               "WHERE name_class = 'scientific name'",
+               "OR name_class = 'synonym'"
+               )
   tax <- dbGetQuery(conn, SQL)
   dbDisconnect(conn)
   
@@ -61,14 +63,15 @@ stepA <- function(x){
   ## INGROUP
   ## -------
   ig <- x@taxon@ingroup
-  ## Check if ingroup is present in NCBI taxonomy
-  ## --------------------------------------------
+  
+  ## Check if/which ingroup taxa are present in NCBI taxonomy
+  ## --------------------------------------------------------
   a <- sapply(ig, function(z, ncbi) any(z %in% ncbi), ncbi = tax$taxon)
   if (x@params@debug.level){
     if (!all(a)){
-      missing_ig <- sort(unlist(ig[!a]))
+      missing_ig <- ig[!a]
       slog("\n", length(missing_ig), " ingroup taxa not in NCBI Taxonomy database:", 
-           paste("\n", missing_ig), sep = "", file = logfile)
+           formatSpecList(missing_ig), sep = "", file = logfile)
       if (x@params@debug.level > 1){
         write.table(missing_ig, file = "data/ingroup-not-NCBI-taxonomy.txt",
                     quote = FALSE, row.names = FALSE, col.names = "INGROUP" )
@@ -81,11 +84,21 @@ stepA <- function(x){
   }
   ig <- ig[a]
   
+  ## Adjust accepted names/synonyms as user-defined
+  ## ----------------------------------------------
+  # tax2 <- tax
+  ## ig[which(sapply(ig, function(x, y) x %in% y, x = "Miniopterus pallidus"))]
+  for (i in seq_along(ig)[]){
+    # cat(i)
+    tax <- taxdumpManageSynonym(tax, binomials = ig[[i]], quiet = FALSE, keep.syn = TRUE)
+    # if (!taxdumpSanity(tax)) break
+  }
+  
   if (unique(sapply(unlist(ig), is.Linnean))){
-    ingroup <- taxdumpSubset(tax, species = unlist(ig))
+    ingroup <- taxdumpSubset(tax, species = sapply(ig, head, n = 1))
     ingroup <- rbind(taxdumpLineage(tax, ig[1]), ingroup) ## add lineage to root
   } else {
-    ## use lapply to handle more than one taxon
+    ## Use lapply to handle more than one taxon
     ingroup <- c(lapply(ig, taxdumpChildren, tax = tax, tip.rank = "species"),
                  lapply(ig, taxdumpLineage, tax = tax))
     ingroup <- do.call(rbind, ingroup)
@@ -96,12 +109,12 @@ stepA <- function(x){
   og <- x@taxon@outgroup
   ## Check if ingroup is present in NCBI taxonomy
   ## --------------------------------------------
-  a <- sapply(ig, function(z, ncbi) any(z %in% ncbi), ncbi = tax$taxon)
+  a <- sapply(og, function(z, ncbi) any(z %in% ncbi), ncbi = tax$taxon)
   if (x@params@debug.level){
     if (!all(a)){
-      missing_og <- sort(unlist(og[!a]))
+      missing_og <- og[!a]
       slog("\n", length(missing_og), " outgroup taxa not in NCBI Taxonomy database:", 
-           paste("\n", og[!a]), sep = "", file = logfile)
+           formatSpecList(missing_og), sep = "", file = logfile)
       if (x@params@debug.level > 1){
         write.table(missing_og, file = "data/outgroup-not-NCBI-taxonomy.txt",
                     quote = FALSE, row.names = FALSE, col.names = "OUTGROUP" )
@@ -113,8 +126,15 @@ stepA <- function(x){
     }
   }
   og <- og[a]
+  
+  ## Adjust accepted names/synonyms as user-defined
+  ## ----------------------------------------------
+  for (i in seq_along(og)){
+    tax <- taxdumpManageSynonym(tax, binomials = og[[i]], quiet = FALSE, keep.syn = FALSE)
+  }
+  
   if (unique(sapply(unlist(og), is.Linnean))){
-    outgroup <- taxdumpSubset(tax, species = unlist(og))
+    outgroup <- taxdumpSubset(tax, species = sapply(og, head, n = 1))
     outgroup <- rbind(taxdumpLineage(tax, outgroup$taxon[1]), outgroup) ## add lineage to root
   } else {
     ## use lapply to handle more than one taxon
@@ -130,7 +150,7 @@ stepA <- function(x){
   conn <- dbconnect(x)
   dbRemoveTable(conn, "taxonomy")
   dbWriteTable(conn, "taxonomy", tax, row.names = FALSE)
-  dbSendQuery(conn, "ALTER TABLE taxonomy ADD PRIMARY KEY (id)")
+  dbSendQuery(conn, "ALTER TABLE taxonomy ADD PRIMARY KEY (taxon, rank)")
   dbDisconnect(conn)
   
   slog("\n\nSTEP A finished", file = logfile)

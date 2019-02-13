@@ -11,8 +11,8 @@ taxdumpDropTip(tax, id)
 frame containing a taxonomy table in parent-child format as returned by
 \code{\link{dbReadTaxonomy}}.}
 
-\item{id}{a vector of mode \code{"numeric"}, giving one or more IDs of a
-terminal node (tip).}
+\item{id}{A vector of mode \code{"numeric"} or \code{"character"}, giving one
+or more IDs or names of a terminal node (tip).}
 }
 \description{
 Get subset of a taxonomy table in parent-child format.

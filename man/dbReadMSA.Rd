@@ -11,18 +11,20 @@ dbReadMSA(x, locus, taxon, regex = TRUE, reliability = 0,
 \item{x}{An object of class \code{\link{megapteraProj}}.}
 
 \item{locus}{A vector of mode \code{"character"} giving a locus name. This
-argument is optional and, if specified, will override the locus definition in
-\code{x}.}
+argument is optional and, if specified, will override the locus definition
+in \code{x}.}
 
 \item{taxon}{A vector of mode \code{"character"} used to choose a subset of
-available taxa. This can be either one or more taxon names or a regular
+vailable taxa. This can be either one or more taxon names or a regular
 expression.}
 
 \item{regex}{Logical: if \code{TRUE}, the string given via \code{taxon} will
 be interpreted as a regular expression (see \code{\link{regex}}).}
 
-\item{reliability}{A vector of mode \code{"numeric"} between 0 and 1 giving the
-minimum reliability score for each alignment column.}
+\item{reliability}{A vector of mode \code{"numeric"} between 0 and 1 giving
+the minimum reliability score for each alignment column. Note that
+reliability/confidence scores are returned as an attribute and can be
+accessed by \code{attr(obj, "cs")}.}
 
 \item{ignore.excluded}{\emph{Currently unused}.}
 

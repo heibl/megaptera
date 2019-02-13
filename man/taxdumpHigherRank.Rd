@@ -4,7 +4,7 @@
 \alias{taxdumpHigherRank}
 \title{Utilities for NCBI Taxdump}
 \usage{
-taxdumpHigherRank(x, taxon, rank)
+taxdumpHigherRank(x, taxon, rank, it.max = 30)
 }
 \arguments{
 \item{x}{Either an object of class \code{\link{megapteraProj}} or a data
@@ -15,6 +15,9 @@ frame containing a taxonomy table in parent-child format as returned by
 
 \item{rank}{A vector of mode \code{"character"} giving the name of a higher
 (relative to \code{taxon}) rank.}
+
+\item{it.max}{An integer giving maximum number of iteration in case
+\code{rank} is not present in the lineage of \code{taxon}}
 }
 \value{
 A character string giving a taxon name.

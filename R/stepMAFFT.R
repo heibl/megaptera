@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2018-02-28)
+## © C. Heibl 2016 (last update 2018-12-18)
 
 #' @title STEP G: MAFFT Alignment
 #' @description Use MAFFT to align tip-rank-level sequences.
@@ -72,21 +72,21 @@ stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){
   
   ## check if previous step has been run
   ## -----------------------------------
-  status <- dbProgress(x)
-  if (status$step_f == "pending") {
-    stop("the previous step has not been called yet")
-  }
-  if (status$step_f == "error") {
-    stop("the previous step has terminated with an error")
-  }
-  if (status$step_f == "failure") {
-    slog("\nNo data from upstream available - quitting", file = "")
-    dbProgress(x, "step_g", "failure")
-    return()
-  }
-  if (status$step_f == "success") {
-    dbProgress(x, "step_g", "error")
-  }
+  # status <- dbProgress(x)
+  # if (status$step_f == "pending") {
+  #   stop("the previous step has not been called yet")
+  # }
+  # if (status$step_f == "error") {
+  #   stop("the previous step has terminated with an error")
+  # }
+  # if (status$step_f == "failure") {
+  #   slog("\nNo data from upstream available - quitting", file = "")
+  #   dbProgress(x, "step_g", "failure")
+  #   return()
+  # }
+  # if (status$step_f == "success") {
+  #   dbProgress(x, "step_g", "error")
+  # }
   
   ## PARAMETERS
   ## ----------
@@ -104,14 +104,16 @@ stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){
   slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
                     paste0("\n", Sys.time()),
                     "\nSTEP G: MAFFT alignment\n", 
-                    paste("\nLocus:", x@locus@sql), file = logfile, megProj = x)
+                    paste("\nLocus:", gene), file = logfile, megProj = x)
   
   ## open database connection
   conn <- dbconnect(x)
   
   ## check if at least 3 (ingroup) species are available
   ## ---------------------------------------------------
-  n <- paste("SELECT count(taxon) FROM", msa.tab)
+  n <- paste("SELECT count(taxon)",
+             "FROM", msa.tab,
+             "WHERE", wrapSQL(gene, "locus", "="))
   n <- dbGetQuery(conn, n)$count
   if (n < 3){
     dbDisconnect(conn)
@@ -124,7 +126,8 @@ stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){
     return()
   }
   if (n < 100){ # 100 is arbitrary
-    n <- dbGetQuery(conn, paste("SELECT taxon FROM", msa.tab))
+    n <- dbGetQuery(conn, paste("SELECT taxon FROM", msa.tab,
+                                "WHERE", wrapSQL(gene, "locus", "=")))
     n <- which(is.ingroup(x, n$taxon))
     if (length(n) < 3){
       dbDisconnect(conn)
@@ -138,23 +141,25 @@ stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){
     }
   }
   
-  ## read taxonomy and create guide tree
+  ## Read taxonomy and create guide tree
   ## -----------------------------------
   slog("\nCreating comprehensive guide tree ... ", file = logfile, megProj = x)
   gt <- comprehensiveGuidetree(x, tip.rank = tip.rank, subset = msa.tab)
   slog("OK", file = logfile, megProj = x)
   
-  ## read DNA sequences and check if guide tree is compatible
+  ## Read DNA sequences and check if guide tree is compatible
   ## --------------------------------------------------------
   slog("\nReading sequences ... ", file = logfile, megProj = x)
   seqs <- dbReadMSA(x, regex = TRUE, blocks = "ignore")
   slog("OK", file = logfile, megProj = x)
   
+  ## Check ...
   if (is.matrix(seqs)){
     seq_names <- rownames(seqs)
   } else {
     seq_names <- names(seqs)
   }
+  ## 1. if alignment
   not_in_seqs <- setdiff(gt$tip.label, seq_names)
   not_in_gt <- setdiff(seq_names, gt$tip.label)
   if (length(not_in_gt) | length(not_in_seqs)){
