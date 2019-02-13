@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-04-11)
+## © C. Heibl 2017 (last update 2019-02-12)
 
 #' @title Read and Write DNA Sequences
 #' @description Read and write DNA Sequences from/to PostgreSQL Database.
@@ -19,6 +19,8 @@
 #' @param enforce.binomial Logical
 #' @param max.bp An integer, only sequences equal or shorter than \code{max.bp}
 #'   will be returned.
+#' @param max.evalue A positive real number giving the highest accepted Expectation
+#'   value (E-value).
 #' @param min.identity A real number between 0 and 1, only sequences with a
 #'   fraction of at least \code{min.identity} nucleotides that are identical
 #'   with the reference sequence will be returned.
@@ -35,8 +37,8 @@
 #'   of a list. \code{"concatenate"} means, blocks will be concatendated and
 #'   returned as a single alignment. In order to get a (potentially unaligned)
 #'   list of sequences, choose \code{"ignore"}.
-#' @param reliability A vector of mode \code{"numeric"} between 0 and 1 giving the
-#'   minimum reliability score for each alignment column.
+#' @param reliability A vector of mode \code{"numeric"} between 0 and 1 giving
+#'   the minimum reliability score for each alignment column.
 #' @param subtree Logical.
 #' @name dbDNA
 

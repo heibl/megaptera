@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-29)
+## © C. Heibl 2014 (last update 2019-02-13)
 
 #' @rdname dbDNA
 #' @importFrom ape as.DNAbin cbind.DNAbin

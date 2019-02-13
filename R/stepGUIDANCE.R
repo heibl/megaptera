@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-12-18)
+## © C. Heibl 2014 (last update 2019-02-13)
 
 #' @title Detect Homology Uncertainty in Alingment
 #' @description Use GUIDANCE, GUIDANCE2 or HoT to calculate column-wise
@@ -120,13 +120,20 @@ stepGUIDANCE <- function(x){
     return()
   }
   
-  ## Masking of poorly aligned nucleotides
-  ## -------------------------------------
+  ## Calculating GUIDANCE residue scores
+  ## Note: Column scores that are calculated from residue
+  ## scores are mathematical identical to GUIDANCE CS
+  ## ------------------------------------------------
   slog("\nCalculating column reliability score:\n", file = logfile)
   s <- guidance(a, msa.exec = x@align.exe, ncore = x@params@cpus, 
-                bootstrap = 100)
-  s <- scores(s, score = "residue")$residue
+                bootstrap = 10)
+  s <- scores(s, score = "residue", na.rm = FALSE)$residue
   slog("done", file = logfile)
+  id <- is.na(s)
+  # s[id] <- 0 ## could also be the column average
+  # usn <- table(id)["TRUE"]
+  # slog("\n", usn, " unscored nucleotides (", round(usn / prod(dim(id)) * 100, 2), 
+  #      "%) are set to GUIDANCE residue score = 0", sep = "", file = logfile)
   slog("\nRange of scores:", paste(range(s), collapse = " - "), file = logfile)
   
   ## Write scores to database 

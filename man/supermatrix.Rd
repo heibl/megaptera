@@ -29,6 +29,11 @@ locus to its own partition. Partitioning of first/second and third
 nucleotides positions is not yet possible, but might be implemented in the
 future.}
 
+\item{trim.ends}{A \code{numeric} giving the required minimum number of
+sequences having an non-ambiguous base character (a, c, g, t) in the first
+and last position of the alignment; defaults to \code{0}, which means no
+trimming. topology. Can also be given as a fraction.}
+
 \item{coverage.locus}{Numeric between 0 and 1 giving the required minimum
 coverage of any species in any alignment.}
 

@@ -12,8 +12,8 @@ This package automates the sequence retrieval and procession from internet datab
 \tabular{ll}{
 Package: \tab megaptera\cr
 Type: \tab Package\cr
-Version: \tab 1.1.5\cr
-Date: \tab 2018-01-31\cr
+Version: \tab 1.1.6\cr
+Date: \tab 2019-02-13\cr
 License: \tab GPL (>= 2)\cr
 }
 \bold{Welcome to megaptera!}
