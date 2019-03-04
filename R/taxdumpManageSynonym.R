@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-12-18)
+## © C. Heibl 2017 (last update 2019-02-25)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Manage Synonyms
@@ -61,9 +61,12 @@ taxdumpManageSynonym <- function(tax, binomials, keep.syn = TRUE, add.syn = FALS
     genus <- taxdumpHigherRank(tax, binomials[1], "genus")
     current_genus <- strip.spec(binomials[1])
     current_parent <- tax$taxon[tax$id == accepted$parent_id & tax$status == "scientific name"]
+    
     if (genus != current_genus){
-      ## The corresponding genus name is a synonym and has to be "resurrected"
+      
       if (nrow(tax[tax$taxon %in% current_genus & tax$rank %in% "genus", ])){
+        
+        ## Case 1: The corresponding genus name is a synonym and has to be "resurrected"
         if (tax$status[tax$taxon %in% current_genus & tax$rank %in% "genus"] == "scientific name"){
           new_parent_id  <- tax$id[tax$taxon %in% current_genus & tax$rank %in% "genus"]
         } else {
@@ -73,10 +76,23 @@ taxdumpManageSynonym <- function(tax, binomials, keep.syn = TRUE, add.syn = FALS
         }
         tax$parent_id[tax$taxon == binomials[1]] <- new_parent_id
       } else {
-        stop("implement me!")
+        
+        ## Case 2: The corresponding genus name must be inserted
+        ## a) genus einsetzen
+        new_id <- max(tax[, c("id", "parent_id")]) + 1
+        new_pid <- tax$parent_id[tax$taxon == genus & tax$rank == "genus"]
+        tax <- rbind(tax,
+                     c(parent_id = new_pid,
+                       id = new_id,
+                       taxon = current_genus,
+                       rank = "genus",
+                       status = "scientific name"))
+        ## b) parent_id bei accepted setzen
+        tax$parent_id[tax$id == accepted$id] <- new_pid
       }
     }
     if (current_parent != current_genus){
+      cat("I am alive!")
       ## The corresponding genus name is a synonym and has to be "resurrected"
       new_parent_id  <- tax$id[tax$taxon %in% current_genus & tax$rank %in% "genus"]
       tax$parent_id[tax$taxon == accepted$taxon] <- new_parent_id 

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2018-12-18)
+## © C. Heibl 2016 (last update 2019-03-04)
 
 #' @title STEP G: MAFFT Alignment
 #' @description Use MAFFT to align tip-rank-level sequences.
@@ -54,8 +54,6 @@
 #' @importFrom ape ladderize
 #' @importFrom DBI dbDisconnect dbExistsTable
 #' @importFrom ips write.nex
-#' @importFrom snow setDefaultClusterOptions
-#' @import snowfall
 #' @export
 
 stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){	

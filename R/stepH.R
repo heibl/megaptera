@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2018-02-26)
+## © C. Heibl 2016 (last update 2019-03-04)
 
 #' @title Step H: Detect and Separate Unalignable Blocks
 #' @description Dependent on the substitution rate of the genomic region and the
@@ -19,7 +19,6 @@
 #' @seealso \code{\link{megapteraProj}}; \code{\link{stepMAFFT}} for the preceeding
 #'   step and \code{\link{supermatrix}} for the concatenation of loci.
 #' @export
-#' @import DBI snowfall
 
 stepH <- function(x, max.mad){
   

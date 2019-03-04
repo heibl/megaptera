@@ -1,7 +1,7 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-02-22)
+## © C. Heibl 2014 (last update 2019-03-04)
 
-#' @importFrom snow setDefaultClusterOptions
+#' @importFrom parallel clusterEvalQ clusterExport makeCluster parLapply stopCluster
 #' @export
 
 stepE <- function(x){
@@ -110,17 +110,17 @@ stepE <- function(x){
     ## --------------------------------------------------------
     if (nrow(tax)) {
       cpus <- x@params@cpus
-      if ( nrow(tax) < cpus | !x@params@parallel ){
+      if (nrow(tax) < cpus | !x@params@parallel){
         lapply(tax$taxon, compareToRef, 
               megProj = x, reference = reference)
       } else {
         slog("\n", file = logfile)
-        sfInit(parallel = TRUE, cpus = cpus, 
-               type = x@params@cluster.type)
-        sfLibrary("megaptera", character.only = TRUE)
-        sfExport("reference", "x")
-        sfLapply(tax$taxon, compareToRef, megProj = x, reference = reference)
-        sfStop()
+        cl <- makeCluster(x@params@cpus)
+        clusterEvalQ(cl, library(megaptera))
+        clusterExport(cl, "x", "reference")
+        parLapply(cl, X = tax$taxon, fun = compareToRef, megProj = x,
+                  reference = reference)
+        stopCluster(cl)
       }
     }
   } else {
@@ -183,12 +183,12 @@ stepE <- function(x){
               megProj = x, reference = reference)
       } else {
         slog("\n", file = logfile)
-        sfInit(parallel = TRUE, cpus = cpus, 
-               type = x@params@cluster.type)
-        sfLibrary("megaptera", character.only = TRUE)
-        sfExport("reference", "x")
-        sfLapply(tax, compareToRef, megProj = x, reference = reference)
-        sfStop()
+        cl <- makeCluster(x@params@cpus)
+        clusterEvalQ(cl, library(megaptera))
+        clusterExport(cl, "x", "reference")
+        parLapply(cl, X = tax, fun = compareToRef, megProj = x,
+                  reference = reference)
+        stopCluster(cl)
       }
     }
   }

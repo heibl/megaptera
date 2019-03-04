@@ -159,7 +159,7 @@ taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent){
     ## Check if target taxon is already present
     ## ----------------------------------------
     if (tab$taxon[1] %in% x$taxon){
-      if (x@debug.level) cat("'", tab$taxon[1], "' already present in 'x'", sep = "")
+      cat("'", tab$taxon[1], "' already present in 'x'", sep = "")
       return(x)
     }
     
@@ -168,7 +168,7 @@ taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent){
     ## -----------------------------------
     id <- tab$taxon %in% x$taxon
     if (!any(id)) {
-      if (x@debug.level) cat("'tab' has no anchor point in 'x'")
+      cat("'tab' has no anchor point in 'x'")
       return(x)
     }
     ## Avoid conflict if ranks higher than anchor do not match

@@ -18,7 +18,8 @@ Does several sanity checks for taxonomic tables in parent-child format.
 \details{
 \code{taxdumpSanity} checks, if
 \enumerate{
-\item synonyms have the same parent as their corresponding accepted name
-\item accepted species names the corresponding genus name assigned
+\item accepted taxa and their synonyms share the same parent
+\item accepted taxa are not linked to parent taxa of the same rank
+\item accepted species are linked to the correct genus name
 }
 }

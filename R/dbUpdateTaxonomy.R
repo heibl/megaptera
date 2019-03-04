@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update: 2018-12-18)
+## © C. Heibl 2014 (last update: 2019-03-04)
 
 #' @rdname dbTaxonomy
 #' @import DBI
@@ -19,7 +19,7 @@ dbUpdateTaxonomy <- function(megProj, taxonomy, logfile = ""){
     if (!dbExistsTable(conn, "taxonomy")){
       
       dbWriteTable(conn, "taxonomy", taxonomy, row.names = FALSE)
-      sql <- "ALTER TABLE taxonomy ADD PRIMARY KEY (taxon, rank)"
+      sql <- "ALTER TABLE taxonomy ADD PRIMARY KEY (id, taxon, rank)"
       dbSendQuery(conn, sql)
       
       ## UPDATE EXISTING TAXONOMY TABLE
@@ -61,7 +61,7 @@ dbUpdateTaxonomy <- function(megProj, taxonomy, logfile = ""){
       ## --------------------------------------------------
       dbRemoveTable(conn, "taxonomy")
       dbWriteTable(conn, "taxonomy", taxonomy, row.names = FALSE)
-      sql <- "ALTER TABLE taxonomy ADD PRIMARY KEY (taxon, rank)"
+      sql <- "ALTER TABLE taxonomy ADD PRIMARY KEY (id, taxon, rank)"
       dbSendQuery(conn, sql)
     } 
   } else {

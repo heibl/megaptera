@@ -16,6 +16,7 @@ Imports:
     methods,
     parallel,
     RCurl,
+    rGUIDANCE,
     rmarkdown,
     RPostgreSQL,
     seqinr,
@@ -27,7 +28,6 @@ Depends:
     R (>= 3.1),
     ips
 Suggests:
-    rGUIDANCE,
     testthat,
     viper
 Encoding: UTF-8
@@ -165,8 +165,6 @@ Collate:
     'stepGUIDANCE.R'
     'stepH.R'
     'stepMAFFT.R'
-    'stepPASTA.R'
-    'stepPOLENTA.R'
     'strip.infraspec.R'
     'strip.spec.R'
     'supermatrix.R'
@@ -184,6 +182,7 @@ Collate:
     'taxdumpRankOrder.R'
     'taxdumpSanity.R'
     'taxdumpSubset.R'
+    'taxdumpSynonym.R'
     'taxdump_isTerminal.R'
     'taxon.R'
     'taxonGuidetree.R'

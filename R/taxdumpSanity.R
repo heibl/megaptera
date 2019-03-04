@@ -1,13 +1,14 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-12-18)
+## © C. Heibl 2017 (last update 2019-02-26)
 
 #' @title Sanity Check for Parent-Child Taxonomic Tables
 #' @description Does several sanity checks for taxonomic tables in parent-child format.
 #' @param tax A data frame in parent-child format.
 #' @details \code{taxdumpSanity} checks, if
 #' \enumerate{
-#' \item synonyms have the same parent as their corresponding accepted name
-#' \item accepted species names the corresponding genus name assigned
+#' \item accepted taxa and their synonyms share the same parent
+#' \item accepted taxa are not linked to parent taxa of the same rank
+#' \item accepted species are linked to the correct genus name
 #' }
 #' @return Logical
 #' @export
@@ -31,7 +32,8 @@ taxdumpSanity <- function(tax){
   parents <- tapply(tax$parent_id, tax$id, function(z) length(unique(z)))
   parents <- names(parents)[parents > 1]
   if (length(parents)){
-    cat("\nFATAL:", length(parents), "taxon", ifelse(n == 1, "concept has", "concepts have"), 
+    cat("\nFATAL:", length(parents), "taxon", 
+        ifelse(length(parents) == 1, "concept has", "concepts have"), 
         "more than one parent:", formatSpecList(parents, n.element = 6))
     is_sane <- FALSE
   } else {
@@ -91,6 +93,22 @@ taxdumpSanity <- function(tax){
         formatSpecList(sort(unique(test))))
   }
   remove(test)
+  
+  ## UNDER DEVELOPMENT: MUST BE DONE FOR KINGDOMS SEPARATELY.
+  ## 4. There must not be duplicated accepted names of the same rank
+  ## ---------------------------------------------------------------
+  # cat("\n... there are no duplicated accepted names of same rank ...")
+  # metazoa <- taxdumpSubset(tax, "Metazoa")
+  # metazoa <- metazoa[metazoa$status == "scientific name" & metazoa$rank != "no rank",
+  #             c("taxon", "rank")]
+  # id <- duplicated(metazoa)
+  # if (any(id) {
+  #   metazoa[test, ]
+  # } else {
+  #   cat(" OK")
+  # }
+
+  
   
   
   cat("\n")

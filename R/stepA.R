@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-12-18)
+## © C. Heibl 2014 (last update 2019-03-04)
 
 #' @title Step A: Creating a Project Taxonomy
 #' @description Creates a project taxonomy from the NCBI taxonomy (see
@@ -64,6 +64,19 @@ stepA <- function(x){
   ## -------
   ig <- x@taxon@ingroup
   
+  ## This is rahter dirty, but should be a quick fix for the discrepancy that
+  ## arises between ICZN and Fauna Europea, which did not adopt its Gender Agreement
+  ## -------------------------------------------------------------------------------
+  renderGender <- function(b){
+    fem <- grep("a$", b)
+    mas <- grep("um$", b)
+    b <- c(b, gsub("a$", "um", b[fem]), gsub("a$", "us", b[fem]),
+           gsub("um$", "a", b[mas]))
+    hyphen <- grep("-", b) ## NCBI: Satyrium walbum (instead of Satyrium w-album)
+    unique(c(b, gsub("-", "", b[hyphen])))
+  }
+  ig <- lapply(ig, renderGender)
+  
   ## Check if/which ingroup taxa are present in NCBI taxonomy
   ## --------------------------------------------------------
   a <- sapply(ig, function(z, ncbi) any(z %in% ncbi), ncbi = tax$taxon)
@@ -87,10 +100,11 @@ stepA <- function(x){
   ## Adjust accepted names/synonyms as user-defined
   ## ----------------------------------------------
   # tax2 <- tax
-  ## ig[which(sapply(ig, function(x, y) x %in% y, x = "Miniopterus pallidus"))]
+  ## ig[which(sapply(ig, function(x, y) x %in% y, x = "Hyloicus pinastri"))]
   for (i in seq_along(ig)[]){
-    # cat(i)
-    tax <- taxdumpManageSynonym(tax, binomials = ig[[i]], quiet = FALSE, keep.syn = TRUE)
+    cat("\n", i, " ")
+    tax <- taxdumpSynonym(tax, binomials = ig[[i]], keep.acc = FALSE, 
+                   quiet = FALSE, keep.syn = TRUE)
     # if (!taxdumpSanity(tax)) break
   }
   
@@ -130,7 +144,9 @@ stepA <- function(x){
   ## Adjust accepted names/synonyms as user-defined
   ## ----------------------------------------------
   for (i in seq_along(og)){
-    tax <- taxdumpManageSynonym(tax, binomials = og[[i]], quiet = FALSE, keep.syn = FALSE)
+    cat("\n", i, " ")
+    tax <- taxdumpSynonym(tax, binomials = og[[i]], quiet = FALSE, 
+                          keep.acc = FALSE, keep.syn = FALSE)
   }
   
   if (unique(sapply(unlist(og), is.Linnean))){
@@ -145,12 +161,23 @@ stepA <- function(x){
   
   tax <- unique(rbind(ingroup, outgroup))
   
-  ## write parent-child taxonomy table to database
+  ## Check if taxonomy is sane
+  ## -------------------------
+  test <- taxdumpSanity(tax)
+  if (!test){
+    stop("debug me!")
+  }
+  
+  ## Write parent-child taxonomy table to database
+  ## ---------------------------------------------
+  ## Note: 'id' has to be part of the PK because synonyms can be homonyms
+  ## (by different authors, e.g. Calothysanis). Hence, the check for 
+  ## duplicated accepted names has to be done upstream by tamxdumpSanity()
   ## ---------------------------------------------
   conn <- dbconnect(x)
   dbRemoveTable(conn, "taxonomy")
   dbWriteTable(conn, "taxonomy", tax, row.names = FALSE)
-  dbSendQuery(conn, "ALTER TABLE taxonomy ADD PRIMARY KEY (taxon, rank)")
+  dbSendQuery(conn, "ALTER TABLE taxonomy ADD PRIMARY KEY (id, taxon, rank)")
   dbDisconnect(conn)
   
   slog("\n\nSTEP A finished", file = logfile)

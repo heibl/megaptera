@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-02-13)
+## © C. Heibl 2014 (last update 2019-03-04)
 
 #' @title Detect Homology Uncertainty in Alingment
 #' @description Use GUIDANCE, GUIDANCE2 or HoT to calculate column-wise
@@ -11,6 +11,7 @@
 #' @export
 #' @import DBI
 #' @importFrom ips gblocks write.nex write.phy
+#' @importFrom rGUIDANCE guidance scores
 
 stepGUIDANCE <- function(x){
   
