@@ -6,7 +6,8 @@
 #'   \code{megaptera} project.
 #' @param megProj An object of class \code{\link{megapteraProj}}.
 #' @param taxonomy A data frame containing a taxonomic classification of the
-#'   study species. It will \bold{replace any existing} taxonomy in the database.
+#'   study species. It will \bold{replace any existing} taxonomy in the
+#'   database.
 #' @param tag A character string used to tag the rows of \code{taxonomy} in the
 #'   postgreSQL table; this argument is mostly for internal use.
 #' @param tip.rank A character string giving the rank of the tips (e.g.
@@ -20,6 +21,8 @@
 #'   to the root are included in the taxonomic classification, whereas
 #'   \code{"mrca"} means that only the MRCA will be included. Note that this
 #'   option only makes sense in combination with \code{subset}.
+#' @param syn Logical, indicating if synonyms should be returned in addition to
+#'   accepted names.
 #' @param logfile A character string giving the names of a potential logfile; no
 #'   logfile is written if this argument is left empty.
 #' @return For \code{dbReadTable} an object of class \code{"data.frame"} holding

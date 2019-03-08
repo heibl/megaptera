@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-06-13)
+## © C. Heibl 2017 (last update 2019-03-05)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get all higher ranks including a given taxon.
@@ -8,6 +8,9 @@
 #' @param taxon A character string giving the name of the taxon.
 #' @param highest.rank A character string giving the highest rank returned; if
 #'   missing (default) the highest rank returned is the root.
+#' @details If \code{taxon} is coded as a synonym, it will be replaced by the
+#'   corresponding accepted name and a warning will be issued.
+#' @return A data frame.
 #' @seealso \code{\link{taxdumpAddNode}}, \code{\link{taxdumpChildren}},
 #'   \code{\link{taxdumpMRCA}}, \code{\link{taxdumpSubset}},
 #'   \code{\link{taxdump2phylo}}
@@ -54,7 +57,6 @@ taxdumpLineage <- function(tax, taxon, highest.rank){
   # pid <- tax[tax$taxon == taxon, c("parent_id", "id", "taxon", "rank")]
   pid <- tax[tax$taxon == taxon, ]
   obj <- rbind(obj, pid)
-  
   if (!nrow(obj)) return(NULL)
 
   ## Subgenera can have the same name as genera
@@ -63,6 +65,16 @@ taxdumpLineage <- function(tax, taxon, highest.rank){
   if (nrow(pid) == 2 & "subgenus" %in% pid$rank){
     pid <- pid[pid$rank != "subgenus", ]
     obj <- obj[obj$rank != "subgenus", ]
+  }
+  
+  ## What, if taxon is a synonym?
+  ## ----------------------------
+  if (obj$status == "synonym"){
+    oname <- obj$taxon
+    nname <- tax$taxon[tax$id == obj$id & tax$status == "scientific name"]
+    obj$taxon <- nname
+    obj$status <- "scientific name"
+    warning("synonym '", oname, "' replaced by accepted name ('", nname, "')")
   }
   
   i <- 1 ## control for unexitable loops

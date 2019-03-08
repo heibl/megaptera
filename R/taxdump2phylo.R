@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-01-15)
+## © C. Heibl 2017 (last update 2019-03-05)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Convert a taxonomy table in parent-child format into an object 
@@ -19,9 +19,14 @@ taxdump2phylo <- function(tax, tip.rank){
   
   tip.rank <- match.arg(tip.rank, c("species", "genus", "family"))
   
-  ## Do some checks
-  ## --------------
-  tax <- unique(tax)
+  ## Is taxonomy sane?
+  ## -----------------
+  if (!taxdumpSanity(tax)){
+    stop("'tax' is not correctly formatted")
+  }
+  
+  ## Make sure that numbers are of mode 'numeric'
+  ## --------------------------------------------
   if (is.character(tax$id)) tax$id <- as.numeric(tax$id)
   if (is.character(tax$parent_id)) tax$parent_id <- as.numeric(tax$parent_id)
   

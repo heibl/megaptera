@@ -4,7 +4,7 @@
 \alias{taxdumpSubset}
 \title{Utilities for NCBI Taxdump}
 \usage{
-taxdumpSubset(tax, mrca, species, root = "tol")
+taxdumpSubset(tax, mrca, species, root = "tol", syn = FALSE)
 }
 \arguments{
 \item{tax}{Either an object of class \code{\link{megapteraProj}} or a data
@@ -19,6 +19,10 @@ names.}
 
 \item{root}{A character string choosing between \code{"mrca"} and
 \code{"tol"} (tree of life).}
+
+\item{syn}{Logical, indicating if synonyms should be returned in addition to
+accepted names; only has an effect if \code{tax} is of class
+\code{\link{megapteraProj}}.}
 }
 \description{
 Get subset of a taxonomy table in parent-child format.

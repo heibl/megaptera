@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package 
-##  © C. Heibl 2017 (last update 2018-09-18)
+##  © C. Heibl 2017 (last update 2019-03-05)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get subset of a taxonomy table in parent-child format.
@@ -12,12 +12,15 @@
 #'   names.
 #' @param root A character string choosing between \code{"mrca"} and
 #'   \code{"tol"} (tree of life).
+#' @param syn Logical, indicating if synonyms should be returned in addition to
+#'   accepted names; only has an effect if \code{tax} is of class
+#'   \code{\link{megapteraProj}}.
 #' @seealso \code{\link{dbReadTaxonomy}},
 #'   \code{\link{taxdumpChildren}},\code{\link{taxdumpLineage}},
 #'   \code{\link{taxdumpAddNode}}, \code{\link{taxdump2phylo}}.
 #' @export
 
-taxdumpSubset <- function(tax, mrca, species, root = "tol"){
+taxdumpSubset <- function(tax, mrca, species, root = "tol", syn = FALSE){
   
   root <- match.arg(root, c("tol", "mrca"))
   
@@ -27,7 +30,7 @@ taxdumpSubset <- function(tax, mrca, species, root = "tol"){
     ## 'tax' is object of class 'megapteraProj'
     #############################################
     
-    tax <- dbReadTaxonomy(tax, subset = species)
+    tax <- dbReadTaxonomy(tax, subset = species, syn = syn)
     
     ## delete tree-of-life root "tail"
     if (root == "mrca") {

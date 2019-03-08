@@ -7,7 +7,8 @@
 \alias{dbUpdateTaxonomy}
 \title{Read and Write Taxonomy Table}
 \usage{
-dbReadTaxonomy(megProj, tip.rank, subset, tag, root = "tol")
+dbReadTaxonomy(megProj, tip.rank, subset, tag, root = "tol",
+  syn = FALSE)
 
 dbUpdateTaxonomy(megProj, taxonomy, logfile = "")
 }
@@ -31,8 +32,12 @@ to the root are included in the taxonomic classification, whereas
 \code{"mrca"} means that only the MRCA will be included. Note that this
 option only makes sense in combination with \code{subset}.}
 
+\item{syn}{Logical, indicating if synonyms should be returned in addition to
+accepted names.}
+
 \item{taxonomy}{A data frame containing a taxonomic classification of the
-study species. It will \bold{replace any existing} taxonomy in the database.}
+study species. It will \bold{replace any existing} taxonomy in the
+database.}
 
 \item{logfile}{A character string giving the names of a potential logfile; no
 logfile is written if this argument is left empty.}

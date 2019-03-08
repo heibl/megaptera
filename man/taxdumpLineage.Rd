@@ -15,8 +15,15 @@ frame as returned by \code{\link{dbReadTaxonomy}}.}
 \item{highest.rank}{A character string giving the highest rank returned; if
 missing (default) the highest rank returned is the root.}
 }
+\value{
+A data frame.
+}
 \description{
 Get all higher ranks including a given taxon.
+}
+\details{
+If \code{taxon} is coded as a synonym, it will be replaced by the
+  corresponding accepted name and a warning will be issued.
 }
 \seealso{
 \code{\link{taxdumpAddNode}}, \code{\link{taxdumpChildren}},

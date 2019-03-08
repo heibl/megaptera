@@ -4,15 +4,19 @@
 \alias{taxdumpChangeParent}
 \title{Utilities for NCBI Taxdump}
 \usage{
-taxdumpChangeParent(x, taxon, new.parent)
+taxdumpChangeParent(x, taxon, new.parent, orphaned.parent = "synonym")
 }
 \arguments{
-\item{x}{An object of class \code{\link{megapteraProj}} or a \code{data.frame}
-a parent-child-format.}
+\item{x}{An object of class \code{\link{megapteraProj}} or a
+\code{data.frame} a parent-child-format.}
 
 \item{taxon}{A character string giving the name of the taxon.}
 
 \item{new.parent}{A character string giving the name of the new parent taxon.}
+
+\item{orphaned.parent}{A character string indicating how to treat previous
+parent taxa, that do not have other children than \code{"taxon"}, i.e.
+which are orphaned.}
 }
 \value{
 A \code{data.frame} in parent-child-format, if \code{class(x) ==
@@ -22,6 +26,12 @@ A \code{data.frame} in parent-child-format, if \code{class(x) ==
 }
 \description{
 Change a node's parent in the NCBI taxonomy.
+}
+\details{
+Two choices are possible for \code{orphaned.parent}: (1)
+  \code{"synonym"} will classify the previous, orphaned parent as a synonym
+  of \code{"new.parent"}, whereas (2) \code{"delete"} will simply delete the
+  orphaned parent from the taxonomy.
 }
 \seealso{
 \code{\link{ncbiTaxonomy}} for downloading the NCBI taxonomy and

@@ -1,11 +1,12 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-12-14)
+## © C. Heibl 2017 (last update 2019-03-07)
 
 #' @rdname dbTaxonomy
 #' @import DBI
 #' @export
 
-dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
+dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol", 
+                           syn = FALSE){
   
   ## CHECKs
   if (!inherits(megProj, "megapteraProj"))
@@ -26,8 +27,11 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
   ## Read taxonomy table
   ## -------------------
   if (missing(tag)){
-    tax <- dbGetQuery(conn, "SELECT * FROM taxonomy")
+    SQL <- "SELECT * FROM taxonomy"
+    if (!syn) SQL <- paste(SQL, "WHERE status != 'synonym'")
+    tax <- dbGetQuery(conn, SQL)
   } else {
+    if (syn) stop("implement me!")
     SQL <- paste("SELECT * INTO tmp",
                  "FROM taxonomy",
                  "WHERE", wrapSQL(tag, "tag"))
@@ -80,7 +84,7 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol"){
     if (is.character(subset)) {
       ## .. based on MSA table or ..
       ## ---------------------------
-      if (length(grep("^[genus]|[species]_", subset))){
+      if (length(grep("^[genus]|[species]_", subset)) == 1){
         tip.rank <- gsub("_.+$", "", subset)
         subset <- paste("SELECT taxon", 
                         "FROM", subset, 

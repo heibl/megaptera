@@ -14,8 +14,22 @@
 #' @export
 
 taxdumpSanity <- function(tax){
-
+  
   is_sane <- TRUE
+  
+  id <- duplicated(tax)
+  if (any(id)){
+    cat("\nFATAL: 'tax' contains duplicate rows")
+    is_sane <- FALSE
+  }
+  
+  if (!"status" %in% names(tax)){
+    tax <- data.frame(tax, status = "scientific name",
+                      stringsAsFactors = FALSE)
+  }
+    
+  ## Summary
+  ## -----
   cat("Number of taxon names:", nrow(tax))
   id_set <- sort(unique(tax$id))
   cat("\nNumber of taxon concepts:", length(id_set))
@@ -45,6 +59,10 @@ taxdumpSanity <- function(tax){
   cat("\n... accepted taxa are not linked to parent taxa of the same rank ...")
   test <- tax[tax$status == "scientific name", ]
   test$parent_rank <- test$rank[match(test$parent_id, test$id)] 
+  ## Find and exclude root
+  root <- which(is.na(test$parent_rank))
+  if (length(root) > 1) stop ("debug me!")
+  test <- test[-root, ] ## This is the root
   test <- test[test$rank != "no rank" & test$parent_rank != "no rank", ]
   id <- test$rank == test$parent_rank
   if (any(id)){

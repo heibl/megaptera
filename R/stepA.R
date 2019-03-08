@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-03-04)
+## © C. Heibl 2014 (last update 2019-03-07)
 
 #' @title Step A: Creating a Project Taxonomy
 #' @description Creates a project taxonomy from the NCBI taxonomy (see
@@ -100,7 +100,8 @@ stepA <- function(x){
   ## Adjust accepted names/synonyms as user-defined
   ## ----------------------------------------------
   # tax2 <- tax
-  ## ig[which(sapply(ig, function(x, y) x %in% y, x = "Hyloicus pinastri"))]
+  ## ig[which(sapply(ig, function(x, y) x %in% y, x = "Earophila badiata"))]
+  ## ig[grep("Dicallomera", ig)]
   for (i in seq_along(ig)[]){
     cat("\n", i, " ")
     tax <- taxdumpSynonym(tax, binomials = ig[[i]], keep.acc = FALSE, 
