@@ -54,7 +54,8 @@ taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent){
     }
     
     ## Retrieve parent data. This can be done over a vector of
-    ## ranks that are ordered from lower to higher (i.e. towards the root)
+    ## ranks that are ordered from lower to higher (i.e. towards the
+    ## root)
     ## The parent of lowest available rank is then used as an anchor point
     ## -------------------------------------------------------------------
     SQL <- paste("SELECT * FROM taxonomy",
@@ -76,7 +77,7 @@ taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent){
       ## Case 1: taxon can be inserted directly, e.g. genus is already present
       ## ---------------------------------------------------------------------
       obj <- data.frame(id = ID + 1, parent_id = SQL[[anchor]]$id, 
-                        rank, taxon, stringsAsFactors = FALSE)
+                        rank, taxon, status = "scientific name", stringsAsFactors = FALSE)
     } else {
       ## Case 2: taxon cannot be inserted directly, e.g. genus is absent
       ## ---------------------------------------------------------------
@@ -85,6 +86,7 @@ taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent){
                         parent_id = c(ID[-1], SQL[[anchor]]$id), 
                         rank = tab$rank[1:anchor], 
                         taxon = tab$taxon[1:anchor], 
+                        status = "scientific name",
                         stringsAsFactors = FALSE)
     }
     
@@ -94,9 +96,10 @@ taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent){
                  wrapSQL(obj$parent_id, term = NULL, boolean = NULL),
                  wrapSQL(obj$rank, term = NULL, boolean = NULL),
                  wrapSQL(obj$taxon, term = NULL, boolean = NULL),
+                 wrapSQL(obj$status, term = NULL, boolean = NULL),
                  sep = ", ")
     SQL <- paste("INSERT INTO taxonomy", 
-                 "(id, parent_id, rank, taxon)",  
+                 "(id, parent_id, rank, taxon, status)",  
                  "VALUES (", SQL, ")")
     lapply(SQL, dbSendQuery, conn = conn)
     

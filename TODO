@@ -1,4 +1,4 @@
-megaptera package to-do (2015-11-18)
+megaptera package to-do (2019-05-16)
 
 * Erwartbare Fehler (z.B. 1 oder keine Arten pro Marker)
   müssen abgepuffert werden, damit die pipeline durchläuft.
@@ -20,9 +20,8 @@ megaptera package to-do (2015-11-18)
 
 * bei prune.to.rank() verschieben sich die node.label Werte!
 
-* Maskierung auch mit Aliscore und TrimAl. Trim-Al muss noch in Ips implementiert werden; Aliscore ist es schon. 
-
 * "Marchantia polymorpha genes for 26S rRNA, 5S rRNA, 18S rRNA, 5.8S rRNA and 26S rRNA"
   gi <- 4587226 
+  
+* on.exit einbauen
 
-* threshold für zeroDist einstellbar machen!

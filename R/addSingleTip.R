@@ -72,6 +72,9 @@ addSingleTip <- function(phy, tip, sister, tax,
     ## -------------------------------------------
     an <- whereToInsert(phy, tax, tip, ignore.monophyly, quiet)
     if (is.null(an)) {
+      if (!quiet) {
+        message("no anchor point for '", tip, "'")
+      }
       return(phy)
     } 
     

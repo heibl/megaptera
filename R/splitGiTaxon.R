@@ -14,7 +14,7 @@ splitGiTaxon <- function(x, enforce.binomial = FALSE, sep = " "){
   x <- do.call(rbind, x)
   x <- as.data.frame(x, stringsAsFactors = FALSE)
   
-  if ( enforce.binomial ){
+  if (enforce.binomial){
     x[, 2] <- strip.infraspec(x[, 2])
   }
   x

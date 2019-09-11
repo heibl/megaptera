@@ -4,10 +4,12 @@
 \alias{taxdumpSanity}
 \title{Sanity Check for Parent-Child Taxonomic Tables}
 \usage{
-taxdumpSanity(tax)
+taxdumpSanity(tax, quiet = FALSE)
 }
 \arguments{
 \item{tax}{A data frame in parent-child format.}
+
+\item{quiet}{Logical, indicating id diagnostic output to screen should be supressed.}
 }
 \value{
 Logical

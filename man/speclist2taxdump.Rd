@@ -7,10 +7,12 @@
 speclist2taxdump(species)
 }
 \arguments{
-\item{species}{A vector of mode \code{"character"} giving subset.}
+\item{species}{A vector of mode \code{"character"} giving a set of species or
+genus names.}
 }
 \description{
-Convert a species list into a taxonomy table in parent-child format.
+Convert a list of species or genera into a taxonomy table in
+  parent-child format.
 }
 \seealso{
 \code{\link{dbReadTaxonomy}},

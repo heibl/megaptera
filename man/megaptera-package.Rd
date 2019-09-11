@@ -3,7 +3,7 @@
 \alias{megaptera}
 \docType{package}
 \title{
-MEGA-Phylogenie TEchniques in R
+MEGA-Phylogeny TEchniques in R
 }
 \description{
 This package automates the sequence retrieval and procession from internet databases (currently \bold{Nucleotide} at \bold{GenBank}) to produce (possibly large) aligned nucleotide sequence datasets.

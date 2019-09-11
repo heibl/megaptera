@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2019-03-07)
+## © C. Heibl 2017 (last update 2019-07-18)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Manage Synonyms

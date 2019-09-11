@@ -6,7 +6,7 @@
 #' @export
 
 dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol", 
-                           syn = FALSE){
+                           syn = FALSE, drop.extinct = TRUE){
   
   ## CHECKs
   if (!inherits(megProj, "megapteraProj"))
@@ -66,14 +66,17 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol",
   ## e.g. subgenus: Neocicindela, no genus, tribe: Cicindelini,
   ## These lineages will be dropped entirely.
   ## ----------------------------------------
-  tn <- taxdump_isTerminal(tax)
-  id <- tax$id[tn & tax$rank != tip.rank & tax$status != "synonym"]
-  if (length(id)){
-    warning(length(id)," terminal taxa without a taxon of rank '", tip.rank, 
-            "' in their lineage were removed:",
-            paste("\n-", tax$taxon[tax$id %in% id]))
-    tax <- taxdumpDropTip(tax, id)
+  if (drop.extinct){
+    tn <- taxdump_isTerminal(tax)
+    id <- tax$id[tn & tax$rank != tip.rank & tax$status != "synonym"]
+    if (length(id)){
+      warning(length(id)," terminal taxa without a taxon of rank '", tip.rank, 
+              "' in their lineage were removed:",
+              paste("\n-", tax$taxon[tax$id %in% id]))
+      tax <- taxdumpDropTip(tax, id)
+    }
   }
+  
   
   ## Subsetting taxonomy ..
   ## ----------------------

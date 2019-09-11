@@ -39,6 +39,7 @@ stepBLAST <- function(x){
   ## Prepare Sequences
   ## ------------------
   seqs <- dbReadDNA(x, acc.tab)
+  names(seqs) <- gsub("-", "__", names(seqs)) # hyphen illegal in BLAST!
   write.fas(seqs, dbn)
   
   ## Do the BLAST
@@ -72,6 +73,7 @@ stepBLAST <- function(x){
   ## For every species select hit with lowest E-value
   res <- by(res, res$qseqid, function(z) z[which.min(z$evalue),])
   res <- do.call(rbind, res)
+  res$qseqid <- gsub("__", "-", res$qseqid) ## bring hyphen back!
   res <- cbind(splitGiTaxon(res$qseqid), res)
   
   # test <- res[grep("Miniopterus_pallidus", res$qseqid), ]

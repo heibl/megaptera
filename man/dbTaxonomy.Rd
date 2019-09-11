@@ -8,7 +8,7 @@
 \title{Read and Write Taxonomy Table}
 \usage{
 dbReadTaxonomy(megProj, tip.rank, subset, tag, root = "tol",
-  syn = FALSE)
+  syn = FALSE, drop.extinct = TRUE)
 
 dbUpdateTaxonomy(megProj, taxonomy, logfile = "")
 }
@@ -34,6 +34,9 @@ option only makes sense in combination with \code{subset}.}
 
 \item{syn}{Logical, indicating if synonyms should be returned in addition to
 accepted names.}
+
+\item{drop.extinct}{Logical, if \code{TRUE} all lineages that lack a taxon of
+rank \code{"tip.rank"} will be pruned from the taxonomy.}
 
 \item{taxonomy}{A data frame containing a taxonomic classification of the
 study species. It will \bold{replace any existing} taxonomy in the

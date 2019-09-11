@@ -5,9 +5,11 @@
 \title{Retrieval and Concatentation of Multiple Sequence Alignments}
 \usage{
 supermatrix(megProj, min.n.seq = 3, reliability = 0,
-  blocks = "split", partition, trim.ends = 0, coverage.locus = 0.5,
-  subset.locus, subset.species, exclude.locus, exclude.species, core.locus,
-  core.species, best.sampled.congeneric = FALSE, squeeze.outgroup)
+  blocks = "split", partition, trim.ends = 0, locus.coverage = 0,
+  global.coverage = 0, subset.locus, subset.species, exclude.locus,
+  exclude.species, core.locus, core.species,
+  best.sampled.congeneric = FALSE, protect.outgroup = FALSE,
+  squeeze.outgroup)
 }
 \arguments{
 \item{megProj}{An object of class \code{\link{megapteraProj}}.}
@@ -34,8 +36,11 @@ sequences having an non-ambiguous base character (a, c, g, t) in the first
 and last position of the alignment; defaults to \code{0}, which means no
 trimming. topology. Can also be given as a fraction.}
 
-\item{coverage.locus}{Numeric between 0 and 1 giving the required minimum
+\item{locus.coverage}{Numeric between 0 and 1 giving the required minimum
 coverage of any species in any alignment.}
+
+\item{global.coverage}{Numeric between 0 and 1 giving the required minimum
+coverage of any species the concatenated alignment.}
 
 \item{subset.locus}{A vector of mode \code{"character"} for choosing a subset
 of loci from the loci available.}
@@ -57,6 +62,10 @@ supermatrices.}
 
 \item{best.sampled.congeneric}{Logical, keep all but the best-sampled species
 in every genus.}
+
+\item{protect.outgroup}{Logical, if \code{TRUE}, the effects of argument
+\code{core.locus} and \code{global.coverage} on outgroup taxa will be
+ignored.}
 
 \item{squeeze.outgroup}{Numeric, can be given to reduce the number of
 outgroup species: The function will select the \code{squeeze.outgroup}

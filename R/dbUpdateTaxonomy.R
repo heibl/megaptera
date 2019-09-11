@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update: 2019-03-04)
+## © C. Heibl 2014 (last update: 2019-04-16)
 
 #' @rdname dbTaxonomy
 #' @import DBI
@@ -120,10 +120,12 @@ dbUpdateTaxonomy <- function(megProj, taxonomy, logfile = ""){
                         id = max_id + (1:length(add)),
                         taxon = add,
                         rank = "species",
+                        status = "scientific name",
                         stringsAsFactors = FALSE)
         dbWriteTable(conn, "taxonomy", s, 
                      append = TRUE, row.names = FALSE)
-        slog("\n", paste(add, collapse = ", "), "added", file = logfile)
+        slog("\n", length(add), " species added (via their genus name)", 
+             formatSpecList(add), sep = "", file = logfile)
       }
       
       ## Try to classify species using BOLD taxonomy

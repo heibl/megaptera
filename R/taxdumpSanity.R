@@ -1,9 +1,10 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2019-02-26)
+## © C. Heibl 2017 (last update 2019-03-11)
 
 #' @title Sanity Check for Parent-Child Taxonomic Tables
 #' @description Does several sanity checks for taxonomic tables in parent-child format.
 #' @param tax A data frame in parent-child format.
+#' @param quiet Logical, indicating id diagnostic output to screen should be supressed.
 #' @details \code{taxdumpSanity} checks, if
 #' \enumerate{
 #' \item accepted taxa and their synonyms share the same parent
@@ -13,13 +14,13 @@
 #' @return Logical
 #' @export
 
-taxdumpSanity <- function(tax){
+taxdumpSanity <- function(tax, quiet = FALSE){
   
   is_sane <- TRUE
   
   id <- duplicated(tax)
-  if (any(id)){
-    cat("\nFATAL: 'tax' contains duplicate rows")
+  if (any(id) ){
+    if (!quiet) cat("\nFATAL: 'tax' contains duplicate rows")
     is_sane <- FALSE
   }
   
@@ -30,19 +31,19 @@ taxdumpSanity <- function(tax){
     
   ## Summary
   ## -----
-  cat("Number of taxon names:", nrow(tax))
+  if (!quiet) cat("Number of taxon names:", nrow(tax))
   id_set <- sort(unique(tax$id))
-  cat("\nNumber of taxon concepts:", length(id_set))
+  if (!quiet) cat("\nNumber of taxon concepts:", length(id_set))
   
   ## Synonyms are defined by having the same id as accepted taxa
   with_syn <- length(unique(tax$id[tax$status == "synonym"]))
-  cat("\nNumber of taxon concepts with synonyms:", with_syn)
+  if (!quiet) cat("\nNumber of taxon concepts with synonyms:", with_syn)
   
-  cat("\n\nMake sure that ...")
+  if (!quiet) cat("\n\nMake sure that ...")
   
   ## 1. Do synonyms have same parent as accepted taxa?
   ## -------------------------------------------------
-  cat("\n... accepted taxa and their synonyms share the same parent ...")
+  if (!quiet) cat("\n... accepted taxa and their synonyms share the same parent ...")
   parents <- tapply(tax$parent_id, tax$id, function(z) length(unique(z)))
   parents <- names(parents)[parents > 1]
   if (length(parents)){
@@ -51,12 +52,12 @@ taxdumpSanity <- function(tax){
         "more than one parent:", formatSpecList(parents, n.element = 6))
     is_sane <- FALSE
   } else {
-    cat(" OK")
+    if (!quiet) cat(" OK")
   }
   
   ## 2. Find taxon names that are linked to a name of the same rank
   ## --------------------------------------------------------------
-  cat("\n... accepted taxa are not linked to parent taxa of the same rank ...")
+  if (!quiet) cat("\n... accepted taxa are not linked to parent taxa of the same rank ...")
   test <- tax[tax$status == "scientific name", ]
   test$parent_rank <- test$rank[match(test$parent_id, test$id)] 
   ## Find and exclude root
@@ -75,13 +76,13 @@ taxdumpSanity <- function(tax){
 
     return(FALSE)
   } else {
-    cat(" OK")
+    if (!quiet) cat(" OK")
   }
   
   ## 3. Find accepted species linked to the wrong genus. This may happen,
   ##    when recombination was done
   ## ------------------------------
-  cat("\n... accepted species are linked to the correct genus name ...")
+  if (!quiet) cat("\n... accepted species are linked to the correct genus name ...")
   accepted <- tax[tax$status == "scientific name", ]
   children <- accepted[accepted$rank == "species", c("parent_id", "id", "taxon")]
   children <- children[-grep(indet.strings(collapse = TRUE), children$taxon), ]
@@ -101,10 +102,10 @@ taxdumpSanity <- function(tax){
         formatDF(genus))
     is_sane <- FALSE
   } else {
-    cat(" OK")
+    if (!quiet) cat(" OK")
   }
   test <- test[test$parent_rank != "genus", ]
-  if (nrow(test)){
+  if (nrow(test) & !quiet){
     cat("\nNOTE:", nrow(test), 
         "accepted species are not direktly linked to a genus,", 
         "but to one of these ranks", 
@@ -125,10 +126,6 @@ taxdumpSanity <- function(tax){
   # } else {
   #   cat(" OK")
   # }
-
-  
-  
-  
-  cat("\n")
+  if (!quiet) cat("\n")
   is_sane
 }

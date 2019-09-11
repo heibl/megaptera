@@ -34,7 +34,7 @@ taxdumpLineage <- function(tax, taxon, highest.rank){
   ## -------------------------------------------------------------------
   ## Beware of evil strings like 'Tuberculina sp. Ru_hy-01'
   test <- head(tax$taxon[tax$rank == "species"])
-  underscore <- length(grep("[[:upper:]][[:lower:]+]_[[:lower:]]", test)) > 0
+  underscore <- length(grep("^[[:upper:]][[:lower:]]{1,}_[[:lower:]]", test)) > 0
   if (underscore){
     taxon <- gsub(" ", "_", taxon)
   } else {

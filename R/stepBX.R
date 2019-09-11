@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-10-24)
+## © C. Heibl 2014 (last update 2019-04-16)
 
 #' @export
 #' @import DBI
@@ -10,7 +10,7 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
   
   ## CHECKS
   ## ------
-  if ( !inherits(x, "megapteraProj") )
+  if (!inherits(x, "megapteraProj"))
     stop("'x' is not of class 'megapteraProj'")
   
   ## DEFINITIONS
@@ -26,6 +26,10 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
        paste("\n", Sys.time(), sep = ""), 
        "\nSTEP BX: adding sequences to database\n",
        file = logfile)
+  
+  ## Sequences ust not be aligned
+  ## ----------------------------
+  dna <- del.gaps(dna)
   
   ## format sequences
   ## ----------------
@@ -47,11 +51,8 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
     coverage = NA,
     dna = dna,
     stringsAsFactors = FALSE)
-    
-    
-  ## check taxonomy
   
-  ## check for duplicates
+  ## Check for duplicates
   ## --------------------
   conn <- dbconnect(x)
   in.db <- paste("SELECT gi || '_' || taxon AS id FROM", acc.tab)
@@ -72,7 +73,7 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
     }
   }
   
-  ## write data to pgSQL database
+  ## Write data to pgSQL database
   ## ----------------------------
   if (nrow(dna)) {
     dbWriteTable(conn, acc.tab, dna, 

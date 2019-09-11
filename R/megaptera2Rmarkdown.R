@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2018-01-31)
+## © C. Heibl 2016 (last update 2019-03-11)
 
 #' @title RMarkdown Report
 #' @description Creates a status report for a megaptera Project using RMarkdown.
@@ -285,20 +285,31 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
   loci_genbank <- ll[grep("gb", names(ll))]
   loci_genbank[loci_genbank > 1] <- 1
   loci_genbank <- rowSums(loci_genbank)
-  taxa_not_found <- names(loci_genbank)[loci_genbank == 0]
-  n_taxa_not_found <- length(taxa_not_found)
-  n_taxa_found <- nrow(ll) - n_taxa_not_found
-  if (length(taxa_not_found)){
-    write(taxa_not_found, "report/species-without-sequences.txt")
+  
+  taxa_with_seq <- names(loci_genbank)[loci_genbank > 0]
+  taxa_without_seq <- sort(setdiff(
+    union(sapply(x@taxon@ingroup, head, 1),
+        sapply(x@taxon@outgroup, head, 1)
+    ), taxa_with_seq
+  ))
+  n_taxa_with_seq <-  length(taxa_with_seq)
+  n_taxa_without_seq <-  length(taxa_without_seq)
+  n_queried <- length(x@taxon@ingroup) + length(x@taxon@outgroup)
+  
+  if (n_taxa_without_seq){
+    write(taxa_without_seq, "report/species-without-sequences.txt")
     taxaNotFound <- c(
       paste("##", Tip_rank ,"without any sequences"),
-      paste0(n_taxa_not_found, " ", tip_rank, " (of ", nrow(ll), " available = ",
-             round(100 * n_taxa_not_found/nrow(ll), 2), "%) have no sequences."))
-    if (n_taxa_not_found <= nmax){ 
-      taxaNotFound <- c(taxaNotFound, "", paste0("- *", taxa_not_found, "*"))
+      paste0(n_taxa_without_seq, " ", tip_rank, " (of ", nrow(ll), " with available taxonomy = ",
+             round(100 * n_taxa_without_seq/nrow(ll), 2), "% and of ",
+             n_queried, " queried = ", round(100 * n_taxa_without_seq/n_queried, 2), 
+             "%) have no sequences."))
+    if (n_taxa_without_seq <= nmax){ 
+      taxaNotFound <- c(taxaNotFound, "", paste0("- *", taxa_without_seq, "*"))
     } 
   } else {
     taxaNotFound <- NULL
+    stop("implement me!")
   }
   z <- c(z, "# DNA sequence retrieval",
          taxaNotFound, "",
@@ -319,15 +330,15 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
   loci_selected <- apply(loci_selected, c(1, 2), as.numeric) ## coerce to numeric!
   loci_selected <- rowSums(loci_selected)
   taxa_not_selected <- names(loci_selected)[loci_selected == 0]
-  taxa_not_selected <- setdiff(taxa_not_selected, taxa_not_found)
+  taxa_not_selected <- setdiff(taxa_not_selected, taxa_without_seq)
   n_taxa_not_selected <- length(taxa_not_selected)
   if (n_taxa_not_selected){
     taxaNotSelected <- c(
       paste("##", Tip_rank, "not selected for alignment"),
       paste0(n_taxa_not_selected, " ", tip_rank, " (of ", nrow(ll), " available = ", 
              round(100* n_taxa_not_selected/nrow(ll), 2),
-             "% and of ", n_taxa_found, " retrieved = ",
-             round(100* n_taxa_not_selected/n_taxa_found, 2), "%) have not been selected."))
+             "% and of ", n_taxa_with_seq, " retrieved = ",
+             round(100* n_taxa_not_selected/n_taxa_with_seq, 2), "%) have not been selected."))
     if (n_taxa_not_selected <= nmax){
       taxaNotSelected <- c(taxaNotSelected, "", paste0("- *", taxa_not_selected, "*"))
     }

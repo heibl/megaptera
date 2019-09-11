@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-02-06)
+## © C. Heibl 2014 (last update 2019-03-11)
 
 #' @title Step F: Select Sequences and Assemble FASTA file
 #' @description In \code{stepF} FASTA files will be assembled selecting all
@@ -233,31 +233,13 @@ stepF <- function(x, update){
     dbSendQuery(conn, in_tab)
   }
   
-  # slog("\nCalculate majority-rule consensus sequences ..", 
-  #      file = logfile)
-  # 
-  # ## consensus -- either sequential or parallel
-  # ## ------------------------------------------
-  # if (nrow(taxa)) {
-  #   cpus <- x@params@cpus
-  #   if (nrow(taxa) < cpus | !x@params@parallel){
-  #     apply(taxa, 1, speciesConsensus, megProj = x)
-  #   } else {
-  #     sfInit(parallel = TRUE, cpus = cpus, 
-  #            type = x@params@cluster.type)
-  #     sfLibrary("megaptera", character.only = TRUE) 
-  #     sfExport("x", "taxa")
-  #     sfApply(taxa, speciesConsensus, margin = 1, megProj = x)
-  #     sfStop()
-  #   }
-  # }
-  
   ## Write choosen accessions to MSA table
   ## -------------------------------------
   SQL <- paste("SELECT taxon, dna",
                "FROM", acc.tab,
-               "WHERE", wrapSQL(choosen_acc, "gi", "=", "OR"))
-  seqs <- dbGetQuery(conn, SQL)
+               "WHERE", wrapSQL(choosen_acc, "gi", "=", "OR", by = 500))
+  seqs <- lapply(SQL, dbGetQuery, conn = conn)
+  seqs <- do.call(rbind, seqs)
   SQL <- paste(wrapSQL(gene, term = NULL, boolean = NULL),
                wrapSQL(seqs$taxon, term = NULL, boolean = NULL),
                "'raw'",

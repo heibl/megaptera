@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-02)
+## © C. Heibl 2014 (last update 2019-04-15)
 
 ## TO DO: 1. enable search of all taxa
 ##        2. enable search of taxa that have no sequences 
@@ -9,7 +9,7 @@
 ## if species list only missing ingroup species will be searched for
 ## if higher taxon the entire taxon will be searched. [2017-10-18]
 
-#' @importFrom bold bold_tax_name
+#' @importFrom bold bold_stats bold_tax_name
 #' @import DBI
 #' @export
 
@@ -35,9 +35,10 @@ stepBOLD <- function(x, overwrite = TRUE){
        "\nSTEP BOLD: searching and downloading sequences from BOLDSYSTEMS\n",
        file = logfile)
   
-  ## check if locus is available and assign correct abbreviation
-  ## according to BOLDSYSTEMS (NOTE: works only for my personal order of aliases)
-  ## ----------------------------------------------------------------------------
+  ## Check if locus is available and assign correct abbreviation
+  ## according to BOLDSYSTEMS (NOTE: works only for my personal 
+  ## order of aliases)
+  ## ------------------------------------------------------------
   markerSet <- c("COI-5P", "ITS", "matK", "rbcL")
   names(markerSet) <- c("cox1", "its", "matk", "rbcl")
   id <- names(markerSet) %in% c(x@locus@sql, x@locus@aliases)
@@ -50,86 +51,73 @@ stepBOLD <- function(x, overwrite = TRUE){
   }
   marker <- markerSet[id]
   
-  ## species present in NCBI taxonomy
-  ## --------------------------------
-  conn <- dbconnect(x)
-  spec <- paste("SELECT taxon",
-                "FROM taxonomy",
-                "WHERE", wrapSQL("species", "rank", "="),
-                "ORDER BY taxon")
-  spec <- dbGetQuery(conn, spec)$taxon
-  dbDisconnect(conn)
+  ## What set of species should be queried?
+  ## -------------------------------------
+  queried <- union(x@taxon@ingroup, x@taxon@outgroup)
+  names(queried) <- sapply(queried, head, 1)
+  retrieved <- dbReadLocus(x)
+  retrieved <- retrieved[grep("gb", names(retrieved))]
+  retrieved[retrieved > 1] <- 1
+  retrieved <- rowSums(retrieved)
+  retrieved <- names(retrieved)[retrieved > 0]
+  missing <- setdiff(, retrieved)
   
-  ingroup_queried <- x@taxon@ingroup
-  id <- sapply(ingroup_queried, function(a, b)  any(a %in% b), b = spec)
-  ingroup_missing <- ingroup_queried[!id]
-  ingroup_missing <- sapply(ingroup_missing, head, n = 1)
-  slog(length(ingroup_missing), "ingroup species are missing on NCBI",
+  slog(length(missing), "queried species do not have any sequences",
        file = logfile)
   
-  ## check whether these taxa are present on BOLD SYSTEMS
-  ## ----------------------------------------------------
-  onBOLD <- bold_tax_name(ingroup_missing)
-  id <- is.na(onBOLD$taxid)
+  
+  ## It seem that BOLD treats synonyms akwardly, eg. Acossus
+  ## terebra and Lamellocossus terebra are presented as separate 
+  ## species. Therefore all name sare treated equally 
+  m <- lapply(missing, function(z) data.frame(z[1], z))
+  m <- do.call(rbind, m)
+  names(m) <- c("concept", "name")
+  
+  public_seqs <- function(taxon){
+    bold_stats(taxon)$records_with_species_name
+  }
+  m$public <- sapply(m$name[], public_seqs)
+  
+  ## 
+  not_public <- setdiff(m$concept, m$concept[m$public > 0])
   if (any(id)){
-    stop("implement this warning!")
-    ingroup_missing <- ingroup_missing[-id]
+    cat("\nWARNING:", length(not_public), "species without public data:",
+        formatSpecList(not_public))
+    m <- m[m$public > 0, ]
   }
   
-  ## sliding window breaks specis names vector in
-  ## batches of 100
-  ## --------------
-  sw <- seq(from = 1, to = length(ingroup_missing), by = 100)
-  sw <- data.frame(from = sw, to = c(sw[-1] -1, length(ingroup_missing)))
-  sw <- apply(sw, 1, function(z, spec) spec[z[1]:z[2]], spec = ingroup_missing)
-  if (is.null(dim(sw))) dim(sw) <- c(1, 1)
+  ## To do: throw error if no sequences are available
+  # if (!length(b)){
+  #   slog("\n.. no sequences on BOLD either", file = logfile)
+  #   # dbProgress(x, "step_bold", "success") # not yet possible
+  #   return()
+  # }
   
-  ## wrap bold_seq to get DNAbin
-  ## ---------------------------
-  formatBOLD <- function(x, species, marker){
-    b <- BOLD2megaptera(species, marker) 
-    if (!length(b)) return(NA)
-    bb <- paste(b[, "taxon"], b[, "id"])
-    bb <- gsub(" ", "_", bb)
-    b <- as.list(b[, "sequence"])
-    b <- lapply(b, strsplit, split = "")
-    b <- lapply(b, unlist)
-    b <- lapply(b, tolower)
-    names(b) <- bb
-    as.DNAbin(b)
-  }
-  
-  ## download and format sequences
-  b <- apply(sw, 1, formatBOLD, x = x, marker = marker)
-  b <- b[!is.na(b)]
-  if (!length(b)){
-    slog("\n.. no sequences on BOLD either", file = logfile)
-    # dbProgress(x, "step_bold", "success") # not yet possible
-    return()
-  }
-  slog("Found", length(b), "sequences", file = logfile)
-  
-  ## manage duplicates name + id combinations
-  ## where do they come from???
-  ## --------------------------
+  ## Download and format sequences
+  ## -----------------------------
+  b <- lapply(m$name, BOLD2megaptera, marker = marker, 
+              out.format = "DNAbin")
   b <- do.call(c, b)
   d <- duplicated(names(b))
   if (any(d)){
     slog("Removed", length(which(d)), "duplicates", file = logfile)
-    names(b)[d] <- paste(names(b)[d], 1:length(which(d)), sep = "-")
-    # a <- b[names(b) == "Locusta_migratoria_CYTC5284-12"]
-    # a <- mafft(a, exec = x@align.exe)
-    # rownames(a) <- paste(rownames(a), 1:nrow(a), sep = "_")
-    # write.nex(a, "aaa.nex")
+    b <- b[!d]
   }
+  slog("Found", length(b), "sequences", file = logfile)
   
-  ## remove sequences that are not determined on species level
-  ## ---------------------------------------------------------
-  taxa_bold <- splitGiTaxon(names(b))$taxon
-  id <- is.Linnean(taxa_bold)
-  b <- b[id]
+  ## Replace names with accepted names
+  ## ---------------------------------
+  bb <- splitGiTaxon(names(b))
+  bb$taxon <- strip.infraspec(bb$taxon)
+  bb$concept <- as.character(m$concept)[match(bb$taxon, m$name)]
+  if (any(is.na(bb$concept))){
+    "debug me!"
+  }
+  bb <- paste(bb$concept, bb$gi)
+  bb <- gsub(" ", "_", bb)
+  names(b) <- bb
   
-  ## write into pgSQL database
+  ## Write into pgSQL database
   ## -------------------------
   stepBX(x, b, tag = "bold", overwrite = overwrite)
 }

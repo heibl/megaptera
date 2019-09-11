@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-01-31)
+## © C. Heibl 2014 (last update 2019-04-15)
 
 #' @title Taxon-Locus-Crosstable
 #' @description Create a data frame that contains for each taxon and locus the
@@ -43,7 +43,9 @@ dbReadLocus <- function(megProj, provenance = ".", tag, subset){
   dbGenBank <- function(conn, tab, tip.rank, provenance, tag){
     # tag <- ifelse(missing(tag), "",
     #               paste("AND", wrapSQL(tag, "t.tag")))
-    SQL <- ifelse(tip.rank == "genus", "regexp_replace(taxon, ' .+$', '') AS taxon", "taxon")
+    SQL <- ifelse(tip.rank == "genus", 
+                  "regexp_replace(taxon, ' .+$', '') AS taxon", 
+                  "taxon")
     SQL <- paste("SELECT", SQL, "FROM", tab)
     SQL <- paste("SELECT t.taxon, count(a.taxon)",
                  "AS", gsub("acc", "gb", tab),
@@ -51,6 +53,7 @@ dbReadLocus <- function(megProj, provenance = ".", tag, subset){
                  "LEFT JOIN (", SQL, ") AS a", 
                  "ON t.taxon = a.taxon",
                  "WHERE", wrapSQL(tip.rank, "t.rank", "="),
+                 "AND t.status='scientific name'",
                  # tag,
                  "GROUP BY t.taxon",
                  "ORDER BY t.taxon")
@@ -77,6 +80,7 @@ dbReadLocus <- function(megProj, provenance = ".", tag, subset){
                  "FROM", SQL, "AS s",
                  "FULL JOIN taxonomy AS t ON t.taxon = s.taxon", 
                  "WHERE", wrapSQL(tip.rank, "t.rank", "="),
+                 "AND t.status='scientific name'",
                  "ORDER BY t.taxon")
     
     

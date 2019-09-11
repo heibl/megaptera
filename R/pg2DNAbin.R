@@ -1,9 +1,15 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2018 (last update 2019-02-13)
+## © C. Heibl 2018 (last update 2019-05-04)
 
 #' @export
 
 pg2DNAbin <- function(pg, reliability = 0){
+  
+  ## CHECKS
+  ## ------
+  if (!is.data.frame(pg)) stop("'pg' must be of class 'data.frame'")
+  id <- c("taxon", "sequence", "reliability") %in% names(pg)
+  if (!all(id)) stop("'pg' is malformatted")
   
   ## Parse DNA sequences
   ## -------------------
@@ -12,6 +18,21 @@ pg2DNAbin <- function(pg, reliability = 0){
   obj <- as.DNAbin(obj)
   if (length(unique(sapply(obj, length))) == 1){
     obj <- as.matrix(obj)
+  } else {
+    # ## If sequences are not aligned, they cannot
+    # ## have reliability scores assigned to them
+    # return(obj)
+  }
+  
+  ## If reliability scores are not available,
+  ## stop here and return sequences
+  ## ------------------------------
+  test <- sapply(pg$reliability, nchar) == 1
+  if (any(is.na(test))){
+    return(obj) ## reliability is NA
+  }
+  if (any(test)){
+    return(obj) ## reliability is a single number
   }
   
   ## Parse reliability score
@@ -32,12 +53,11 @@ pg2DNAbin <- function(pg, reliability = 0){
   if (reliability > 0){
     if (pg$reliability[1] != "-1"){
       obj <- obj[, rel_score >= reliability]
-      rel_score <- rel_score[, rel_score >= reliability]
+      rel_score <- rel_score[rel_score >= reliability]
     }
   }
-  
-  
-  
   attr(obj, "cs") <- rel_score
+  
+  
   obj
 }

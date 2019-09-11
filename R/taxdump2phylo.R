@@ -21,7 +21,7 @@ taxdump2phylo <- function(tax, tip.rank){
   
   ## Is taxonomy sane?
   ## -----------------
-  if (!taxdumpSanity(tax)){
+  if (!taxdumpSanity(tax, quiet = TRUE)){
     stop("'tax' is not correctly formatted")
   }
   

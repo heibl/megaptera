@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-09-24)
+## © C. Heibl 2017 (last update 2019-04-22)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get all children of certain rank for a given taxon.
@@ -13,7 +13,7 @@
 #'   \code{"taxon"} must belong to. The default (\code{"any"}) does not imply
 #'   any restriction on the rank of the taxon queried.
 #' @param tip.rank A character string giving the name a rank. This rank will be
-#'   treated as tip rank, i.e. all taxa of lower rank will be dicarded.
+#'   treated as tip rank, i.e. all taxa of lower rank will be dicarded. 
 #' @param status A character string defining the status of the taxon names to be
 #'   returned, e.g. \code{"scientific name"} will return only currently
 #'   accepted names, while \code{"all"} will return synonyms in addition.
@@ -52,7 +52,9 @@ taxdumpChildren <- function(tax, taxon, immediate = FALSE, query.rank = "any", t
   
   ## Determine which separator is used by 'tax' and impose it on 'taxon'
   ## -------------------------------------------------------------------
-  underscore <- length(grep("_", tax$taxon)) > 0
+  ## Beware of evil strings like 'Tuberculina sp. Ru_hy-01'
+  test <- head(tax$taxon[tax$rank == "species"])
+  underscore <- length(grep("^[[:upper:]][[:lower:]]{1,}_[[:lower:]]", test)) > 0
   if (underscore){
     taxon <- gsub(" ", "_", taxon)
   } else {
@@ -97,7 +99,7 @@ taxdumpChildren <- function(tax, taxon, immediate = FALSE, query.rank = "any", t
     gain <- length(this.id)
     if (immediate) break
   }
-  tax <- tax[tax$id %in% id, c(2, 1, 4, 3)]
+  tax <- tax[tax$id %in% id, c(2, 1, 4, 3, 5)]
   rownames(tax) <- NULL
   
   ## Remove rows of rank below 'tip.rank'

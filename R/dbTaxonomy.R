@@ -23,6 +23,8 @@
 #'   option only makes sense in combination with \code{subset}.
 #' @param syn Logical, indicating if synonyms should be returned in addition to
 #'   accepted names.
+#' @param drop.extinct Logical, if \code{TRUE} all lineages that lack a taxon of
+#'   rank \code{"tip.rank"} will be pruned from the taxonomy.
 #' @param logfile A character string giving the names of a potential logfile; no
 #'   logfile is written if this argument is left empty.
 #' @return For \code{dbReadTable} an object of class \code{"data.frame"} holding

@@ -30,7 +30,9 @@
 taxdumpChangeParent <- function(x, taxon, new.parent, orphaned.parent = "synonym"){
   
   if (inherits(x, "megapteraProj")){
-    tax <- dbReadTaxonomy(x)
+    ## Need to set drop.extinct = FALSE, in order not to loose potential parentials
+    ## that just have been added
+    tax <- dbReadTaxonomy(x, drop.extinct = FALSE)
   } else {
     tax <- x
   }
@@ -45,9 +47,11 @@ taxdumpChangeParent <- function(x, taxon, new.parent, orphaned.parent = "synonym
   opid <- tax$parent_id[tax$taxon == taxon] ## old parent's ID
   oname <- tax$taxon[tax$id == opid] ## old parent's name
   npid <- tax$id[tax$taxon == new.parent] ## new parent's ID
+  if (!length(npid)) stop("'new.parent' not availbale - you can create it with taxdumpAddNode()")
   sid <- tax$id[tax$parent_id == opid & tax$taxon != taxon] ## sister taxa's ID
 
   if (inherits(x, "megapteraProj")){
+    
     conn <- dbconnect(x)
     SQL <- paste("UPDATE taxonomy",
                  "SET", wrapSQL(npid, "parent_id", "="), 

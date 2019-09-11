@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (2018-10-25)
+## © C. Heibl 2014 (2019-04-22)
 
 #' @title Add Tips to a Phylogenetic Tree
 #' @description Add tips (i.e. species) to a phylogenetic tree according to
@@ -32,7 +32,8 @@
 #' tre <- addTips(phy = cetacea$tree, tips = missing_species, insert = "crown")
 #' @export
 
-addTips <- function(phy, tips, sister, tax, insert = "crown", ignore.monophyly = FALSE, quiet = FALSE){
+addTips <- function(phy, tips, sister, tax, insert = "crown", 
+                    ignore.monophyly = FALSE, quiet = FALSE){
   
   if (!inherits(phy, "phylo"))
     stop("'phy' is not of class 'phylo'")

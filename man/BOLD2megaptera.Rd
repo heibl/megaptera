@@ -4,12 +4,15 @@
 \alias{BOLD2megaptera}
 \title{Barcode of Life Database Interface}
 \usage{
-BOLD2megaptera(taxon, marker)
+BOLD2megaptera(taxon, marker, out.format = "df")
 }
 \arguments{
-\item{taxon}{A character string giving a taxon name.}
+\item{taxon}{A character string giving a taxon name (only one allowed).}
 
 \item{marker}{A character string giving a marker name.}
+
+\item{out.format}{A character string giving the desired output format;
+possible are \code{"df"} (data frame) or \code{"\link{DNAbin}"}}
 }
 \description{
 Get DNA sequences from BOLD SYSTEMS

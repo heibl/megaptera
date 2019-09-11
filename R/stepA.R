@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-03-07)
+## © C. Heibl 2014 (last update 2019-07-18)
 
 #' @title Step A: Creating a Project Taxonomy
 #' @description Creates a project taxonomy from the NCBI taxonomy (see
@@ -68,6 +68,7 @@ stepA <- function(x){
   ## arises between ICZN and Fauna Europea, which did not adopt its Gender Agreement
   ## -------------------------------------------------------------------------------
   renderGender <- function(b){
+    if (!is.Linnean(b)) return(b) # extend only species names
     fem <- grep("a$", b)
     mas <- grep("um$", b)
     b <- c(b, gsub("a$", "um", b[fem]), gsub("a$", "us", b[fem]),
@@ -86,7 +87,8 @@ stepA <- function(x){
       slog("\n", length(missing_ig), " ingroup taxa not in NCBI Taxonomy database:", 
            formatSpecList(missing_ig), sep = "", file = logfile)
       if (x@params@debug.level > 1){
-        write.table(missing_ig, file = "data/ingroup-not-NCBI-taxonomy.txt",
+        ## only accepted names will be written to file
+        write.table(sapply(missing_ig, head, 1), file = "data/ingroup-not-NCBI-taxonomy.txt",
                     quote = FALSE, row.names = FALSE, col.names = "INGROUP" )
         slog("\nThe list of missing ingroup taxa was written to", 
              "'data/ingroup-not-NCBI-taxonomy.txt'", file = logfile)
@@ -100,12 +102,13 @@ stepA <- function(x){
   ## Adjust accepted names/synonyms as user-defined
   ## ----------------------------------------------
   # tax2 <- tax
+  # tax <- tax2
   ## ig[which(sapply(ig, function(x, y) x %in% y, x = "Earophila badiata"))]
   ## ig[grep("Dicallomera", ig)]
-  for (i in seq_along(ig)[]){
+  for (i in seq_along(ig)[1:13]){
     cat("\n", i, " ")
     tax <- taxdumpSynonym(tax, binomials = ig[[i]], keep.acc = FALSE, 
-                   quiet = FALSE, keep.syn = TRUE)
+                   quiet = FALSE, keep.syn = TRUE, add.syn = TRUE)
     # if (!taxdumpSanity(tax)) break
   }
   

@@ -1,13 +1,14 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-02-13)
+## © C. Heibl 2014 (last update 2019-09-11)
 
+#' @importFrom methods is
 #' @export
 
 term <- function(organism, kingdom, locus) {
   
   if (!is.character(organism))
     stop("organism must be of mode 'character'")
-  if (!inherits(locus, "locus"))
+  if (!is(locus, "locus"))
     stop("locus must be of class 'locus'")
   
   ## species names must not contain whitespace

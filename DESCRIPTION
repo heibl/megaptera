@@ -104,6 +104,7 @@ Collate:
     'formatDF.R'
     'frmt.R'
     'fuzzy.match.R'
+    'gbflat2DNAbin.R'
     'getLineage.R'
     'giConsensus.R'
     'harmonizePhyloData.R'
