@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-05-11)
+## © C. Heibl 2014 (last update 2018-09-11)
 
 #' @title Create an Object of Class "megapteraPars"
 #' @description S4 Class for parameters of a megaptera project pipeline, as
@@ -8,6 +8,8 @@
 #'   names of the parameters described in the `Pipeline Parameters' section.
 #' @section Pipeline Parameters: 
 #' \describe{ 
+#' \item{\code{gb.seq.download}}{A character string defining how sequences should be
+#'   downloaded from GenBank Nucleotide; can be \code{"eutils"} or \code{"ftp"}.}
 #' \item{\code{debug.level}}{Numeric, a
 #'   number between 0 and 5, determining the pipeline's verbosity (see Details). (default: 1)}
 #' \item{\code{parallel}}{Logical: if
@@ -71,7 +73,8 @@
 
 "megapteraPars" <- function(...){
   
-  params <- list(debug.level = 1,
+  params <- list(gb.seq.download = "eutils",
+                 debug.level = 1,
                  parallel = FALSE,
                  cpus = 0,
                  cluster.type = "none",
@@ -108,6 +111,7 @@
   }
   
   new("megapteraPars",
+      gb.seq.download = params$gb.seq.download,
       debug.level = params$debug.level,
       parallel = params$parallel,
       cpus = params$cpus,

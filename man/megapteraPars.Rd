@@ -25,6 +25,8 @@ The pipeline's verbosity can be fine-tuned with \code{debug.level}:
 \section{Pipeline Parameters}{
  
 \describe{ 
+\item{\code{gb.seq.download}}{A character string defining how sequences should be
+  downloaded from GenBank Nucleotide; can be \code{"eutils"} or \code{"ftp"}.}
 \item{\code{debug.level}}{Numeric, a
   number between 0 and 5, determining the pipeline's verbosity (see Details). (default: 1)}
 \item{\code{parallel}}{Logical: if

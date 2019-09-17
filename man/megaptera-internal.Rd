@@ -67,6 +67,7 @@
 \alias{maxDistMPI}
 \alias{meanPairwiseIdentity}
 \alias{megapteraHeatmap}
+\alias{megapteraCSS} % megaptera2Rmarkdown
 \alias{myDist}
 \alias{ncbiLineage}
 \alias{NCBI.wrap}
@@ -86,6 +87,8 @@
 \alias{sql.conform}
 \alias{sqlTaxonomyHeader}
 \alias{sql.wrap}
+\alias{stepB_eutils}
+\alias{stepB_ftp}
 \alias{summary.sproj}
 \alias{tab}
 \alias{tax2tree}

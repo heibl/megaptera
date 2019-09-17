@@ -1,8 +1,10 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-16)
+## © C. Heibl 2014 (last update 2019-09-11)
 
 #' @title Class "megapteraPars"
 #' @description S4 Class for pipeline parameters of \code{\link{megapteraProj}}.
+#' @slot gb.seq.download A character string defining how sequences should be
+#'   downloaded from GenBank Nucleotide; can be \code{"eutils"} or \code{"ftp"}.
 #' @slot debug.level Numeric, a number between 0 and 5, determining the
 #'   pipeline's verbosity. \emph{This parameter under development and should not
 #'   be changed by the user.}
@@ -55,26 +57,24 @@
 #' @slot gb4 Parameters for masking of alignment blocks with
 #'   \code{\link{gblocks}}.
 #' @slot gb5 Parameters for masking of alignment blocks with
-#'   \code{\link{gblocks}}.
-#'   #' @details The pipeline's verbosity can be fine-tuned with \code{debug.level}:
-#' \tabular{ll}{
-#' 0 \tab No progess and diagnostic messages\cr
-#' 1 \tab Messages on screen\cr
-#' 2 \tab Messages logged to file\cr
-#' 3 \tab Messages on screen and logged to file\cr
-#' 4 \tab Same as 3, in addition current data is saved as .rda object in case of a foreseeable error\cr
-#' 5 \tab Same as 4, in addition current data is always saved\cr
-#' }
+#'   \code{\link{gblocks}}. #' @details The pipeline's verbosity can be
+#'   fine-tuned with \code{debug.level}: \tabular{ll}{ 0 \tab No progess and
+#'   diagnostic messages\cr 1 \tab Messages on screen\cr 2 \tab Messages logged
+#'   to file\cr 3 \tab Messages on screen and logged to file\cr 4 \tab Same as
+#'   3, in addition current data is saved as .rda object in case of a
+#'   foreseeable error\cr 5 \tab Same as 4, in addition current data is always
+#'   saved\cr }
 #' @references  Smith, S.A., J.M. Beaulieu, and M.J. Donoghue. 2009.
 #'   Mega-phylogeny approach for comparative biology: an alternative to
 #'   supertree and supermatrix approaches. \emph{BMC Evolutionary Biology}
 #'   \bold{9}:37.
 #' @seealso \code{\link{megapteraProj}} for creating a megaptera project.
-#' @examples 
+#' @examples
 #' megapteraPars()
 
 setClass("megapteraPars", 
          representation = list(
+           gb.seq.download = "character", # stepB
            debug.level = "numeric", # all steps
            parallel = "logical",
            cpus = "numeric",

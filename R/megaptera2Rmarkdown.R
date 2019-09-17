@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2019-03-11)
+## © C. Heibl 2016 (last update 2019-09-11)
 
 #' @title RMarkdown Report
 #' @description Creates a status report for a megaptera Project using RMarkdown.
@@ -17,6 +17,11 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
   if (length(grep("^report/", file)) == 0){
     file <- paste("report", file, sep = "/")
   }
+  
+  ## Write CSS file
+  ## --------------
+  megapteraCSS(file = paste0(gsub("(.*/).*$", "\\1", file),
+                             "megaptera.css"))
   
   ## Prepare some strings for output
   ## -------------------------------
@@ -263,7 +268,7 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
   if (inherits(x@taxon, 'taxonGuidetree')){
     guide_tree <- c("## User-defined guide tree",
                     "```{r, echo=FALSE, message=FALSE}",
-                    "plot(x@taxon@guide.tree, type = 'phylo', no.margin = TRUE)",
+                    "plot(ladderize(x@taxon@guide.tree), type = 'phylo', no.margin = TRUE)",
                     "```", "")
   } else {
     guide_tree <- ""
@@ -384,5 +389,8 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
          "b <- checkBlocks(x)",
          "```", "")
   
+  ## Write files
+  ## -----------
   write(z, file = file)
+  
 }
