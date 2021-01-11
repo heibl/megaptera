@@ -4,8 +4,13 @@
 \alias{taxdumpManageSynonym}
 \title{Utilities for NCBI Taxdump}
 \usage{
-taxdumpManageSynonym(tax, binomials, keep.syn = TRUE, add.syn = FALSE,
-  quiet = TRUE)
+taxdumpManageSynonym(
+  tax,
+  binomials,
+  keep.syn = TRUE,
+  add.syn = FALSE,
+  quiet = TRUE
+)
 }
 \arguments{
 \item{tax}{A data frame in parent-child format.}

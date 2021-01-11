@@ -4,8 +4,18 @@
 \alias{dbReadMSA}
 \title{Read Sequences from Database}
 \usage{
-dbReadMSA(x, locus, taxon, regex = TRUE, reliability = 0,
-  ignore.excluded = TRUE, blocks = "ignore")
+dbReadMSA(
+  x,
+  locus,
+  taxon,
+  regex = TRUE,
+  label = c("taxon", "acc"),
+  confid.scores = "all",
+  row.confid = 0,
+  col.confid = 0,
+  ignore.excluded = TRUE,
+  blocks = "ignore"
+)
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}
@@ -21,10 +31,23 @@ expression.}
 \item{regex}{Logical: if \code{TRUE}, the string given via \code{taxon} will
 be interpreted as a regular expression (see \code{\link{regex}}).}
 
-\item{reliability}{A vector of mode \code{"numeric"} between 0 and 1 giving
-the minimum reliability score for each alignment column. Note that
-reliability/confidence scores are returned as an attribute and can be
-accessed by \code{attr(obj, "cs")}.}
+\item{label}{A vector of mode \code{"character"} giving the attributes for
+constructing the sequences labels, e.g. \code{"taxon"}, \code{"acc"}, or both.}
+
+\item{confid.scores}{A vector of mode \code{"character"} specifying if and
+how confidence scores will be returned. Use \code{"ignore"} to omit
+confidence scores. Other options are \code{"all"}, \code{"row.means"}, and
+\code{"col.means"}. Confidence scores are returned as an attribute and can
+be accessed by \code{attr(obj, "cs")}.}
+
+\item{row.confid}{A real number in the interval \code{[0, 1]} giving
+the confidence threshold for alignment rows (i.e. taxa, sequences); only rows  scoring equal
+or greater to \code{min.confid} will be selected.}
+
+\item{col.confid}{A real number in the interval \code{[0, 1]} giving
+the confidence threshold for alignment columns (i.e. nucletide positions); only rows
+(i.e. taxa, sequences) or columns  scoring equal
+or greater to \code{min.confid} will be selected.}
 
 \item{ignore.excluded}{\emph{Currently unused}.}
 
@@ -36,7 +59,7 @@ An object of class \code{\link{DNAbin}}.
 \description{
 Reads selected and assembled sequences (see \code{\link{stepF}}
   and subsequent steps) from the database, specifically from the table
-  'species_sequences'.
+  'sequence_selected'.
 }
 \seealso{
 \code{\link{dbReadDNA}} and \code{\link{dbWriteDNA}}

@@ -1,8 +1,10 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-09-11)
+## © C. Heibl 2014 (last update 2019-09-17)
 
 #' @title Class "megapteraPars"
 #' @description S4 Class for pipeline parameters of \code{\link{megapteraProj}}.
+#' @slot data.path A character string giving the path to the directory there all
+#'   data and results will be stored (see \code{\link{megapteraInit}}).
 #' @slot gb.seq.download A character string defining how sequences should be
 #'   downloaded from GenBank Nucleotide; can be \code{"eutils"} or \code{"ftp"}.
 #' @slot debug.level Numeric, a number between 0 and 5, determining the
@@ -69,11 +71,10 @@
 #'   supertree and supermatrix approaches. \emph{BMC Evolutionary Biology}
 #'   \bold{9}:37.
 #' @seealso \code{\link{megapteraProj}} for creating a megaptera project.
-#' @examples
-#' megapteraPars()
 
 setClass("megapteraPars", 
          representation = list(
+           data.path = "character", 
            gb.seq.download = "character", # stepB
            debug.level = "numeric", # all steps
            parallel = "logical",

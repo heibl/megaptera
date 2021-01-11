@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-21)
+## © C. Heibl 2014 (last update 2019-10-19)
 
 #' @title Get Information about Species
 #' @description Returns information about the 'fate' of a single species along the pipeline.
@@ -51,55 +51,69 @@ checkSpecies <- function(megProj, spec){
   
   ## B: SEQUENCES
   ## ------------
-  # spec <- gsub(" ", "_", spec)
   cat("\n\n***** SEQUENCES *****")
-  tab <- dbReadLocus(megProj)
-  tab <- tab[rownames(tab) == spec, ]
-  if (!nrow(tab)){
-    cat("\nno sequences of species '", spec, 
+  total <- paste("SELECT locus , taxon FROM sequence WHERE", 
+                 wrapSQL(spec, "taxon", "="))
+  total <- dbGetQuery(conn, total)
+  if (!nrow(total)){
+    cat("\nNo sequences of species '", spec, 
         "' in database\n", sep = "")
+    dbDisconnect(conn)
+    return()
+  } else {
+    cat("\nNumber of sequences in database:", nrow(total))
+  }
+  
+  ## C: LOCI
+  ## -------
+  if (any(!is.na(total$locus))){
+    nass <- table(total$locus) ## number assigned
+    nloc <- length(nass)
+    nloc <- ifelse(nloc == 1, paste(nloc, "locus"), paste(nloc, "loci"))
+    nass <- sum(nass)
+    nass <- ifelse(nass == 1, paste(nass, "of these has"), paste(nass, "of these have"))
+    cat("\n", nass ," been assigned (by BLAST) to ", nloc,  "\n", sep = "")
+  } else {
+    cat("\nNone of these has been assigned (by BLAST) to a particular locus")
     dbDisconnect(conn)
     return()
   }
   
-  ## which loci
-  ## ----------
+  tab <- dbReadLocus(megProj)
+  tab <- tab[rownames(tab) == spec, ]
+
   loci <- colnames(tab)[tab > 0]
-  loci <- unique(gsub("(gb|sel)_", "", loci))
-  if (!length(loci)){
-    cat("\nno sequences of species '", spec, 
-        "' in database\n", sep = "")
-  } else {
-    cat("\nnumber of loci:", length(loci), "\n")
-  }
+  loci <- sort(unique(gsub("(gb|sel)_", "", loci)))
+  loci <- gsub("(^[[:digit:]])", "_\\1", loci) ## _5_8S
   
   ACC <- data.frame()
-  for (i in seq_along(loci)){
-    
-    tabb <- tab[, grep(loci[i], colnames(tab)), drop = FALSE]
-    SQL <- paste("SELECT gi, status, genom, npos, identity, coverage",
-                 "FROM", paste("acc", loci[i], sep = "_"),
-                 "WHERE", wrapSQL(spec, term = "taxon"))
-    acc <- dbGetQuery(conn, SQL)
-    
-    if (ncol(tabb) == 1){
-      tabb <- data.frame(tabb, "not yet run", stringsAsFactors = FALSE)
-      present <- "no"
-    } else {
-      present <- grep("selected|masked", tabb[, 2])
-      present <- ifelse(length(present), "yes", "no")
-    }
-    
-    ## screen output
-    ## -------------
-    cat("\n*** LOCUS ", i, ": ", loci[i], " ***", sep = "")
-    cat("\nnumber of sequences downloaded from GenBank :", tabb[, 1])
-    cat("\nnumber of sequences selected for consensus  :", tabb[, 2])
-    cat("\npresent in final alignment                  :", present, "\n\n")
-    print(acc)
+  
+  
+  # tabb <- tab[, grep(loci[i], colnames(tab)), drop = FALSE]
+  SQL <- paste("SELECT locus, acc, length, evalue, qcovs",
+               "FROM sequence",
+               "WHERE", wrapSQL(spec, term = "taxon"))
+  acc <- dbGetQuery(conn, SQL)
+  acc <- acc[order(acc$locus, acc$evalue, acc$qcovs, 
+                   decreasing = c(FALSE, FALSE, TRUE),
+                   method = "radix"), ]
+  rownames(acc) <- NULL
+  acc <- split(acc, f = acc$locus)
+  
+  ## screen output
+  ## -------------
+  for (i in loci){
+    cat("\n*** LOCUS : ", i, " ***", sep = "")
+    lc <- acc[names(acc) == i][[1]]
+    cat("\nNumber of sequences downloaded from GenBank :", nrow(lc))
+    # cat("\nNumber of sequences selected                :", 1)
+    # cat("\nPresent in final alignment                  :", present, "\n\n")
     cat("\n")
-    ACC <- rbind(ACC, cbind(loci[i], acc[-9]))
+    print(head(lc))
+    cat("\n")
   }
+  
+  
   dbDisconnect(conn)  # must be outside of FOR-loop!
-  invisible(ACC)
+  invisible(acc)
 }

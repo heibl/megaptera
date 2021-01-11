@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2019-02-06)
+## © C. Heibl 2016 (last update 2019-10-30)
 
 #' @title Summarize and Plot Aligment Blocks
 #' @description Summarize and visualize alignment blocks with a barplot.
@@ -33,11 +33,11 @@ checkBlocks <- function(x, plot = TRUE, col, subset = NULL){
   ## How many blocks per locus?
   ## --------------------------
   conn <- dbconnect(x)
-  loci <- "SELECT DISTINCT locus FROM species_sequence ORDER BY locus"
+  loci <- "SELECT DISTINCT locus FROM sequence_selected ORDER BY locus"
   loci <- dbGetQuery(conn, loci)$locus
   
   b <- paste("SELECT status, count(status)", 
-             "FROM species_sequence", 
+             "FROM sequence_selected", 
              "WHERE", wrapSQL(loci, "locus", "=", NULL),
              subset,
              "GROUP BY status")

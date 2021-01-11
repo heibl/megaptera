@@ -4,8 +4,13 @@
 \alias{checkSpecLocus}
 \title{Barplot of Species Numbers per Locus}
 \usage{
-checkSpecLocus(megProj, stage = "selected", subset.taxon, subset.locus,
-  plot = TRUE)
+checkSpecLocus(
+  megProj,
+  stage = "selected",
+  subset.taxon,
+  subset.locus,
+  plot = TRUE
+)
 }
 \arguments{
 \item{megProj}{An object of class \code{\link{megapteraProj}}.}

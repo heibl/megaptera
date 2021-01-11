@@ -4,9 +4,16 @@
 \alias{megapteraProj}
 \title{Bundle Input Data for the Pipeline}
 \usage{
-megapteraProj(db, taxon, locus = locus(), align.exe = "undefined",
-  merge.exe = "undefined", mask.exe = "undefined",
-  params = megapteraPars(), update = FALSE)
+megapteraProj(
+  db,
+  taxon = taxon(),
+  locus = locus(),
+  align.exe = "undefined",
+  merge.exe = "undefined",
+  mask.exe = "undefined",
+  params = megapteraPars(),
+  update = FALSE
+)
 }
 \arguments{
 \item{db}{An object of class \code{\linkS4class{dbPars}}.}

@@ -4,12 +4,26 @@
 \alias{supermatrix}
 \title{Retrieval and Concatentation of Multiple Sequence Alignments}
 \usage{
-supermatrix(megProj, min.n.seq = 3, reliability = 0,
-  blocks = "split", partition, trim.ends = 0, locus.coverage = 0,
-  global.coverage = 0, subset.locus, subset.species, exclude.locus,
-  exclude.species, core.locus, core.species,
-  best.sampled.congeneric = FALSE, protect.outgroup = FALSE,
-  squeeze.outgroup)
+supermatrix(
+  megProj,
+  min.n.seq = 3,
+  blocks = "split",
+  row.confid = 0,
+  col.confid = 0,
+  partition,
+  trim.ends = 0,
+  locus.coverage = 0,
+  global.coverage = 0,
+  subset.locus,
+  subset.species,
+  exclude.locus,
+  exclude.species,
+  core.locus,
+  core.species,
+  best.sampled.congeneric = FALSE,
+  protect.outgroup = FALSE,
+  squeeze.outgroup
+)
 }
 \arguments{
 \item{megProj}{An object of class \code{\link{megapteraProj}}.}
@@ -17,13 +31,19 @@ supermatrix(megProj, min.n.seq = 3, reliability = 0,
 \item{min.n.seq}{Numeric, the minimum number of sequences in any alignment
 that is required to be included in the supermatrix.}
 
-\item{reliability}{Numeric between 0 and 1, giving the minimum reliability
-score for a column in an alignment.}
-
 \item{blocks}{A character string indicating how to handle alignment blocks:
 \code{"split"} causes blocks to be returned as elements of a list.
 \code{"concatenate"} means, blocks will be concatendated and returned as a
 single alignment.}
+
+\item{row.confid}{A real number in the interval \code{[0, 1]} giving
+the confidence threshold for alignment rows (i.e. taxa, sequences); only rows  scoring equal
+or greater to \code{min.confid} will be selected.}
+
+\item{col.confid}{A real number in the interval \code{[0, 1]} giving
+the confidence threshold for alignment columns (i.e. nucletide positions); only rows
+(i.e. taxa, sequences) or columns  scoring equal
+or greater to \code{min.confid} will be selected.}
 
 \item{partition}{A named list, each element of which contains the names of
 the loci to group together in one partition. The default is to assign each

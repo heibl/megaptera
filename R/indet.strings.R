@@ -1,10 +1,10 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-02-02)
+## © C. Heibl 2014 (last update 2019-10-30)
 
 #' @title Identify Undetermined Species
 #' @description Provides a set of regular expressions (\code{\link{regex}}) that
 #'   identify undetermined names as they will appear in the NCBI Taxonomy.
-#' @param hybrids Logical, indicating if hybrids should be also identified by
+#' @param exclude.hybrids Logical, indicating if hybrids should be also identified by
 #'   the set of regular expressions.
 #' @param collapse Logical, if \code{TRUE} the regular expressions are collected
 #'   in one single characters string using the \code{|} operator.
@@ -12,7 +12,7 @@
 #' @export
 #' @keywords internal
 
-indet.strings <- function(hybrids = TRUE, collapse = FALSE, SQL = FALSE){
+indet.strings <- function(exclude.hybrids = TRUE, collapse = FALSE, SQL = FALSE){
   
   obj <- c("^[[:upper:]][[:lower:]]+$", # "Luciola"
            "( |_)sp[.]?( |-|_|$)", # Amanita_sp  Amanita_sp_xxx
@@ -34,12 +34,17 @@ indet.strings <- function(hybrids = TRUE, collapse = FALSE, SQL = FALSE){
            "^fungal",
            "uncultured",
            "unknown",
-           ".[[:upper:]]",
+           # ".[[:upper:]]", matches "Picea_engelmannii_x_Picea_glauca"
            "^[[:lower:]]") 
   
-  ## exclude hybrids? (hybrids == FALSE)
-  if (!hybrids) obj <- c(obj, "_x_", "^x_")
+  ## Exclude hybrids? 
+  if (exclude.hybrids) obj <- c(obj, "_x_", "^x_")
   
   if (collapse) obj <- paste(obj, collapse =  "|")
   obj
 }
+
+
+## For debugging: Which regular expressions matches?
+# id <- sapply(obj, grep, x = "Picea_engelmannii_x_Picea_glauca")
+# obj[sapply(id, function(z) length(z) == 1)]

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-01-11)
+## © C. Heibl 2014 (last update 2020-01-15)
 
 #' @title Bundle Input Data for the Pipeline
 #' @description Create an object of class \code{\linkS4class{megapteraProj}} to
@@ -33,7 +33,8 @@
 #' @importFrom methods new
 #' @export
 
-"megapteraProj" <- function(db, taxon, 
+"megapteraProj" <- function(db, 
+                            taxon = taxon(), 
                             locus = locus(), 
                             align.exe = "undefined",
                             merge.exe = "undefined",
@@ -41,6 +42,20 @@
                             params = megapteraPars(),
                             update = FALSE){
   
+  ## Create project file system (if it does not exist)
+  ## -------------------------------------------------
+  proj_path <- file.path(params@data.path, "megaptera_data/project", db@dbname)
+  std_dir <- c("data", "fig", "log", "msa", "phy", "report", "scripts", "user_data")
+  std_dir <- file.path(proj_path, std_dir)
+  if (!dir.exists(proj_path)){
+    dir.create(proj_path)
+  } else {
+    std_dir <- std_dir[!dir.exists(std_dir)]
+  }
+  if (length(std_dir)) sapply(std_dir, dir.create)
+  
+  ## Create instance of megapteraProj
+  ## --------------------------------
   new("megapteraProj", 
       db = db,
       taxon = taxon,
@@ -74,7 +89,7 @@ setMethod("show",
             cat("\noutgroup taxon :", o)
             cat("\nin kingdom     :", object@taxon@kingdom)
             cat("\nhybrids        :", 
-                ifelse(object@taxon@hybrids, "included", "excluded"))
+                ifelse(object@taxon@exclude.hybrids, "excluded", "included"))
             cat("\nlocus          :", object@locus@aliases[1])
             cat("\nexecution      :", 
                 ifelse(object@params@parallel, 

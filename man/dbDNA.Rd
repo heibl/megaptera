@@ -6,9 +6,20 @@
 \alias{dbWriteDNA}
 \title{Read and Write DNA Sequences}
 \usage{
-dbReadDNA(x, tab.name, taxon, regex = TRUE, max.bp, max.evalue,
-  min.identity, min.coverage, ignore.excluded = TRUE, subtree = FALSE,
-  blocks = "ignore", reliability = 0)
+dbReadDNA(
+  x,
+  tab.name,
+  taxon,
+  regex = TRUE,
+  max.bp,
+  max.evalue,
+  min.identity,
+  min.coverage,
+  ignore.excluded = TRUE,
+  subtree = FALSE,
+  blocks = "ignore",
+  reliability = 0
+)
 
 dbWriteDNA(conn, tab.name, dna, enforce.binomial = TRUE, status)
 }

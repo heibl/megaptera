@@ -1,10 +1,10 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-05-04)
+## © C. Heibl 2014 (last update 2019-12-10)
 
 #' @title Read Sequences from Database
 #' @description Reads selected and assembled sequences (see \code{\link{stepF}}
 #'   and subsequent steps) from the database, specifically from the table
-#'   'species_sequences'.
+#'   'sequence_selected'.
 #' @param x An object of class \code{\link{megapteraProj}}.
 #' @param locus A vector of mode \code{"character"} giving a locus name. This
 #'   argument is optional and, if specified, will override the locus definition
@@ -14,10 +14,7 @@
 #'   expression.
 #' @param regex Logical: if \code{TRUE}, the string given via \code{taxon} will
 #'   be interpreted as a regular expression (see \code{\link{regex}}).
-#' @param reliability A vector of mode \code{"numeric"} between 0 and 1 giving
-#'   the minimum reliability score for each alignment column. Note that
-#'   reliability/confidence scores are returned as an attribute and can be
-#'   accessed by \code{attr(obj, "cs")}.
+#' @inheritParams pg2DNAbin
 #' @param ignore.excluded \emph{Currently unused}.
 #' @param blocks \emph{Currently unused}.
 #' @return An object of class \code{\link{DNAbin}}.
@@ -27,7 +24,9 @@
 #' @export
 
 dbReadMSA <- function(x, locus, taxon, regex = TRUE,
-                      reliability = 0,
+                      label = c("taxon", "acc"),
+                      confid.scores = "all",
+                      row.confid = 0, col.confid = 0,
                       ignore.excluded = TRUE, 
                       blocks = "ignore"){
   
@@ -37,8 +36,6 @@ dbReadMSA <- function(x, locus, taxon, regex = TRUE,
   if (x@locus@kind == "undefined" & missing(locus)) stop("locus undefined; use setLocus() to define a locus")
   if (missing(locus)) locus <- x@locus@sql
   tip.rank <-x@taxon@tip.rank
-  msa.tab <- paste(tip.rank, "sequence", sep = "_")
-  
   
   if (missing(taxon)) taxon <- ".+"
   otaxon <- taxon
@@ -55,13 +52,12 @@ dbReadMSA <- function(x, locus, taxon, regex = TRUE,
     taxon <- paste(taxon, collapse = "|")
   }
   
-  ## Open database connection
+  ## Retrieve sequences from table 'species_selected'
+  ## ------------------------------------------------
   conn <- dbconnect(x)
-  
-  ## retrieve sequences from species.table or genus.table
-  ## ----------------------------------------------------
-  SQL <- paste("SELECT regexp_replace(taxon, ' ', '_') AS taxon, sequence, reliability",
-               "FROM", msa.tab,
+  SQL <- paste("SELECT regexp_replace(taxon, ' ', '_') AS taxon,",
+               "acc, sequence, reliability",
+               "FROM sequence_selected",
                "WHERE", wrapSQL(locus, "locus", "="))
   seqs <- dbGetQuery(conn, SQL)
   dbDisconnect(conn)
@@ -69,7 +65,8 @@ dbReadMSA <- function(x, locus, taxon, regex = TRUE,
     warning("no sequences for\n- ", paste(otaxon, collapse = "\n- "))
     return(NULL)
   }
-  seqs <- pg2DNAbin(seqs, reliability = reliability)
+  seqs <- pg2DNAbin(pg = seqs, label = label, confid.scores = confid.scores, 
+                    row.confid = row.confid, col.confid = col.confid)
   
   # ## split into blocks (if necessary)
   # ## --------------------------------

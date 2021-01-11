@@ -10,6 +10,9 @@ S4 Class for pipeline parameters of \code{\link{megapteraProj}}.
 \section{Slots}{
 
 \describe{
+\item{\code{data.path}}{A character string giving the path to the directory there all
+data and results will be stored (see \code{\link{megapteraInit}}).}
+
 \item{\code{gb.seq.download}}{A character string defining how sequences should be
 downloaded from GenBank Nucleotide; can be \code{"eutils"} or \code{"ftp"}.}
 
@@ -96,9 +99,6 @@ foreseeable error\cr 5 \tab Same as 4, in addition current data is always
 saved\cr }}
 }}
 
-\examples{
-megapteraPars()
-}
 \references{
 Smith, S.A., J.M. Beaulieu, and M.J. Donoghue. 2009.
   Mega-phylogeny approach for comparative biology: an alternative to

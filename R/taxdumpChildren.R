@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2019-04-22)
+## © C. Heibl 2017 (last update 2019-11-13)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get all children of certain rank for a given taxon.
@@ -29,12 +29,13 @@
 #'   \code{\link{taxdump2phylo}} and \code{\link{taxdump_isTerminal}}.
 #' @examples
 #' # The set of default regular expressions used to identify nonvalid species binomials
-#' indet.strings()
+#' indet.strings(collapse = TRUE)
 #' @export
 
-taxdumpChildren <- function(tax, taxon, immediate = FALSE, query.rank = "any", tip.rank = "species",
-                            status = "scientific name", indet = indet.strings(), 
-                            quiet = FALSE){
+taxdumpChildren <- function(tax, taxon, immediate = FALSE, 
+                            query.rank = "any", tip.rank = "species", 
+                            status = "scientific name", 
+                            indet, quiet = FALSE){
   
   ## checks
   ## ------
@@ -117,8 +118,12 @@ taxdumpChildren <- function(tax, taxon, immediate = FALSE, query.rank = "any", t
   ## Remove *lineages* that do not terminate in structurally
   ## valid Latin binomials according to 'indet'
   ## ------------------------------------------
-  notvalid <- grep(indet.strings(collapse = TRUE), tax$taxon)
+  if (missing(indet)) {
+    indet <- indet.strings(collapse = TRUE)
+  }
+  notvalid <- grep(indet, tax$taxon)
   notvalid <- intersect(notvalid, which(tax$rank == "species"))
+  message(notvalid)
   if (length(notvalid)){
     
     notvalid <- sort(tax$id[notvalid])

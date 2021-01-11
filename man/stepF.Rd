@@ -4,14 +4,22 @@
 \alias{stepF}
 \title{Step F: Select Sequences and Assemble FASTA file}
 \usage{
-stepF(x, update)
+stepF(x, update, min.cov = 25, user.addition)
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}
 
 \item{update}{Logical, if \code{FALSE}, step F is redone from scratch, if
-\code{TRUE}, updating is done only if the data or parameters have changed. If
-left empty, \code{update} is taken from \code{\link{dbPars}}.}
+\code{TRUE}, updating is done only if the data or parameters have changed.
+If left empty, \code{update} is taken from \code{\link{dbPars}}.}
+
+\item{min.cov}{Numeric between 0 and 100 giving the minimum coverage (see
+\code{qcovs} in BLASTN) to be selected into the final alignment.}
+
+\item{user.addition}{A vector of mode \code{"character"} giving the names of
+taxa that should be included in the final alignment even if their BLAST
+scores are bad. This is mainly intended for data exploration and should not
+be used to create alignments for analysis.}
 }
 \description{
 In \code{stepF} FASTA files will be assembled selecting all

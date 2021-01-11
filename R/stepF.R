@@ -1,20 +1,26 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-03-11)
+## © C. Heibl 2014 (last update 2019-10-30)
 
 #' @title Step F: Select Sequences and Assemble FASTA file
 #' @description In \code{stepF} FASTA files will be assembled selecting all
 #'   sequences that passed the quality evalution.
 #' @param x An object of class \code{\link{megapteraProj}}.
 #' @param update Logical, if \code{FALSE}, step F is redone from scratch, if
-#'   \code{TRUE}, updating is done only if the data or parameters have changed. If
-#'   left empty, \code{update} is taken from \code{\link{dbPars}}.
+#'   \code{TRUE}, updating is done only if the data or parameters have changed.
+#'   If left empty, \code{update} is taken from \code{\link{dbPars}}.
+#' @param min.cov Numeric between 0 and 100 giving the minimum coverage (see
+#'   \code{qcovs} in BLASTN) to be selected into the final alignment.
+#' @param user.addition A vector of mode \code{"character"} giving the names of
+#'   taxa that should be included in the final alignment even if their BLAST
+#'   scores are bad. This is mainly intended for data exploration and should not
+#'   be used to create alignments for analysis.
 #' @seealso \code{\link{megapteraProj}}; \code{\link{stepE}} for the preceeding
 #'   and \code{\link{stepMAFFT}} for the subsequent step.
 #' @importFrom DBI dbGetQuery dbRemoveTable dbSendQuery
 #' @importFrom ips write.fas
 #' @export
 
-stepF <- function(x, update){
+stepF <- function(x, update, min.cov = 25, user.addition){
   
   start <- Sys.time()
   
@@ -33,22 +39,20 @@ stepF <- function(x, update){
   # if (status$step_e == "error") {
   #   stop("the previous step has terminated with an error")
   # }
-  if (status$step_e == "failure") {
-    slog("\nNo data from upstream available - quitting", file = "")
-    dbProgress(x, "step_f", "failure")
-    return()
-  }
-  if (status$step_e == "success") {
-    dbProgress(x, "step_f", "error")
-  }
+  # if (status$step_e == "failure") {
+  #   slog("\nNo data from upstream available - quitting", file = "")
+  #   dbProgress(x, "step_f", "failure")
+  #   return()
+  # }
+  # if (status$step_e == "success") {
+  #   dbProgress(x, "step_f", "error")
+  # }
   
   ## PARAMETERS
   ## -----------
   if (missing(update)) update <- x@update
   gene <- x@locus@sql
-  acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
   tip.rank <-x@taxon@tip.rank
-  msa.tab <- paste(tip.rank, "sequence", sep = "_")
   align.exe <- x@align.exe
   max.bp <- x@params@max.bp
   
@@ -67,22 +71,23 @@ stepF <- function(x, update){
   ## TO DO: nachfolgenden Code sinnvoll einbetten!
   if (!update){
     slog("\nUpdate: no -> deleting data from MSA tables", file = logfile)
-    SQL <- paste("DELETE FROM", msa.tab,
+    SQL <- paste("DELETE FROM sequence_selected", 
                  "WHERE", wrapSQL(gene, "locus"))
     dbSendQuery(conn, SQL)
   } 
   
   ## Select accessions that have an Expect value of at least 11
   ## and a coverage of al least 20%
+  ## Note: sstrand = minus: cannot be rc'd, they are just bad
   ## -----------------------------------------------------------
-  SQL <- paste("SELECT taxon, gi, npos, e_value, coverage",
-               "FROM", acc.tab, 
-               "WHERE npos <=", max.bp,
-               "AND e_value <= 11",
-               "AND coverage >= 20",
-               "AND status !~ 'excluded|too'",
-               "ORDER BY (taxon, gi)")
-  taxa <- dbGetQuery(conn, SQL)
+  taxa <- paste("SELECT taxon, acc, length, mismatch, evalue, qcovs, sstrand",
+               "FROM sequence", 
+               "WHERE", wrapSQL(gene, "locus", "="),
+               "AND evalue <= 11",
+               "AND qcovs >=", min.cov, ## coverage
+               "AND sstrand = 'plus'",
+               "ORDER BY (qcovs)")
+  taxa <- dbGetQuery(conn, taxa)
   if (!nrow(taxa)) {
     dbDisconnect(conn)
     # slog(paste("\n.. WARNING: no sequences comply with min.identity=", 
@@ -97,156 +102,65 @@ stepF <- function(x, update){
   }
   chooseAcc <- function(tab, spec){
     tab <- tab[tab$taxon == spec, ]
-    tab <- tab[tab$e_value == min(tab$e_value), ] # lowest E-value and
-    tab <- tab[tab$coverage == max(tab$coverage), ] # greatest coverage
-    tab <- tab[tab$npos == max(tab$npos), ] # longest sequence
+    # if ("plus" %in% tab$sstrand){
+    #   tab <- tab[tab$sstrand == "plus", ] # do not use minus if plus is available
+    # }
+    tab <- tab[tab$evalue == min(tab$evalue), ] # lowest E-value and
+    tab <- tab[tab$qcovs == max(tab$qcovs), ] # greatest coverage
+    tab <- tab[tab$length == max(tab$length), ] # longest alignment
     tab[1, ]
   }
-  choosen_acc <- lapply(unique(taxa$taxon), chooseAcc, tab = taxa)
-  choosen_acc <- do.call(rbind, choosen_acc)$gi
-  
-  # taxa <- split(taxa$gi, f = taxa$taxon)
-  # n <- sapply(taxa, length)
-  # taxa <- lapply(taxa, md5)
-  # taxa <- do.call(rbind, taxa)
-  # colnames(taxa) <- "md5"
-  # taxa <- data.frame(taxon = rownames(taxa), n, taxa, stringsAsFactors = FALSE)
-  # slog(paste("\n", nrow(taxa), " species found in table '", 
-  #            acc.tab, "'", sep = ""), file = logfile)
-  # 
-  # if (dbExistsTable(conn, msa.tab)){
-  #   
-  #   ## stepF was run before, now check 
-  #   ## if table needs updating, i.e. ...
-  #   in_tab <- paste("SELECT taxon, md5",
-  #                   "FROM", msa.tab)
-  #   in_tab <- dbGetQuery(conn, in_tab)
-  #   
-  #   ## are there old sequences?
-  #   old.spec <- !in_tab$taxon %in% taxa$taxon
-  #   if (any(old.spec)){
-  #     delete <- in_tab$taxon[old.spec]
-  #     update_taxa <- paste("\n  -", delete)
-  #     update_taxa <- paste(update_taxa, collapse = "")
-  #     slog("\n.. removing", length(delete), "species:", 
-  #          update_taxa, file = logfile)
-  #     
-  #     delete <- c(
-  #       paste("DELETE FROM", msa.tab, 
-  #             "WHERE", wrapSQL(delete, 
-  #                              operator = "=",
-  #                              boolean = NULL)),
-  #       paste("UPDATE", msa.tab,
-  #             "SET status = 'raw'",
-  #             "WHERE status !~ 'excluded'"))
-  #     lapply(delete, dbSendQuery, conn = conn)
-  #   }
-  #   ## ... are there new species?
-  #   new.spec <- !taxa$spec %in% in_tab$taxon
-  #   ## .. are there new sequences?
-  #   new.seq <- !taxa$md5 %in% in_tab$md5
-  #   
-  #   if (any(new.spec) | any(new.seq)){
-  #     
-  #     ## table needs updating
-  #     ## new species
-  #     if (any(new.spec)){
-  #       spec.id <- which(new.spec)
-  #       update_taxa <- paste("\n  -", taxa[spec.id, "taxon"])
-  #       update_taxa <- paste(update_taxa, collapse = "")
-  #       slog("\n.. adding", length(spec.id), "new species:", 
-  #            update_taxa, file = logfile)
-  #     } else {
-  #       spec.id <- NULL
-  #     }
-  #     ## new sequences
-  #     if (any(new.seq)){
-  #       seq.id <- which(new.seq)
-  #       update_taxa <- paste("\n  -", taxa[seq.id, "taxon"])
-  #       update_taxa <- paste(update_taxa, collapse = "")
-  #       slog(paste0("\n.. set of available sequences has changed for ", 
-  #                  length(seq.id), " ", tip.rank, ": ", update_taxa), 
-  #            file = logfile)
-  #     } else {
-  #       seq.id <- NULL
-  #     }
-  #     ## subset of species that needs updating
-  #     taxa <- taxa[union(spec.id, seq.id), ]
-  #     
-  #     ## reset status for species to update
-  #     SQL <- paste("UPDATE", acc.tab,
-  #                  "SET status = 'aligned'",
-  #                  "WHERE (status = 'too short (from reference)'",
-  #                  "OR status = 'too distant (from reference)')",
-  #                  "AND", wrapSQL(taxa$spec, term = "taxon",
-  #                                 operator = "=", 
-  #                                 boolean = NULL))
-  #     lapply(SQL, dbSendQuery, conn = conn)
-  #     
-  #     ## remove alignments files from previous runs
-  #     fn <- list.files(pattern = paste0(gene, ".+[fas|phy|nex]$"))
-  #     file.remove(fn)
-  #     
-  #     ## update <status> for accessions *NOT* selected
-  #     ## ---------------------------------------------
-  #     SQL <- c(paste("UPDATE", acc.tab, 
-  #                    "SET status='excluded (too long)'", ## see stepC!
-  #                    "WHERE npos >", max.bp),
-  #              paste("UPDATE", acc.tab, 
-  #                    "SET status='too distant (from reference)'",
-  #                    "WHERE identity <", min.identity),
-  #              paste("UPDATE", acc.tab, 
-  #                    "SET status='too short (from reference)'",
-  #                    "WHERE coverage <", min.coverage))
-  #     lapply(SQL, dbSendQuery, conn = conn)
-  #     
-  #   } else {
-  #     
-  #     ## no updating necessary
-  #     ## ---------------------
-  #     dbDisconnect(conn)
-  #     slog(paste("\n.. table '", msa.tab, 
-  #                "' is up to date - nothing to do\n", sep = ""), 
-  #          file = logfile)
-  #     dbProgress(x, "step_f", "success")
-  #     return()
-  #   }
-  # } else {
-  
-  # slog("\nRunning step F for the first time", file = logfile)
-  ## create table
-  
-  
-  # }
+  chosen_acc <- lapply(unique(taxa$taxon), chooseAcc, tab = taxa)
+  chosen_acc <- do.call(rbind, chosen_acc)
   
   ## Check for existing sequences and delete them
   ## --------------------------------------------
   in_tab <- paste("SELECT count(taxon)",
-                  "FROM", msa.tab,
+                  "FROM sequence_selected", 
                   "WHERE", wrapSQL(gene, "locus", "="))
   in_tab <- dbGetQuery(conn, in_tab)$count
   if (in_tab){
     slog("\nDelete", in_tab, "sequences from previous runs of stepF", 
               file = logfile)
-    in_tab <- paste("DELETE FROM", msa.tab,
+    in_tab <- paste("DELETE FROM sequence_selected", 
                     "WHERE", wrapSQL(gene, "locus", "="))
     dbSendQuery(conn, in_tab)
   }
   
+  ## User addition: this is intended to test sequences that would not have
+  ## passed automatic selection
+  ## --------------------------
+  selected <- chosen_acc$acc
+  if (!missing(user.addition)){
+    selected <- c(selected, user.addition)
+  }
+  
   ## Write choosen accessions to MSA table
   ## -------------------------------------
-  SQL <- paste("SELECT taxon, dna",
-               "FROM", acc.tab,
-               "WHERE", wrapSQL(choosen_acc, "gi", "=", "OR", by = 500))
+  SQL <- paste("SELECT acc, taxon, sequence",
+               "FROM sequence", 
+               "WHERE", wrapSQL(selected, "acc", "=", "OR", by = 500))
   seqs <- lapply(SQL, dbGetQuery, conn = conn)
   seqs <- do.call(rbind, seqs)
+  slog("\n", nrow(seqs), " sequences selected", sep = "", file = logfile)
+  r <- range(sapply(seqs$sequence, nchar))
+  slog("\nSequence lengths: ", r[1],"-", r[2], " bp", sep = "", file = logfile)
+  
+  ## Do reverse-complements 
+  ## ----------------------
+  # if ("minus" %in% chosen_acc$sstrand){
+  #   id <- seqs$acc %in% chosen_acc$acc[chosen_acc$sstrand == "minus"]
+  #   seqs$sequence[id] <- rcString(seqs$sequence[id])
+  # }
+  
   SQL <- paste(wrapSQL(gene, term = NULL, boolean = NULL),
                wrapSQL(seqs$taxon, term = NULL, boolean = NULL),
+               wrapSQL(seqs$acc, term = NULL, boolean = NULL),
                "'raw'",
-               wrapSQL(seqs$dna, term = NULL, boolean = NULL),
+               wrapSQL(seqs$sequence, term = NULL, boolean = NULL),
                sep = ", ") 
-  SQL <- paste("INSERT INTO species_sequence",
-               "(locus, taxon, status, sequence)",
+  SQL <- paste("INSERT INTO sequence_selected",
+               "(locus, taxon, acc, status, sequence)",
                "VALUES (", SQL, ")")
   lapply(SQL, dbSendQuery, conn = conn)
   

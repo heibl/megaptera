@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-04-15)
+## © C. Heibl 2014 (last update 2019-10-16)
 
 #' @title Taxon-Locus-Crosstable
 #' @description Create a data frame that contains for each taxon and locus the
@@ -31,49 +31,42 @@ dbReadLocus <- function(megProj, provenance = ".", tag, subset){
   tip.rank <- megProj@taxon@tip.rank
   conn <- dbconnect(megProj)
   
-  ## names of acc_* tables
-  ## ---------------------
-  acc <- dbTableNames(megProj, "acc")
-
-  ## names of spec_* or gen_* tables
-  ## -------------------------------
-  msa <- dbTableNames(megProj, tip.rank)
-  
-  ## gb:
-  dbGenBank <- function(conn, tab, tip.rank, provenance, tag){
-    # tag <- ifelse(missing(tag), "",
-    #               paste("AND", wrapSQL(tag, "t.tag")))
-    SQL <- ifelse(tip.rank == "genus", 
-                  "regexp_replace(taxon, ' .+$', '') AS taxon", 
+  ## 1: Available sequences per taxon and locus
+  ## ------------------------------------------  
+  dbGenBank <- function(conn, locus, tip.rank, provenance, tag){
+    SQL <- ifelse(tip.rank == "genus",
+                  "regexp_replace(taxon, ' .+$', '') AS taxon",
                   "taxon")
-    SQL <- paste("SELECT", SQL, "FROM", tab)
+    SQL <- paste("SELECT", SQL, 
+                 "FROM sequence",
+                 "WHERE", wrapSQL(locus, "locus", "="))
     SQL <- paste("SELECT t.taxon, count(a.taxon)",
-                 "AS", gsub("acc", "gb", tab),
-                 "FROM taxonomy AS t", 
-                 "LEFT JOIN (", SQL, ") AS a", 
+                 "AS", gsub("__", "_", paste0("gb_", locus)),
+                 "FROM taxonomy AS t",
+                 "LEFT JOIN (", SQL, ") AS a",
                  "ON t.taxon = a.taxon",
                  "WHERE", wrapSQL(tip.rank, "t.rank", "="),
                  "AND t.status='scientific name'",
-                 # tag,
                  "GROUP BY t.taxon",
                  "ORDER BY t.taxon")
     tab <- dbGetQuery(conn, SQL)
     rownames(tab) <- tab[, 1]
     tab[, 2, drop = FALSE]
   }
-  tab.gb <- lapply(acc, dbGenBank, conn = conn, tip.rank = tip.rank,
-                   # tag = tag,
+  loci <- dbGetQuery(conn, "SELECT DISTINCT locus FROM sequence")
+  loci <- loci$locus[!is.na(loci$locus)]
+  tab.gb <- lapply(loci, dbGenBank, conn = conn, tip.rank = tip.rank,
                    provenance = provenance)
   tab.gb <- do.call(cbind, tab.gb)
   
-  ## selected sequences:
-  ## -------------------
-  selected_loci <- "SELECT DISTINCT locus FROM species_sequence ORDER BY locus"
+  ## 2: Selected sequences:
+  ## ----------------------
+  selected_loci <- "SELECT DISTINCT locus FROM sequence_selected ORDER BY locus"
   selected_loci <- dbGetQuery(conn, selected_loci)$locus
   if (!is.null(selected_loci)){
     out <- gsub("__", "_", paste("sel", selected_loci, sep = "_"))
     SQL <- paste("(SELECT taxon, status",
-                 "FROM species_sequence",
+                 "FROM sequence_selected",
                  "WHERE", wrapSQL(selected_loci, "locus", "=", NULL), ")")
     SQL <- paste("SELECT t.taxon, s.status", 
                  "AS", out,
@@ -97,13 +90,14 @@ dbReadLocus <- function(megProj, provenance = ".", tag, subset){
   
   dbDisconnect(conn)
   
-  ## create complete table
+  ## Create complete table
   ## ---------------------
   if (!is.null(tab.sel)){
     obj <- cbind(tab.gb, tab.sel)
     ## order columns
-    loc <- rep(gsub("acc_", "", acc), each = 2)
+    loc <- rep(loci, each = 2)
     loc <- paste(c("gb", "sel"), loc, sep = "_")
+    loc <- gsub("__", "_", loc)
     loc <- loc[loc %in% names(obj)]
     obj <- obj[, loc]
   } else {

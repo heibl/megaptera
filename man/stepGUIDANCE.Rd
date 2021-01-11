@@ -4,10 +4,12 @@
 \alias{stepGUIDANCE}
 \title{Detect Homology Uncertainty in Alingment}
 \usage{
-stepGUIDANCE(x)
+stepGUIDANCE(x, bootstrap = 100)
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}
+
+\item{bootstrap}{An integer giving the number of alternative MSAs to be computed.}
 }
 \value{
 None, \code{stepGUIDANCE} is called for its side effects.

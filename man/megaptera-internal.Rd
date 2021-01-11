@@ -65,6 +65,7 @@
 \alias{markersGenbank}
 \alias{maxDist}
 \alias{maxDistMPI}
+\alias{meanCS} % currently unused
 \alias{meanPairwiseIdentity}
 \alias{megapteraHeatmap}
 \alias{megapteraCSS} % megaptera2Rmarkdown
@@ -72,8 +73,8 @@
 \alias{ncbiLineage}
 \alias{NCBI.wrap}
 \alias{nucleotideOverlap}
-\alias{pg2DNAbin} % dbReadMSA
 \alias{proParte} % prune.phylo.rank
+\alias{rcString} % stepF (outcommented)
 \alias{revCompTest}
 \alias{robustXMLparse} % downloadSequences
 \alias{select.seqs}

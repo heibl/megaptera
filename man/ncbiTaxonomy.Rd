@@ -8,7 +8,9 @@ ncbiTaxonomy(x, quiet = FALSE)
 }
 \arguments{
 \item{x}{Database connection parameters, either as object of class
-\code{\link{dbPars}} or \code{\link{megapteraProj}}.}
+\code{\link{dbPars}} or \code{\link{megapteraProj}}. Alternatively, can be
+a character string giving the path to the megaptera file system (see
+\code{\link{megapteraInit}}).}
 
 \item{quiet}{Logical, indicating if diagnostic messages should be printed on
 screen.}
@@ -17,15 +19,19 @@ screen.}
 \code{ncbiTaxonomy} is called for its side effect (see Details).
 }
 \description{
-Retrieve taxonomic classification from the taxonomy database at
-  the National Center for Biotechnology Information (NCBI).
+Retrieve taxonomic classification from the Taxonomy database
+  maintained by the National Center for Biotechnology Information (NCBI).
 }
 \details{
 The NCBI taxonomy database will be downloaded via FTP in "taxdump"
-  format, unpacked, and translated into data frames. In a second step, the
-  data frames will be stored in a postgreSQL database called
+  format, unpacked, and translated into data frames. In a second step, the data
+  frames will be stored in a postgreSQL database called
   \code{"ncbitaxonomy"}. Any existing data will be overwritten in the
   process.
+
+  There is no versioning of the Taxonomy database like the release numbers of
+  GenBank. The taxonomy FTP dump files are updated hourly so it might be
+  reasonable to update them together with GenBank sequences data.
 }
 \references{
 NCBI Taxonomy Database website:

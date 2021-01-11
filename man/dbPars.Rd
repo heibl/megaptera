@@ -4,8 +4,7 @@
 \alias{dbPars}
 \title{Set Database Parameters}
 \usage{
-dbPars(host = "localhost", port = 5432, dbname, user = "postgres",
-  password)
+dbPars(host = "localhost", port = 5432, dbname, user = "postgres", password)
 }
 \arguments{
 \item{host}{A vector of mode \code{"character"}, giving the name of the host,

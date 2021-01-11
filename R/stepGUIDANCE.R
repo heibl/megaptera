@@ -1,10 +1,11 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-03-11)
+## © C. Heibl 2014 (last update 2019-11-07)
 
 #' @title Detect Homology Uncertainty in Alingment
 #' @description Use GUIDANCE, GUIDANCE2 or HoT to calculate column-wise
 #'   reliability scores for alignments.
 #' @param x An object of class \code{\link{megapteraProj}}.
+#' @param bootstrap An integer giving the number of alternative MSAs to be computed.
 #' @return None, \code{stepGUIDANCE} is called for its side effects.
 #' @seealso \code{\link{megapteraProj}}; \code{\link{stepMAFFT}} for the
 #'   preceeding step and \code{\link{stepH}} for the subsequent step.
@@ -13,7 +14,7 @@
 #' @importFrom ips gblocks write.nex write.phy
 #' @importFrom rGUIDANCE guidance scores
 
-stepGUIDANCE <- function(x){
+stepGUIDANCE <- function(x, bootstrap = 100){
   
   start <- Sys.time()
   
@@ -25,17 +26,17 @@ stepGUIDANCE <- function(x){
   
   ## check if previous step has been run
   ## -----------------------------------
-  status <- dbProgress(x)
-  if (status$step_g == "pending") {
-    stop("the previous step has not been called yet")
-  }
-  if (status$step_g == "error") {
-    stop("the previous step has terminated with an error")
-  }
-  if (status$step_g == "failure") {
-    slog("\nNo data from upstream available - quitting", file = "")
-    return()
-  }
+  # status <- dbProgress(x)
+  # if (status$step_g == "pending") {
+  #   stop("the previous step has not been called yet")
+  # }
+  # if (status$step_g == "error") {
+  #   stop("the previous step has terminated with an error")
+  # }
+  # if (status$step_g == "failure") {
+  #   slog("\nNo data from upstream available - quitting", file = "")
+  #   return()
+  # }
   ## Currently progress end with stepH (2018-02-26)
   # if (status$step_h == "success") {
   #   dbProgress(x, "step_i", "error")
@@ -46,7 +47,7 @@ stepGUIDANCE <- function(x){
   gene <- x@locus@sql
   acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
   tip.rank <- x@taxon@tip.rank
-  msa.tab <- paste(tip.rank, "sequence", sep = "_")
+  msa.tab <- "sequence_selected"
   block.max.dist <- x@params@block.max.dist
   max.bp <- x@params@max.bp * 1.5
   min.n.seq <- x@params@min.n.seq
@@ -108,10 +109,10 @@ stepGUIDANCE <- function(x){
     }
   }
   
-  ## read alignment
+  ## Read alignment
   ## --------------
   slog("\nReading alignment", file = logfile)
-  a <- dbReadMSA(x)
+  a <- dbReadMSA(x, confid.scores = "ignore")
   if (is.null(a)) {
     dbDisconnect(conn)
     slog("\nWARNING: no sequences conform to current parameter setting\n", file = logfile)
@@ -127,21 +128,36 @@ stepGUIDANCE <- function(x){
   ## ------------------------------------------------
   slog("\nCalculating column reliability score:\n", file = logfile)
   s <- guidance(a, msa.exec = x@align.exe, ncore = x@params@cpus, 
-                bootstrap = 10)
+                bootstrap = bootstrap)
+  a <- s@msa
   s <- scores(s, score = "residue", na.rm = FALSE)$residue
   slog("done", file = logfile)
+  if (!identical(dim(a), dim(s))) stop("MSA and scores do not match; this is likely a bug")
+  slog("\nMSA with", nrow(a), "rows and", ncol(a), "columns",  file = logfile)
   id <- is.na(s)
-  # s[id] <- 0 ## could also be the column average
-  # usn <- table(id)["TRUE"]
-  # slog("\n", usn, " unscored nucleotides (", round(usn / prod(dim(id)) * 100, 2), 
-  #      "%) are set to GUIDANCE residue score = 0", sep = "", file = logfile)
+  s[id] <- 0 ## could also be the column average
+  usn <- table(id)["TRUE"]
+  slog("\n", usn, " unscored nucleotides (", round(usn / prod(dim(id)) * 100, 2),
+       "%) are set to GUIDANCE residue score = 0", sep = "", file = logfile)
   slog("\nRange of scores:", paste(range(s), collapse = " - "), file = logfile)
   
   ## Write scores to database 
   ## ------------------------
   slog("\nWrite reliability scores to database ...", file = logfile)
-  dbWriteMSA(x, dna = a, score = s, status = "aligned")
+  dbWriteMSA(x, dna = a, score = s, status = "aligned + reliability")
   slog("done", file = logfile)
+  
+  # Write files
+  # -----------
+  seqs <- dbReadMSA(x)
+  slog("\nWriting alignment to PHYLIP file ... ", file = logfile, megProj = x)
+  write.phy(seqs, paste0("msa/", gene, ".phy"))
+  slog("OK", file = logfile, megProj = x)
+  
+  slog("\nWriting alignment to NEXUS file ... ", file = logfile, megProj = x)
+  rownames(seqs) <- gsub("-", "_", rownames(seqs))
+  write.nex(seqs, paste0("msa/", gene, ".nex"))
+  slog("OK", file = logfile, megProj = x)
   
   
   dbDisconnect(conn)

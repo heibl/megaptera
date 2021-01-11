@@ -47,9 +47,12 @@ numeric between 0 and 1, giving the minimum proportion of nucleotide positions a
   }
   \item{check}{logical: if \code{TRUE}, the existance of a locus as specified by \code{...} and \code{not} will be checked. }
 }
-\details{The website \url{http://www.ncbi.nlm.nih.gov/genome/browse/?report=5} or \code{\link{ncbiGenome}} can be used to find complete organelle genomes that can be used as references.}
+\details{The website \url{http://www.ncbi.nlm.nih.gov/genome/browse/?report=5} or \code{\link{ncbiGenome}} can be used to find complete organelle genomes that can be used as references.
+
+See also \url{https://www.ncbi.nlm.nih.gov/refseq/rsg/} for the \bold{RefSeqGene} in the NCBI Reference Sequence collection.
+}
 \value{
-an object of class \code{locus} or \code{locusRef}
+An object of class \code{locus} or \code{locusRef}
 }
 %%\references{}
 \author{Christoph Heibl}

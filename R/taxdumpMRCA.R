@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2017-06-12)
+## © C. Heibl 2017 (last update 2019-11-13)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get most-recent common ancestor (MRCA) of a group of species.
@@ -45,7 +45,18 @@ taxdumpMRCA <- function(x, species, tip.rank){
     }
   }
   
-  ## Identity MRCA
-  ## -------------
-  x[!x$parent_id %in% x$id, "taxon"]
+  ## Identify MRCA
+  ## The loop is necessary because 'x' can be with root='tol'
+  ## --------------------------------------------------------
+  x <- x[x$id != 1, ]
+  id <- x[!x$parent_id %in% x$id, "id"]
+  repeat {
+    temp <- x$id[x$parent_id == id]
+    if (length(temp) == 1){
+      id <- temp
+    } else {
+      break
+    }
+  }
+  x[x$id == id, "taxon"]
 }

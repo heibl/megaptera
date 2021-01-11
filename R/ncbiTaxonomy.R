@@ -1,17 +1,24 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-09-17)
+## © C. Heibl 2014 (last update 2019-10-09)
 
 #' @title NCBI Taxonomy Database
 #' @description Retrieve taxonomic classification from the Taxonomy database
 #'   maintained by the National Center for Biotechnology Information (NCBI).
 #' @param x Database connection parameters, either as object of class
-#'   \code{\link{dbPars}} or \code{\link{megapteraProj}}.
+#'   \code{\link{dbPars}} or \code{\link{megapteraProj}}. Alternatively, can be
+#'   a character string giving the path to the megaptera file system (see
+#'   \code{\link{megapteraInit}}).
 #' @param quiet Logical, indicating if diagnostic messages should be printed on
 #'   screen.
-#' @details The GenBank taxonomy database will be downloaded via FTP in
-#'   "taxdump" format, unpacked, and translated into data frames. In a second
-#'   step, the data frames will be stored in a postgreSQL database called
-#'   \code{"ncbitaxonomy"}. Any existing data will be overwritten in the process.
+#' @details The NCBI taxonomy database will be downloaded via FTP in "taxdump"
+#'   format, unpacked, and translated into data frames. In a second step, the data
+#'   frames will be stored in a postgreSQL database called
+#'   \code{"ncbitaxonomy"}. Any existing data will be overwritten in the
+#'   process.
+#'
+#'   There is no versioning of the Taxonomy database like the release numbers of
+#'   GenBank. The taxonomy FTP dump files are updated hourly so it might be
+#'   reasonable to update them together with GenBank sequences data.
 #' @return \code{ncbiTaxonomy} is called for its side effect (see Details).
 #' @references NCBI Taxonomy Database website:
 #'   \url{http://www.ncbi.nlm.nih.gov/taxonomy}
@@ -23,20 +30,82 @@
 #'   information in a megaptera project database;
 #'   \code{\link{dbSummaryTaxonomy}} for a short numerical summary of the
 #'   project taxonomy.
-#' @importFrom DBI dbDisconnect dbRemoveTable dbSendQuery dbWriteTable
-#' @importFrom utils read.table untar
+#' @importFrom DBI dbConnect dbDisconnect dbRemoveTable dbSendQuery dbWriteTable
+#' @importFrom tools md5sum
+#' @importFrom utils download.file read.table untar
 #' @export
 
 ncbiTaxonomy <- function(x, quiet = FALSE){
   
   ## Check input object
   ## ------------------
-  if (!inherits(x, c("dbPars", "megapteraProj"))){
-    stop("x is not of classes 'dbPars' or 'megapteraProj'")
+  if (inherits(x, c("dbPars", "megapteraProj"))){
+    if (inherits(x, "megapteraProj")){
+      path <- file.path(x@params@data.path, "megaptera_data/gb_taxonomy")
+      x <- x@db
+    }
+  } else {
+    path <- file.path(x, "megaptera_data/gb_taxonomy")
+    x <- NULL
+    if (!dir.exists(path)){
+      stop("x must be either the path to the megaptera file system ", 
+           "or of classes 'dbPars' or 'megapteraProj'")
+    }
   }
-  if (inherits(x, "megapteraProj")){
-    x <- x@db
+  
+  ## 1. Determine if existing version of taxdump is still up to date
+  ## ---------------------------------------------------------------
+  new_version <- TRUE ## default
+  unlink(file.path(path, "taxdump.tar.gz.md5"))
+  download.file("ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz.md5",
+                file.path(path, "taxdump.tar.gz.md5"))
+  md5 <- scan(file.path(path, "taxdump.tar.gz.md5"), what = "c", quiet = TRUE)[1]
+  if (file.exists(file.path(path, "INFO"))){
+    info_old <- scan(file.path(path, "INFO"), sep = "\n", what = "c", quiet = TRUE)
+    info_old <- sapply(info_old, strsplit, split = ": ")
+    info_old <- do.call(rbind, info_old)
+    md5_old <- info_old[info_old[, 1] == "MD5", 2]
+    if (!quiet) message("\nFound 'taxdump' download from ", 
+                        info_old[info_old[, 1] == "Timestamp", 2])
+    new_version <- md5_old != md5
+    if (new_version){
+      if (!quiet) message("\nThere is a new 'taxdump' version available")
+    } else {
+      if (!quiet) message("\n'taxdump' version is still up to date ... ")
+    }
+  } 
+  
+  ## 2. Download taxdump via FTP and check file with MD5
+  ## ---------------------------------------------------
+  if (new_version){
+    
+    if (!quiet) message("\nDownloading 'taxdump' via FTP ... ")
+    unlink(file.path(path, "taxdump.tar.gz"))
+    unlink(file.path(path, "taxdump"), recursive = TRUE)
+    
+    download.file("ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz",
+                  file.path(path, "taxdump.tar.gz"))
+    
+    md5 <- scan(file.path(path, "taxdump.tar.gz.md5"), what = "c", quiet = TRUE)[1]
+    if (md5sum(file.path(path, "taxdump.tar.gz")) != md5){
+      stop("MD5 checksums do not match")
+    }
+    
+    info <- c(paste("Timestamp:", as.character(Sys.time())),
+              paste("MD5:", md5),
+              paste("MegapteraVersion:", packageDescription("megaptera")$Version))
+    info <- paste(info, collapse = "\n")
+    write(info, file.path(path, "INFO"))
   }
+  if (!quiet) message("done")
+  
+  if (is.null(x)) return() ## stop here if only path was given
+  
+  ## 3. Decompress taxdump
+  ## ---------------------
+  if (!quiet) message("\nDecompressing 'taxdump.tar.gz' ... ")
+  untar(file.path(path, "taxdump.tar.gz"), exdir = file.path(path, "taxdump"))
+  if (!quiet) message("done")
   
   ## Check if database exists ...
   ## ----------------------------
@@ -60,30 +129,20 @@ ncbiTaxonomy <- function(x, quiet = FALSE){
   }
   dbDisconnect(conn)
   
-  ## Download and decompress taxdump
-  ## -------------------------------
-  if (!quiet) cat("\nDownloading 'taxdump' via FTP ... ")
-  unlink("taxdump.tar.gz")
-  unlink("taxdump", recursive = TRUE)
-  system("curl -OL ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz", 
-         ignore.stderr = TRUE, wait = TRUE)
-  if (!quiet) cat("done\nDecompressing 'taxdump.tar.gz' ... ")
-  untar("taxdump.tar.gz", exdir = "taxdump")
-  if (!quiet) cat("done")
-  
   ## Connect to 'ncbitaxonomy'
   ## -------------------------
-  conn <- dbConnect(RPostgreSQL::PostgreSQL(),
-                    host = x@host,
-                    port = x@port,
-                    user = x@user,
-                    password = x@password,
-                    dbname = "ncbitaxonomy")
+  conn <- DBI::dbConnect(RPostgreSQL::PostgreSQL(),
+                         host = x@host,
+                         port = x@port,
+                         user = x@user,
+                         password = x@password,
+                         dbname = "ncbitaxonomy")
   
   ## 1. nodes: the hierarchical structure of the classification
   ## ----------------------------------------------------------
-  if (!quiet) cat("\nReading table 'nodes' ...")
-  nodes <- read.table("taxdump/nodes.dmp", sep = "|", strip.white = TRUE, stringsAsFactors = FALSE)
+  if (!quiet) cat("\nReading table 'nodes' ... ")
+  nodes <- read.table(file.path(path, "taxdump/nodes.dmp"), sep = "|", 
+                      strip.white = TRUE, stringsAsFactors = FALSE)
   names(nodes) <- c("id", "parent_id", "rank", "embl_code", "division_id",
                     "inherited_div_flag", "genetic_code_id", "inherited_gc_flag",
                     "mitochondrial_genetic_code_id", "inherited_MGC_flag", "GenBank_hidden_flag",
@@ -106,7 +165,8 @@ ncbiTaxonomy <- function(x, quiet = FALSE){
   ## ---------------------
   if (!quiet) cat("\nReading table 'names' ... ")
   # taxnames <- read.table("taxdump/names.dmp", sep = "|", strip.white = TRUE, stringsAsFactors = FALSE)
-  taxnames <- scan("taxdump/names.dmp", sep = "\n", what = "c", strip.white = TRUE, quiet = TRUE)
+  taxnames <- scan(file.path(path, "taxdump/names.dmp"), sep = "\n", 
+                   what = "c", strip.white = TRUE, quiet = TRUE)
   taxnames <- lapply(taxnames, function(z) unlist(strsplit(z, "\t[|]\t|\t[|]")))
   id <- sapply(taxnames, length)
   if (all(id == 4)) taxnames <- do.call(rbind, taxnames)
@@ -140,7 +200,8 @@ ncbiTaxonomy <- function(x, quiet = FALSE){
   ## -------------------------------
   if (!quiet) cat("\nCleaning up ... ")
   dbDisconnect(conn)
-  unlink("taxdump.tar.gz")
-  unlink("taxdump", recursive = TRUE)
-  if (!quiet) cat("done")
+  # unlink(file.path(path, "taxdump.tar.gz"))
+  unlink(file.path(path, "taxdump.tar.gz.md5"))
+  unlink(file.path(path, "taxdump"), recursive = TRUE)
+  # if (!quiet) cat("done")
 }

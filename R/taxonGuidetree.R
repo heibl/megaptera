@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2015 (last update 2017-03-28)
+## © C. Heibl 2015 (last update 2019-10-30)
 
 #' @include taxonGuidetree-class.R
 #' @importFrom methods new
@@ -9,15 +9,15 @@
 ## ----------------------
 "taxonGuidetree" <- function(ingroup, extend.ingroup = FALSE,
                              outgroup, extend.outgroup = FALSE,
-                             kingdom, hybrids = FALSE,
+                             kingdom, exclude.hybrids = FALSE,
                              tip.rank = "species",
                              reference.rank = "auto",
                              guide.tree){
   ingroup <- unique(ingroup); outgroup <- unique(outgroup)
-  if ( is.factor(ingroup) ) ingroup <- levels(ingroup)[ingroup]
-  if ( is.factor(outgroup) ) outgroup <- levels(outgroup)[outgroup]
-  if ( is.character(ingroup) ) ingroup <- as.list(ingroup)
-  if ( is.character(outgroup) ) outgroup <- as.list(outgroup)
+  if (is.factor(ingroup)) ingroup <- levels(ingroup)[ingroup]
+  if (is.factor(outgroup)) outgroup <- levels(outgroup)[outgroup]
+  if (is.character(ingroup)) ingroup <- as.list(ingroup)
+  if (is.character(outgroup)) outgroup <- as.list(outgroup)
   
   tip.rank <- match.arg(tip.rank, c("genus", "species"))
   
@@ -27,7 +27,7 @@
       outgroup = outgroup,
       extend.outgroup = extend.outgroup,
       kingdom = kingdom,
-      hybrids = hybrids,
+      exclude.hybrids = exclude.hybrids,
       tip.rank = tip.rank,
       reference.rank = reference.rank,
       guide.tree = guide.tree
@@ -54,7 +54,7 @@
 #             }
 #             cat("\noutgroup taxon :", o)
 #             cat("\nin kingdom     :", object@kingdom)
-#             cat("\nhybrids        :", 
-#                 ifelse(object@hybrids, "included", "excluded"))
+#             cat("\nexclude.hybrids        :", 
+#                 ifelse(object@exclude.hybrids, "included", "excluded"))
 # }
 # )

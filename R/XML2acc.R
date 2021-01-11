@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-21)
+## © C. Heibl 2014 (last update 2019-10-30)
 
 #' @export
 #' @importFrom DBI dbWriteTable
@@ -100,7 +100,7 @@ XML2acc <- function(x, xml, taxon){
     status <- "raw"
   } else {
     taxa <- organism
-    indet <- indet.strings(x@taxon@hybrids, TRUE)
+    indet <- indet.strings(x@taxon@exclude.hybrids, TRUE)
     indet <- grep(indet, taxa)
     status <- rep("raw", length(taxa))
     status[indet] <- "excluded (indet)"

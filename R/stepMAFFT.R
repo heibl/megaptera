@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2019-03-04)
+## © C. Heibl 2016 (last update 2019-10-30)
 
 #' @title STEP G: MAFFT Alignment
 #' @description Use MAFFT to align tip-rank-level sequences.
@@ -89,9 +89,7 @@ stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){
   ## PARAMETERS
   ## ----------
   gene <- x@locus@sql
-  acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
   tip.rank <- match.arg(x@taxon@tip.rank, c("species", "genus"))
-  msa.tab <- paste(tip.rank, "sequence", sep = "_")
   min.n.seq <- x@params@min.n.seq
   dbl <- x@params@debug.level
   
@@ -110,7 +108,7 @@ stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){
   ## check if at least 3 (ingroup) species are available
   ## ---------------------------------------------------
   n <- paste("SELECT count(taxon)",
-             "FROM", msa.tab,
+             "FROM sequence_selected",
              "WHERE", wrapSQL(gene, "locus", "="))
   n <- dbGetQuery(conn, n)$count
   if (n < 3){
@@ -124,7 +122,7 @@ stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){
     return()
   }
   if (n < 100){ # 100 is arbitrary
-    n <- dbGetQuery(conn, paste("SELECT taxon FROM", msa.tab,
+    n <- dbGetQuery(conn, paste("SELECT taxon FROM sequence_selected", 
                                 "WHERE", wrapSQL(gene, "locus", "=")))
     n <- which(is.ingroup(x, n$taxon))
     if (length(n) < 3){
@@ -142,13 +140,13 @@ stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){
   ## Read taxonomy and create guide tree
   ## -----------------------------------
   slog("\nCreating comprehensive guide tree ... ", file = logfile, megProj = x)
-  gt <- comprehensiveGuidetree(x, tip.rank = tip.rank, subset = msa.tab)
+  gt <- comprehensiveGuidetree(x, tip.rank = tip.rank, subset = "sequence_selected")
   slog("OK", file = logfile, megProj = x)
   
   ## Read DNA sequences and check if guide tree is compatible
   ## --------------------------------------------------------
   slog("\nReading sequences ... ", file = logfile, megProj = x)
-  seqs <- dbReadMSA(x, regex = TRUE, blocks = "ignore")
+  seqs <- dbReadMSA(x, label = "taxon")
   slog("OK", file = logfile, megProj = x)
   
   ## Check ...
@@ -225,6 +223,7 @@ stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){
   
   # Write files
   # -----------
+  seqs <- dbReadMSA(x)
   slog("\nWriting alignment to PHYLIP file ... ", file = logfile, megProj = x)
   write.phy(seqs, paste0("msa/", gene, ".phy"))
   slog("OK", file = logfile, megProj = x)

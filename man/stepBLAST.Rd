@@ -4,13 +4,46 @@
 \alias{stepBLAST}
 \title{stepBLASTN: Filter Homologous Sequences}
 \usage{
-stepBLAST(x)
+stepBLAST(
+  x,
+  word.size = 11,
+  gapopen = 5,
+  gapextend = 2,
+  penalty = -3,
+  reward = 1
+)
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}
+
+\item{word.size}{Integer, ...}
+
+\item{gapopen}{Integer, ...}
+
+\item{gapextend}{Integer, ...}
+
+\item{penalty}{Integer, ...}
+
+\item{reward}{Integer, ...}
 }
 \description{
 Filters homologous sequences using the BLASTB tool
+}
+\details{
+\tabular{ll}{
+\code{sseqid} \tab ID of query sequence that gave the lowest E-value \cr
+\code{length} \tab Alignment length \cr
+\code{mismatch} \tab Alignment length \cr
+\code{qstart} \tab Start of alignment in query \cr
+\code{qend} \tab End of alignment in query \cr
+\code{sstart} \tab Start of alignment in subject \cr
+\code{send} \tab End of alignment in subject \cr
+\code{qcovs} \tab Percentage of query coverage per subject\cr
+\code{pident} \tab Percentage of identical matches \cr
+\code{evalue} \tab Expect value \cr
+\code{bitscore} \tab Bit score \cr
+\code{sstrand} \tab Percentage of identical matches \cr
+}
 }
 \references{
 NCBI BLAST: \url{https://blast.ncbi.nlm.nih.gov/Blast.cgi}

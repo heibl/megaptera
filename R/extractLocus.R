@@ -75,9 +75,8 @@ extractLocus <- function(xml, seqid, locus, kind = "gene"){
   
   ## extract locus; convert to complement, if necessary
   ## --------------------------------------------------
-  dna <- paste("//GBSeq[", UID, "]",
-               "//GBSeq_sequence", 
-               sep = "")
+  dna <- paste0("//GBSeq[", UID, "]",
+               "//GBSeq_sequence")
   dna <- xpathSApply(xml, dna, xmlValue)
   
   cutSequence <- function(seq, pos){

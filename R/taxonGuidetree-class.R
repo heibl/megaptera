@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-11-03)
+## © C. Heibl 2014 (last update 2019-11-13)
 
 #' @include taxon-class.R
 

@@ -4,10 +4,10 @@
 \alias{indet.strings}
 \title{Identify Undetermined Species}
 \usage{
-indet.strings(hybrids = TRUE, collapse = FALSE, SQL = FALSE)
+indet.strings(exclude.hybrids = TRUE, collapse = FALSE, SQL = FALSE)
 }
 \arguments{
-\item{hybrids}{Logical, indicating if hybrids should be also identified by
+\item{exclude.hybrids}{Logical, indicating if hybrids should be also identified by
 the set of regular expressions.}
 
 \item{collapse}{Logical, if \code{TRUE} the regular expressions are collected

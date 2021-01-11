@@ -14,7 +14,7 @@
                     min.identity = 0.75,
                     min.coverage = 0.5,
                     check = FALSE){
-  if ( missing(...) ){
+  if (missing(...)){
     new(Class = "locus", 
         kind = "undefined",
         aliases = "undefined", 
@@ -48,7 +48,7 @@
     
     ## GenBank uses uppercase and lowercase spelling
     ## in the same places ...
-    if ( kind == "gene" ){
+    if (kind == "gene"){
       aliases <- unique(c(aliases, 
                           toupper(aliases),
                           tolower(aliases), 
@@ -56,11 +56,11 @@
                                 substring(aliases, 2), sep = "")))
     }
     
-    if ( missing(not) ) not <- "not"
+    if (missing(not)) not <- "not"
     
-    ## check if locus exists at GenBank
+    ## Check if locus exists at GenBank
     ## --------------------------------
-    if ( check ){
+    if (check){
       cat("\nChecking if locus exists on GenBank ..")
       #a <- paste("\"", aliases, "\"", sep = "")
       a <- gsub(" ", "+", aliases)

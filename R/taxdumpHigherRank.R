@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2018-12-20)
+## © C. Heibl 2017 (last update 2020-05-15)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get the taxon name of a certain higher rank for a particular
@@ -24,8 +24,16 @@
 taxdumpHigherRank <- function(x, taxon, rank, it.max = 30){
   
   if (inherits(x, "megapteraProj")){
-    x <- dbReadTaxonomy(x, subset = taxon)
+    # x <- dbReadTaxonomy(x, subset = taxon)
+    x <- dbReadTaxonomy(x)
   }
+  taxon <- gsub("_", " ", taxon)
+  
+  if (!taxon %in% x$taxon){
+    warning("there is no taxon '", taxon, "' in 'x'")
+    return(NA)
+  }
+  
   ## Algorithmus  1
   # x <- lapply(taxon, taxdumpLineage, tax = x, highest.rank = rank)
   # sapply(x, function(z) z$taxon[z$rank == rank]) # or

@@ -16,7 +16,7 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
   ## DEFINITIONS
   ## -----------
   gene <- x@locus@sql
-  acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
+  acc.tab <- "sequence"
   
   ## iniate logfile
   ## --------------
@@ -27,35 +27,32 @@ stepBX <- function(x, dna, tag = "user-supplied", overwrite = FALSE){
        "\nSTEP BX: adding sequences to database\n",
        file = logfile)
   
-  ## Sequences ust not be aligned
+  ## Sequences must not be aligned
   ## ----------------------------
   dna <- del.gaps(dna)
   
   ## format sequences
   ## ----------------
   gitax <- splitGiTaxon(names(dna))
-  indet <- indet.strings(x@taxon@hybrids, TRUE)
+  indet <- indet.strings(x@taxon@exclude.hybrids, TRUE)
   status <- rep("raw", nrow(gitax))
   indet <- grep(indet, gitax$taxon)
   status[indet] <- "excluded (indet)"
   dna <- as.character(dna)
   dna <- sapply(dna, paste, collapse = "")
   dna <- data.frame(
-    gi = gitax$gi,
+    acc = gitax$gi,
     taxon = strip.infraspec(gitax$taxon),
-    spec_ncbi = gitax$taxon,
+    taxon_source = gitax$taxon,
+    locus = gene,
     status = status, 
-    genom = tag,
-    npos = sapply(dna, nchar),
-    identity = NA,
-    coverage = NA,
-    dna = dna,
+    sequence = dna,
     stringsAsFactors = FALSE)
   
   ## Check for duplicates
   ## --------------------
   conn <- dbconnect(x)
-  in.db <- paste("SELECT gi || '_' || taxon AS id FROM", acc.tab)
+  in.db <- paste("SELECT acc || '_' || taxon AS id FROM", acc.tab)
   in.db <- dbGetQuery(conn, in.db)$id
   in.dna <- paste(dna$gi, dna$taxon, sep = "_")
   dup <- in.dna %in% in.db

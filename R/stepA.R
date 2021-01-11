@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-07-18)
+## © C. Heibl 2014 (last update 2019-10-09)
 
 #' @title Step A: Creating a Project Taxonomy
 #' @description Creates a project taxonomy from the NCBI taxonomy (see
@@ -67,16 +67,16 @@ stepA <- function(x){
   ## This is rahter dirty, but should be a quick fix for the discrepancy that
   ## arises between ICZN and Fauna Europea, which did not adopt its Gender Agreement
   ## -------------------------------------------------------------------------------
-  renderGender <- function(b){
-    if (!is.Linnean(b)) return(b) # extend only species names
-    fem <- grep("a$", b)
-    mas <- grep("um$", b)
-    b <- c(b, gsub("a$", "um", b[fem]), gsub("a$", "us", b[fem]),
-           gsub("um$", "a", b[mas]))
-    hyphen <- grep("-", b) ## NCBI: Satyrium walbum (instead of Satyrium w-album)
-    unique(c(b, gsub("-", "", b[hyphen])))
-  }
-  ig <- lapply(ig, renderGender)
+  # renderGender <- function(b){
+  #   if (!is.Linnean(b)) return(b) # extend only species names
+  #   fem <- grep("a$", b)
+  #   mas <- grep("um$", b)
+  #   b <- c(b, gsub("a$", "um", b[fem]), gsub("a$", "us", b[fem]),
+  #          gsub("um$", "a", b[mas]))
+  #   hyphen <- grep("-", b) ## NCBI: Satyrium walbum (instead of Satyrium w-album)
+  #   unique(c(b, gsub("-", "", b[hyphen])))
+  # }
+  # ig <- lapply(ig, renderGender)
   
   ## Check if/which ingroup taxa are present in NCBI taxonomy
   ## --------------------------------------------------------
@@ -105,7 +105,7 @@ stepA <- function(x){
   # tax <- tax2
   ## ig[which(sapply(ig, function(x, y) x %in% y, x = "Earophila badiata"))]
   ## ig[grep("Dicallomera", ig)]
-  for (i in seq_along(ig)[1:13]){
+  for (i in seq_along(ig)[]){
     cat("\n", i, " ")
     tax <- taxdumpSynonym(tax, binomials = ig[[i]], keep.acc = FALSE, 
                    quiet = FALSE, keep.syn = TRUE, add.syn = TRUE)

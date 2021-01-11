@@ -4,8 +4,15 @@
 \alias{addTips}
 \title{Add Tips to a Phylogenetic Tree}
 \usage{
-addTips(phy, tips, sister, tax, insert = "crown",
-  ignore.monophyly = FALSE, quiet = FALSE)
+addTips(
+  phy,
+  tips,
+  sister,
+  tax,
+  insert = "crown",
+  ignore.monophyly = FALSE,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{phy}{An object of class \code{\link{phylo}}.}

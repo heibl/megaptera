@@ -1,6 +1,17 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2019 (last update 2019-09-17)
+## © C. Heibl 2019 (last update 2019-10-30)
 
+#' @title Initialize MEGAPTERA
+#' @description Creates a consist system of folders where data and metadata are
+#'   stored.
+#' @param path A vector of mode \code{"character"} that gives the directory
+#'   where megaptera should store data and results.
+#' @details \code{"megapteraInit"} creates a file system that is designed to
+#'   keep memory requirements and execution times at the necessary minimum
+#'   during subsequent runs of the MEGAPTERA pipeline. Individula projects can
+#'   be created with \code{\link{megapteraProj}}.
+#' @return None, \code{megapteraInit} is called for its side effects.
+#' @seealso \code{\link{megapteraProj}}, \code{\link{ncbiTaxonomy}}
 #' @import DBI
 #' @importFrom restez db_download restez_path_set
 #' @export

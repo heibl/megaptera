@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-01-13)
+## © C. Heibl 2014 (last update 2019-10-30)
 
 dbExcludeIndet <- function(x){
   
@@ -20,7 +20,7 @@ dbExcludeIndet <- function(x){
              "unknown",
              ".[[:upper:]]",
              "^[[:lower:]]") 
-  if ( !x@taxon@hybrids ){
+  if (x@taxon@exclude.hybrids){
     indet <- union(indet, "_x_|^x_")
   }
   indet <- paste(indet, collapse = "|")

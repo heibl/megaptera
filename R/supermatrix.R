@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-09-11)
+## © C. Heibl 2014 (last update 2019-11-05)
 
 # TO DO: marker-wise deletion of species (line 38)
 
@@ -9,8 +9,7 @@
 #' @param megProj An object of class \code{\link{megapteraProj}}.
 #' @param min.n.seq Numeric, the minimum number of sequences in any alignment
 #'   that is required to be included in the supermatrix.
-#' @param reliability Numeric between 0 and 1, giving the minimum reliability
-#'   score for a column in an alignment.
+#' @inheritParams pg2DNAbin
 #' @param blocks A character string indicating how to handle alignment blocks:
 #'   \code{"split"} causes blocks to be returned as elements of a list.
 #'   \code{"concatenate"} means, blocks will be concatendated and returned as a
@@ -61,12 +60,12 @@
 #'   sequence matrix and (3) a zipped directory containing the PHYLIP-formatted
 #'   sequence matrix plus output and partitions as separate ASCII-formatted
 #'   files.
-#' @importFrom ape write.tree
+#' @importFrom ape cbind.DNAbin write.tree
 #' @importFrom utils zip
 #' @export
 
-supermatrix <- function(megProj, min.n.seq = 3, 
-                        reliability = 0, blocks = "split", 
+supermatrix <- function(megProj, min.n.seq = 3, blocks = "split", 
+                        row.confid = 0, col.confid = 0,
                         partition, trim.ends = 0,
                         locus.coverage = 0.0,
                         global.coverage = 0.0,
@@ -84,138 +83,30 @@ supermatrix <- function(megProj, min.n.seq = 3,
   blocks <- match.arg(blocks, c("concatenate", "ignore", "split"))
   if (blocks == "concatenate") blocks <- "split"
   
-  ## Taxonomy and outgroup
-  ## ---------------------
-  tax <- dbReadTaxonomy(megProj)
+  ## Get outgroup
+  ## ------------
+  outgroup <- dbReadTaxonomy(megProj)
   outgroup <- lapply(megProj@taxon@outgroup, taxdumpChildren,
-                     tax = tax, tip.rank = "species")
+                     tax = outgroup, tip.rank = "species")
   outgroup <- gsub(" ", "_", do.call(rbind, outgroup)$taxon)
   
-  #############################################
-  ##  PART A: Determine tables (loci) to import
-  #############################################
+  x <- selectMSA(megProj = megProj,
+                 min.n.seq = min.n.seq,
+                 row.confid = row.confid, col.confid = col.confid,
+                 trim.ends = trim.ends,
+                 locus.coverage = locus.coverage, global.coverage = global.coverage,
+                 subset.locus = subset.locus, subset.species = subset.species,
+                 exclude.locus = exclude.locus, exclude.species = exclude.species,
+                 core.locus = core.locus, core.species = core.species,
+                 best.sampled.congeneric = best.sampled.congeneric,
+                 protect.outgroup = protect.outgroup, squeeze.outgroup = squeeze.outgroup)
   
-  ## A1: Get list of available tables
-  ## --------------------------------
-  cat("Looking for database tables ... ")
-  tabs <- checkBlocks(megProj, plot = FALSE, subset = subset.species)
-  # tabs <- checkBlocks(megProj, plot = FALSE)
-  cat(length(tabs), " found:", paste("\n-", sort(names(tabs))), sep = "")
-  
-  ## A2: Determine tables that contain more than min.n.seq species
-  ## -------------------------------------------------------------
-  id <- sapply(tabs, function(z) any(z >= min.n.seq[1]))
-  tabs <- names(tabs)[id]
-  cat("\n", length(tabs), " of these contain at least ", min.n.seq[1], 
-      " species:", sort(paste("\n-", tabs)), sep = "")
-  
-  ## A3: User-defined subset loci (optional)
-  ## ---------------------------------------
-  if (!missing(subset.locus)){
-    cat("\nSubsetting to loci:", subset.locus)
-    subset.locus <- paste(subset.locus, collapse = "|")
-    tabs <- tabs[grep(subset.locus, tabs)]
-  }
-  
-  ## A4: User-defined exclusion of loci (optional)
-  ## ---------------------------------------------
-  if (!missing(exclude.locus)){
-    cat("\nExcluding locus:", exclude.locus)
-    exclude.locus <- paste(exclude.locus, collapse = "|")
-    tabs <- tabs[-grep(exclude.locus, tabs)]
-  }
-  
-  #############################################
-  ##  PART B: Import alignments
-  #############################################
-  
-  ## B1: Select and read individual alignments
-  ## -----------------------------------------
-  cat("\nReading", length(tabs), "alignments ... ")
-  if (missing(subset.species)){
-    x <- lapply(tabs, dbReadMSA, x = megProj, blocks = blocks, 
-                reliability = reliability)
-  } else {
-    x <- lapply(tabs, dbReadMSA, x = megProj, taxon = subset.species, 
-                regex = FALSE, blocks = blocks, reliability = reliability)
-  }
+  ## Prepare column weights. Note that these must be integers for RAxML
+  ## ------------------------------------------------------------------
+  cat("\nPreparing column weights ... ")
+  w <- unlist(lapply(x, "attr", which = "cs"))
+  w <- round(w / min(w))
   cat("OK")
-  if (any(sapply(x, is.null))) x <- x[!sapply(x, is.null)]
-  
-  ## B2: Handle blocks
-  ## -----------------
-  block.id <- which(sapply(x, is.list))
-  cat("\n", length(block.id), " alignments are split into blocks", sep = "")
-  if (length(block.id)){
-    concatenateBlocks <- function(ali, n){
-      ali <- ali[which(sapply(ali, nrow) >= n)]
-      if (length(ali)){
-        ali <- do.call(cbind.DNAbin, c(ali, fill.with.gaps = TRUE))
-      } else {
-        ali <- ali[[1]]
-      }
-      ali
-    }
-    cat("\nKeeping only blocks >", min.n.seq[2], "sequence")
-    x[block.id] <- lapply(x[block.id], concatenateBlocks, n = min.n.seq[2])
-  }
-  
-  ## B3: Trim tapering ends of alignment
-  ## -------------------------------
-  cat("\nTrimming alignment ends (columns with <", 
-      round(trim.ends * 100, 1), "% sequence information) ... ")
-  n <- sapply(x, ncol)
-  x <- lapply(x, trimEnds, min.n.seq = trim.ends)
-  cat(sum(n - sapply(x, ncol)), "columns deleted")
-  
-  names(x) <- gsub(paste0("^", tip.rank, "_"), "", tabs)
-  spec.set <- lapply(x, rownames)
-  spec.set <- table(unlist(spec.set))
-  spec.set <- data.frame(spec = names(spec.set),
-                         freq = spec.set,
-                         stringsAsFactors = FALSE)
-  nspec <- nrow(spec.set)
-  
-  ## B4: Exclude species from alignments that have
-  ## less than 'locus.coverage' percent sites
-  ## ----------------------------------------
-  if (locus.coverage > 0){
-    cat("\nExcluding snippets (<", locus.coverage, "% sites) ... ")
-    exclude.snippets <- function(a, locus.coverage){
-      cv <- coverage(a)
-      cv <- names(cv)[cv >= locus.coverage]
-      a[cv, ]
-    }
-    x <- lapply(x, exclude.snippets, locus.coverage = locus.coverage)
-  }
-  
-  ## B5: Core set of species (optional)
-  ## ----------------------------------
-  if (!missing(core.locus)){
-    cat("\nMaking core dataset ... ")
-    core.species <- lapply(x[core.locus], function(x) rownames(x))
-    core.species <- unique(unlist(core.species))
-    if (protect.outgroup) core.species <- union(core.species, outgroup)
-    subset.alignment <- function(a, s) deleteEmptyCells(a[rownames(a) %in% s, ], quiet = TRUE)
-    x <- lapply(x, subset.alignment, s = core.species)
-    cat("OK")
-    
-    ## Any species lost?
-    spec.set2 <- lapply(x, rownames)
-    spec.set2 <- table(unlist(spec.set2))
-    spec.set2 <- data.frame(spec = names(spec.set2),
-                            freq = spec.set2,
-                            stringsAsFactors = FALSE)
-    lost <- setdiff(spec.set$spec, spec.set2$spec)
-    nb.lost <- length(lost)
-    if (nb.lost){
-      if (nb.lost > 12) lost <- c(head(lost), paste0("[", nb.lost - 12, " sequences]"), tail(lost))
-      cat("WARNING:", nb.lost, "species lost:",
-          paste("\n-", lost))
-    } else {
-      cat("OK")
-    }
-  }
   
   ## Create partitions
   ## -----------------
@@ -284,27 +175,10 @@ supermatrix <- function(megProj, min.n.seq = 3,
   outgroup <- intersect(outgroup, rownames(x))
   cat("\nNumber of available outgroup species:", length(outgroup))
   
-  ## Create denser outgroup
-  ## ----------------------
-  if (!missing(squeeze.outgroup)){
-    cat("\nCreating denser outgroup ... ")
-    o <- deleteEmptyCells(x[outgroup, ], quiet = TRUE)
-    nn <- as.raw(c(240, 2, 4))
-    names(nn) <- c("n", "?", "-")
-    nn <- apply(o, 1, function(x, n) length(which((x %in% nn))), n = nn)
-    nn <- sort(nn, decreasing = TRUE)
-    outgroup <- names(tail(nn, squeeze.outgroup))
-    nn <- head(nn, -squeeze.outgroup)
-    x <- x[!rownames(x) %in% names(nn), ]
-    ## This is a bug, because it changes partitions!
-    # x <- deleteEmptyCells(x, quiet = TRUE)
-    cat("OK")
-  }
-  
   ## Make filenames (from here on 'x' does not change any more)
   ## ----------------------------------------------------------
   fn <- paste("data/supermatrix", nrow(x), ngene, ncol(x), sep = "-")
-  ext <- c("tre", "phy", "nex", "partitions", "outgroup")
+  ext <- c("tre", "phy", "nex", "partitions", "weights", "outgroup")
   fns <- paste(fn, ext, sep = ".")
   names(fns) <- ext
   
@@ -339,6 +213,7 @@ supermatrix <- function(megProj, min.n.seq = 3,
               supermatrix = x,
               outgroup = og,
               partitions = p,
+              weights = w,
               guide.tree = gt)
   
   ## write data as PHY and NEX
@@ -348,6 +223,7 @@ supermatrix <- function(megProj, min.n.seq = 3,
   write.phy(x, fns["phy"])
   rownames(x) <- gsub("-", "_", rownames(x))
   write.nex(x, fns["nex"])
+  write(paste(w, collapse = " "), file = fns["weights"]) ## weight file
   cat("done")
   
   obj

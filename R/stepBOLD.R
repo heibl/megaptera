@@ -60,15 +60,15 @@ stepBOLD <- function(x, overwrite = TRUE){
   retrieved[retrieved > 1] <- 1
   retrieved <- rowSums(retrieved)
   retrieved <- names(retrieved)[retrieved > 0]
-  missing <- setdiff(, retrieved)
+  missing <- setdiff(queried, retrieved)
   
   slog(length(missing), "queried species do not have any sequences",
        file = logfile)
   
   
-  ## It seem that BOLD treats synonyms akwardly, eg. Acossus
+  ## It seems that BOLD treats synonyms akwardly, eg. Acossus
   ## terebra and Lamellocossus terebra are presented as separate 
-  ## species. Therefore all name sare treated equally 
+  ## species. Therefore all names are treated equally 
   m <- lapply(missing, function(z) data.frame(z[1], z))
   m <- do.call(rbind, m)
   names(m) <- c("concept", "name")

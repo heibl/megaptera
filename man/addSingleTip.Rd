@@ -4,8 +4,16 @@
 \alias{addSingleTip}
 \title{Add Tips to a Phylogenetic Tree}
 \usage{
-addSingleTip(phy, tip, sister, tax, insert = "crown", ignore.monophyly,
-  stem.edge = 0.5, quiet = FALSE)
+addSingleTip(
+  phy,
+  tip,
+  sister,
+  tax,
+  insert = "crown",
+  ignore.monophyly,
+  stem.edge = 0.5,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{phy}{An object of class \code{\link{phylo}}.}

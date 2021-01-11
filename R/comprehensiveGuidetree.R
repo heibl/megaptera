@@ -84,7 +84,11 @@ comprehensiveGuidetree <- function(megProj, tip.rank, subset){
     ## Create subtrees that will be plotted onto the guide
     ## tree's tips
     ## -----------
-    subtrees <- lapply(gt$tip.label, taxdumpChildren, tax = tax, tip.rank = tip.rank)
+    indet <- indet.strings(exclude.hybrids = megProj@taxon@exclude.hybrids,
+                           collapse = TRUE)
+    subtrees <- lapply(gt$tip.label, taxdumpChildren, 
+                       tax = tax, tip.rank = tip.rank, 
+                       indet = indet)
     subtrees <- lapply(subtrees, taxdump2phylo, tip.rank = tip.rank)
     names(subtrees) <- gt$tip.label
 

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2016-11-03)
+## © C. Heibl 2014 (last update 2019-10-30)
 
 setClass("taxon", 
          representation = list(
@@ -8,7 +8,7 @@ setClass("taxon",
            outgroup = "list",
            extend.outgroup = "logical",
            kingdom = "character",
-           hybrids = "logical",
+           exclude.hybrids = "logical",
            tip.rank = "character",
            reference.rank = "character")
 )

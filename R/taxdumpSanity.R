@@ -109,7 +109,8 @@ taxdumpSanity <- function(tax, quiet = FALSE){
     cat("\nNOTE:", nrow(test), 
         "accepted species are not direktly linked to a genus,", 
         "but to one of these ranks", 
-        formatSpecList(sort(unique(test))))
+        # formatSpecList(sort(unique(test))))
+        formatSpecList(unique(test)))
   }
   remove(test)
   

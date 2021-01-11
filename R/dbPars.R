@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-01-11)
+## © C. Heibl 2014 (last update 2020-05-15)
 
 #' @title Set Database Parameters
 #' @description Sets the connection parameters for a PostgreSQL database and, as
@@ -72,7 +72,7 @@
     
   ## Create relation 'progress' if necessary
   ## ---------------------------------------
-  if (!dbExistsTable(conn, "progress")) {
+  if (dbname != "ncbitaxonomy" & !dbExistsTable(conn, "progress")) {
     cat("\nCreate relation 'progress'")
     SQL <- paste("CREATE TABLE progress",
                  "(",
@@ -91,7 +91,7 @@
   
   ## Create relation 'reference' if necessary
   ## ----------------------------------------
-  if (!dbExistsTable(conn, "reference")) {
+  if (dbname != "ncbitaxonomy" & !dbExistsTable(conn, "reference")) {
     cat("\nCreate relation 'reference'")
     SQL <- paste("CREATE TABLE reference",
                  "(gene character varying NOT NULL,",
@@ -101,23 +101,53 @@
     dbSendQuery(conn, SQL)
   }
   
+  ## Create relation 'sequence' if necessary
+  ## ------------------------------------------------
+  msa.tab <- "sequence"
+  if (dbname != "ncbitaxonomy" & !dbExistsTable(conn, msa.tab)) {
+    cat("\nCreate relation 'species_sequence'")
+    SQL <- paste0(msa.tab, "_pk")
+    SQL <- paste("CREATE TABLE", msa.tab, 
+                 "(acc character varying NOT NULL,",
+                 "taxon character varying  NOT NULL,",
+                 "taxon_source character varying  NOT NULL,",
+                 "locus character varying,",
+                 "status character varying,",
+                 "qseqid character varying,",
+                 "sseqid character varying,",
+                 "length integer,",
+                 "mismatch integer,",
+                 "qstart integer,",
+                 "qend integer,",
+                 "sstart integer,",
+                 "send integer,",
+                 "qcovs integer,",
+                 "pident numeric,",
+                 "evalue numeric,",
+                 "bitscore numeric,",
+                 "sstrand character varying,",
+                 "sequence character varying,",
+                 "CONSTRAINT", SQL, "PRIMARY KEY (acc))")
+    dbSendQuery(conn, SQL)
+  }
+  
   ## Create relation 'species_sequences' if necessary
   ## ------------------------------------------------
-  msa.tab <- "species_sequence"
-  if (!dbExistsTable(conn, msa.tab)) {
-    cat("\nCreate relation 'species_sequence'")
+  msa.tab <- "sequence_selected"
+  if (dbname != "ncbitaxonomy" & !dbExistsTable(conn, msa.tab)) {
+    cat("\nCreate relation 'sequence_selected'")
     SQL <- paste0(msa.tab, "_pk")
     SQL <- paste("CREATE TABLE", msa.tab, 
                  "(locus character varying NOT NULL,",
                  "taxon character varying  NOT NULL,",
+                 "acc character varying  NOT NULL,",
                  "n integer,",
                  "md5 character(32),",
                  "status  character varying,",
                  "sequence character varying,",
                  "reliability character varying,",
-                 "CONSTRAINT", SQL, "PRIMARY KEY (locus, taxon))")
+                 "CONSTRAINT", SQL, "PRIMARY KEY (locus, taxon, acc))")
     dbSendQuery(conn, SQL)
-    dbDisconnect(conn)
   }
 
   dbDisconnect(conn)

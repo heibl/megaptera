@@ -4,9 +4,16 @@
 \alias{taxdumpChildren}
 \title{Utilities for NCBI Taxdump}
 \usage{
-taxdumpChildren(tax, taxon, immediate = FALSE, query.rank = "any",
-  tip.rank = "species", status = "scientific name",
-  indet = indet.strings(), quiet = FALSE)
+taxdumpChildren(
+  tax,
+  taxon,
+  immediate = FALSE,
+  query.rank = "any",
+  tip.rank = "species",
+  status = "scientific name",
+  indet,
+  quiet = FALSE
+)
 }
 \arguments{
 \item{tax}{Either an object of class \code{\link{megapteraProj}} or a data
@@ -42,7 +49,7 @@ Get all children of certain rank for a given taxon.
 }
 \examples{
 # The set of default regular expressions used to identify nonvalid species binomials
-indet.strings()
+indet.strings(collapse = TRUE)
 }
 \seealso{
 \code{\link{ncbiTaxonomy}} for downloading the NCBI taxonomy and

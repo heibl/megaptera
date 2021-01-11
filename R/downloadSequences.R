@@ -15,7 +15,7 @@ downloadSequences <- function(x, taxon){
   
   slog("\n\nSearch taxon:", taxon, file = logfile, megProj = x)
   
-  ## post UIDs on Entrez History Server
+  ## Post UIDs on Entrez History Server
   ## ----------------------------------
   xml <- paste0("https://eutils.ncbi.nlm.nih.gov/entrez/", 
                 "eutils/esearch.fcgi?",

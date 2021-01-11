@@ -25,6 +25,8 @@ The pipeline's verbosity can be fine-tuned with \code{debug.level}:
 \section{Pipeline Parameters}{
  
 \describe{ 
+\item{\code{data.path}}{A character string giving the path to the directory there all
+  data and results will be stored (see \code{\link{megapteraInit}}).}
 \item{\code{gb.seq.download}}{A character string defining how sequences should be
   downloaded from GenBank Nucleotide; can be \code{"eutils"} or \code{"ftp"}.}
 \item{\code{debug.level}}{Numeric, a
@@ -73,9 +75,6 @@ The pipeline's verbosity can be fine-tuned with \code{debug.level}:
   alignment blocks with \code{\link{gblocks}}.} }
 }
 
-\examples{
-megapteraPars()
-}
 \references{
 Smith, S.A., J.M. Beaulieu, and M.J. Donoghue. 2009.
   Mega-phylogeny approach for comparative biology: an alternative to

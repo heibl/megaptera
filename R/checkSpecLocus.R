@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-01-26)
+## © C. Heibl 2014 (last update 2019-10-12)
 
 #' @title Barplot of Species Numbers per Locus
 #' @description Produce a barplot showing the number of species found for each
@@ -43,7 +43,7 @@ checkSpecLocus <- function(megProj, stage = "selected",
   ## -------------------------------------
   args <- c(gb = "retrieved", sel = "selected")
   stage <- names(match.arg(stage, args))
-  stage <- paste(stage, "_", sep = "")
+  stage <- paste0(stage, "_")
   cols <- grep(stage, names(x))
   if (!length(cols)) stop("no locus available")
   x <- x[, cols, drop = FALSE]
@@ -79,7 +79,7 @@ checkSpecLocus <- function(megProj, stage = "selected",
   x <- apply(x, 2, bincov)
   rownames(x) <- spec
   
-  ## delete species with any locus
+  ## delete species without any locus
   ## -----------------------------
   x <- x[rowSums(x) != 0, , drop = FALSE]
   
@@ -92,7 +92,7 @@ checkSpecLocus <- function(megProj, stage = "selected",
     total <- c(total, length(which(rowSums(x[, 1:i, drop = FALSE]) != 0)))
   }
   
-  ## number of private species per locus
+  ## Number of private species per locus
   ## -----------------------------------
   mfreq <- rowSums(x)
   private <- which(mfreq == 1)
@@ -100,7 +100,7 @@ checkSpecLocus <- function(megProj, stage = "selected",
   pfreq <- colSums(x)
   obj <- cbind(Ntotal = sfreq, Nprivate = pfreq[match(names(sfreq), names(pfreq))])
   
-  ## number of loci per species
+  ## Number of loci per species
   ## --------------------------
   pslist <- as.list(names(pfreq)[pfreq > 0])
   names(pslist) <- as.vector(pslist)
@@ -108,7 +108,7 @@ checkSpecLocus <- function(megProj, stage = "selected",
     pslist[[i]] <- sort(rownames(x)[x[, i] == 1])
   }
   
-  ## produce barplot
+  ## Produce barplot
   ## ---------------
   if (plot) {
     xx <- t(obj)
@@ -130,7 +130,7 @@ checkSpecLocus <- function(megProj, stage = "selected",
       v <- xx[2, id]
       text(x, y, v)
     }
-    ## plot total number of species as line
+    ## Plot total number of species as line
     ## makes sense only for more than one locus
     ## ----------------------------------------
     if (ncol(xx) > 1){

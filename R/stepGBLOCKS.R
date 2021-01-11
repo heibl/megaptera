@@ -116,24 +116,8 @@ stepGBLOCKS <- function(x){
   ## read alignment
   ## --------------
   slog("\nReading alignment", file = logfile)
-  #   if ( x@params@parallel ){
-  #     spec <- dbGetQuery(conn, paste("SELECT", tip.rank, "FROM", msa.tab))[, tip.rank]
-  #     spec <- paste("^", spec, "$", sep = "")
-  #     n <- length(spec)
-  #     id <- seq(from = 1, to = n, by = ceiling(n/x@params@cpus))
-  #     id <- data.frame(from = id, to = c(id[-1] - 1, n))
-  #     spec <- apply(id, 1, function(i, a) paste(a[i[1]:i[2]], collapse = "|"), a = spec)
-  #     sfInit(parallel = TRUE, cpus = x@params@cpus, 
-  #            type = x@params@cluster.type)
-  #     sfLibrary("megaptera", character.only = TRUE)
-  #     sfLibrary("seqinr", character.only = TRUE)
-  #     megProj <- x
-  #     sfExport("spec", "msa.tab", "megProj")
-  #     a <- sfLapply(x = spec, fun = dbPReadDNA, conn = megProj, tab.name = msa.tab, regex = TRUE)
-  #     a <- do.call(rbind, a)
-  #   } else {
   a <- dbReadMSA(x)
-  # }
+
   if (is.null(a)) {
     dbDisconnect(conn)
     slog("\nWARNING: no sequences conform to current parameter setting\n", file = logfile)

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-09-11)
+## © C. Heibl 2014 (last update 2019-11-24)
 
 #' @title Step B: Search and Download Sequences
 #' @description For any given project (see \code{\link{megapteraProj}}), 
@@ -23,8 +23,10 @@
 #' @seealso \code{\link{megapteraProj}}; \code{\link{stepA}} for the preceeding 
 #' and \code{\link{stepC}} for the subsequent step; \code{\link{stepBX}} for the 
 #' addition of external sequences to the database.
-#' @export
+
 #' @import DBI
+#' @importFrom RCurl url.exists
+#' @export
 
 stepB <- function(x, update.seqs = "no"){
   
@@ -42,7 +44,7 @@ stepB <- function(x, update.seqs = "no"){
   ## sequences from GenBank::Nucleotide
   ## ----------------------------------
   if (x@params@gb.seq.download == "ftp"){
-    stepB_ftp(x = x, update.seqs = update.seqs)
+    stepGenBankFTP(x = x)
   } else {
     stepB_eutils(x = x, update.seqs = update.seqs)
   }

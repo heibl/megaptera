@@ -199,7 +199,7 @@ dbUpdateTaxonomy <- function(megProj, taxonomy, logfile = ""){
   ##    (same set of tokens in stepB + stepBX)
   ## -----------------------------------------
   slog("\nChecking for undetermined taxon names ... ", file = logfile)
-  indet <- indet.strings(megProj@taxon@hybrids, TRUE, TRUE)
+  indet <- indet.strings(megProj@taxon@exclude.hybrids, TRUE, TRUE)
   indet <- paste("SELECT taxon FROM taxonomy", 
                  "WHERE", wrapSQL(indet, "taxon", "~", NULL),
                  "AND", wrapSQL(tip.rank, "rank", "="))

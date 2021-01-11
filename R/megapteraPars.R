@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-09-11)
+## © C. Heibl 2014 (last update 2019-09-17)
 
 #' @title Create an Object of Class "megapteraPars"
 #' @description S4 Class for parameters of a megaptera project pipeline, as
@@ -8,6 +8,8 @@
 #'   names of the parameters described in the `Pipeline Parameters' section.
 #' @section Pipeline Parameters: 
 #' \describe{ 
+#' \item{\code{data.path}}{A character string giving the path to the directory there all
+#'   data and results will be stored (see \code{\link{megapteraInit}}).}
 #' \item{\code{gb.seq.download}}{A character string defining how sequences should be
 #'   downloaded from GenBank Nucleotide; can be \code{"eutils"} or \code{"ftp"}.}
 #' \item{\code{debug.level}}{Numeric, a
@@ -65,15 +67,14 @@
 #'   as .rda object in case of a foreseeable error\cr 5 \tab Same as 4, in
 #'   addition current data is always saved\cr }
 #' @seealso \code{\link{megapteraProj}} for creating a megaptera project.
-#' @examples
-#' megapteraPars()
 #' @include megapteraPars-class.R
 #' @importFrom methods new slotNames
 #' @export
 
 "megapteraPars" <- function(...){
   
-  params <- list(gb.seq.download = "eutils",
+  params <- list(data.path = "undefined",
+                 gb.seq.download = "eutils",
                  debug.level = 1,
                  parallel = FALSE,
                  cpus = 0,
@@ -97,11 +98,19 @@
   
   args <- list(...)
   notDef <- setdiff(names(args), names(params))
-  if ( length(notDef) ) 
+  if (length(notDef)) 
     stop ("parameter '", notDef[1], "' is not defined", sep = "")
   
   id <- match(names(args), names(params))
   params[id] <- args
+  
+  ## data.path lead to an existing path
+  if (params$data.path == "undefined")
+    stop("data.path must be defined")
+  if (!dir.exists(params$data.path)){
+    stop("data.path '", params$data.path, "' does not exist", sep = "")
+  }
+  
   
   if (params$parallel & params$cpus == 0){
     stop("number of CPUs must be given")
@@ -111,6 +120,7 @@
   }
   
   new("megapteraPars",
+      data.path = params$data.path,
       gb.seq.download = params$gb.seq.download,
       debug.level = params$debug.level,
       parallel = params$parallel,

@@ -7,8 +7,15 @@
 \alias{dbUpdateTaxonomy}
 \title{Read and Write Taxonomy Table}
 \usage{
-dbReadTaxonomy(megProj, tip.rank, subset, tag, root = "tol",
-  syn = FALSE, drop.extinct = TRUE)
+dbReadTaxonomy(
+  megProj,
+  tip.rank,
+  subset,
+  tag,
+  root = "tol",
+  syn = FALSE,
+  drop.extinct = TRUE
+)
 
 dbUpdateTaxonomy(megProj, taxonomy, logfile = "")
 }

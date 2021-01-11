@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2019-09-11)
+## © C. Heibl 2016 (last update 2019-10-30)
 
 #' @title RMarkdown Report
 #' @description Creates a status report for a megaptera Project using RMarkdown.
@@ -74,7 +74,7 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
          paste("- **extend ingroup**:", ifelse(x@taxon@extend.ingroup, "yes", "no")),
          paste("- **Outgroup**:", outgroup),
          paste("- **extend outgroup**:", ifelse(x@taxon@extend.outgroup, "yes", "no")),
-         paste("- **Hybrids**:", ifelse(x@taxon@hybrids, "included", "excluded")),
+         paste("- **Hybrids**:", ifelse(x@taxon@exclude.hybrids, "excluded", "included")),
          paste("- **Tip rank**:", x@taxon@tip.rank),
          paste("- **Reference rank** :", x@taxon@reference.rank),
          paste("- **User-defined guide tree** :", ifelse(inherits(x@taxon, "taxonGuidetree"), "yes", "no")),
@@ -101,9 +101,13 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
          "")
   
   ## 2: STATUS locus-wise
-  ## -----------------
-  tabs <- dbTableNames(x, "acc")
-  if (!length(tabs)){
+  ## --------------------
+  conn <- dbconnect(x)
+  loci <- dbGetQuery(conn, "SELECT DISTINCT locus FROM sequence")
+  loci <- loci$locus[!is.na(loci$locus)]
+  dbDisconnect(conn)
+  
+  if (!length(loci)){
     if ("taxonomy" %in% dbTableNames(x, "all")){
       z <- c(z, "# Status of the pipeline", 
              "Taxonomy table has been created (by running stepA)", "",
@@ -279,7 +283,7 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
   
   ## stop here if no sequences have been downloaded so far
   ## -----------------------------------------------------
-  if (!length(tabs)){
+  if (!length(loci)){
     write(z, file = file)
     return()  
   }
@@ -313,8 +317,8 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
       taxaNotFound <- c(taxaNotFound, "", paste0("- *", taxa_without_seq, "*"))
     } 
   } else {
-    taxaNotFound <- NULL
-    stop("implement me!")
+    taxaNotFound <- paste("## All", tip_rank ,"have at least one sequences")
+    # stop("implement me!")
   }
   z <- c(z, "# DNA sequence retrieval",
          taxaNotFound, "",
@@ -326,10 +330,10 @@ megaptera2Rmarkdown <- function(x, file, nmax = 100){
   
   ## SELECTED SEQUENCES
   ## ------------------
-  if (all(STATUS[, "F"] %in% c("pending", "failure", "error"))){
-    write(z, file = file)
-    return()  
-  }
+  # if (all(STATUS[, "F"] %in% c("pending", "failure", "error"))){
+  #   write(z, file = file)
+  #   return()  
+  # }
   loci_selected <- ll[, grep("sel_", names(ll)), drop = FALSE]
   loci_selected[loci_selected != "0"] <- 1
   loci_selected <- apply(loci_selected, c(1, 2), as.numeric) ## coerce to numeric!

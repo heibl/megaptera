@@ -8,11 +8,11 @@ Creates a S4 class defining a taxonomic parameters for a \code{\link{megapteraPr
 }
 \usage{
 taxon(ingroup, extend.ingroup = FALSE, outgroup,
-  extend.outgroup = FALSE, kingdom, hybrids = FALSE,
+  extend.outgroup = FALSE, kingdom, exclude.hybrids = FALSE,
   tip.rank = "species", reference.rank = "auto")
       
 taxonGuidetree(ingroup, extend.ingroup = FALSE, outgroup,
-  extend.outgroup = FALSE, kingdom, hybrids = FALSE,
+  extend.outgroup = FALSE, kingdom, exclude.hybrids = FALSE,
   tip.rank = "species", reference.rank = "auto", guide.tree)
 }
 \arguments{
@@ -31,7 +31,7 @@ logical, if \code{TRUE} and \code{outgroup} is a set of Linnean binomials, the s
   \item{kingdom}{
 a vector of mode \code{"character"}, currently one of  \code{"Fungi"}, \code{"Metazoa"}, or \code{"Viridiplantae"}. The \bold{International Code of Nomenclature for algae, fungi, and plants} (ICBN) and the \bold{International Code of Zoological Nomenclature} (ICZN) do not exclude the possibility that genera and species of plants/fungi/algae and animals share the same name (e.g., \emph{Prunella} \emph{vulgaris}). Therefore it is necessary to include the kingdom into the search term when querying GenBank. 
 }
-  \item{hybrids}{
+  \item{exclude.hybrids}{
 logical: if \code{TRUE}, hybrids (as recognized by the regular expression \code{"^x_|_x_"}) will be excluded from the pipeline.
   }
   \item{tip.rank}{
