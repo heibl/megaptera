@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-11-29)
+## © C. Heibl 2014 (last update 2021-03-12)
 
 #' @importFrom ips mafft.merge
 #' @export
@@ -60,7 +60,7 @@ compareToRef <- function(megProj, spec, reference){
     rownames(obj) <- gsub("^_R_", "", rownames(obj))
     ## realignment if only subset of sequences concerned
     if ( length(spec.id) > length(rc) ){
-      gt <- splitGiTaxon(rownames(obj)[rc], sep = " ")
+      gt <- splitGiTaxon(rownames(obj)[rc])
       rc <- paste("UPDATE", acc.tab,
                   "SET status = 'aligned-RC'",
                   "WHERE", sql.wrap(gt[, 1], term = "gi", BOOL = NULL),
@@ -90,7 +90,7 @@ compareToRef <- function(megProj, spec, reference){
                                    FALSE, TRUE))
     id <- names(which(!id))
     if ( length(id) > 0 ){
-      id <- data.frame(splitGiTaxon(id), sep = " ")
+      id <- data.frame(splitGiTaxon(id))
       SQL <- paste("UPDATE", acc.tab, 
                    "SET status = 'excluded (outside reference)'",
                    "WHERE", wrapSQL(id$gi, "gi", "=", NULL), 
@@ -136,7 +136,7 @@ compareToRef <- function(megProj, spec, reference){
   
   ## write results to database
   ## -------------------------
-  d <- data.frame(splitGiTaxon(names(d), sep = " "), 
+  d <- data.frame(splitGiTaxon(names(d)), 
                   identity = d,
                   coverage = cv)
   SQL <- paste("UPDATE", acc.tab, 

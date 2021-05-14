@@ -24,7 +24,7 @@ An object of class \code{\linkS4class{dbPars}}.
 }
 \description{
 Sets the connection parameters for a PostgreSQL database and, as
-  a side effect, creates the database, if it does not yet exist.
+  a side effect, creates the database with relevant tables, if it does not yet exist.
 }
 \details{
 \bold{megaptera} stores all data internally in a PostgreSQL

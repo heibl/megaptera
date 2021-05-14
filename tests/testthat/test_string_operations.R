@@ -46,6 +46,8 @@ test_that("correctly split taxon name and identifier", {
                    list(taxon = "Strix nigrolineata", gi = "USNMA071_10"))
   expect_identical(splitGiTaxon("Strix_nigrolineata USNMA071_10"), 
                    list(taxon = "Strix_nigrolineata", gi = "USNMA071_10"))
+  expect_identical(splitGiTaxon("Abdera_affinis_FBCOA294-10"), 
+                   list(taxon = "Abdera_affinis", gi = "FBCOA294-10"))
   ## NCBI style identifier
   expect_identical(splitGiTaxon("Bufo bufo AY840247"), 
                    list(taxon = "Bufo bufo", gi = "AY840247"))

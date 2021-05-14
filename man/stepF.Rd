@@ -4,7 +4,16 @@
 \alias{stepF}
 \title{Step F: Select Sequences and Assemble FASTA file}
 \usage{
-stepF(x, update, min.cov = 25, user.addition)
+stepF(
+  x,
+  update,
+  max.evalue = 11,
+  min.cov = 25,
+  src = "all",
+  src.dogma = "limitation",
+  push.og = FALSE,
+  user.addition
+)
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}
@@ -15,6 +24,9 @@ If left empty, \code{update} is taken from \code{\link{dbPars}}.}
 
 \item{min.cov}{Numeric between 0 and 100 giving the minimum coverage (see
 \code{qcovs} in BLASTN) to be selected into the final alignment.}
+
+\item{src}{A vector of mode \code{"character"} optionally restricting the
+selection to sequences of a particular source.}
 
 \item{user.addition}{A vector of mode \code{"character"} giving the names of
 taxa that should be included in the final alignment even if their BLAST

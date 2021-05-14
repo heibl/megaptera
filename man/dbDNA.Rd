@@ -21,7 +21,7 @@ dbReadDNA(
   reliability = 0
 )
 
-dbWriteDNA(conn, tab.name, dna, enforce.binomial = TRUE, status)
+dbWriteDNA(conn, tab.name, dna, status)
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}}.}
@@ -71,8 +71,6 @@ the minimum reliability score for each alignment column.}
 
 \item{dna}{An object of class \code{\link[ape]{DNAbin}} to write to the
 database.}
-
-\item{enforce.binomial}{Logical}
 
 \item{status}{A vector of mode \code{"character"} to be written to the
 \emph{status} field of the PostgreSQL table.}

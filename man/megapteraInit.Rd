@@ -20,7 +20,7 @@ Creates a consist system of folders where data and metadata are
 \details{
 \code{"megapteraInit"} creates a file system that is designed to
   keep memory requirements and execution times at the necessary minimum
-  during subsequent runs of the MEGAPTERA pipeline. Individula projects can
+  during subsequent runs of the MEGAPTERA pipeline. Individual projects can
   be created with \code{\link{megapteraProj}}.
 }
 \seealso{

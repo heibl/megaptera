@@ -1,24 +1,27 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2020-02-23)
+## © C. Heibl 2014 (last update 2021-03-19)
 
 #' @export
 
-splitGiTaxon <- function(x, enforce.binomial = FALSE, sep = " "){
+splitGiTaxon <- function(string, white.space = " "){
   
-  # old version until 2020-02-23
-  # fun <- function(x){
-  #   x <- unlist(strsplit(x, "_"))
-  #   c(gi = tail(x, 1), 
-  #     taxon = paste(head(x, -1), collapse = sep))
-  # }
-  # x <- lapply(x, fun)
-  # x <- do.call(rbind, x)
-  # x <- as.data.frame(x, stringsAsFactors = FALSE)
-  # 
-  # if (enforce.binomial){
-  #   x[, 2] <- strip.infraspec(x[, 2])
-  # }
+  ## Output: white space or underscore between genus and species?
+  ws <- c(" ", "_")
+  white.space <- match.arg(white.space, ws) ## white space
   
-  reg_exp <- "(^[[:upper:]][[:lower:][:space:]_-]+)([ _])([[:upper:][:digit:]_ ]+$)"
-  list(taxon = gsub(reg_exp, "\\1", x), gi = gsub(reg_exp, "\\3", x))
+  binomial_term <- "(^[[:upper:]][[:lower:][:space:][:punct:]]+)"
+  sep_term <- "([ _])"
+  ID_term <- "([[:upper:][:digit:][:punct:]]+$)"
+  reg_exp <- paste0(binomial_term, sep_term, ID_term)
+  taxon <- gsub(reg_exp, "\\1", string)
+  gi <- gsub(reg_exp, "\\3", string)
+  if (all(taxon == gi)){
+    return(list(taxon = gsub(ws[!ws %in% white.space],
+                             ws[ws %in% white.space],
+                             taxon)))
+  }
+  list(taxon = gsub(ws[!ws %in% white.space],
+                    ws[ws %in% white.space],
+                    gsub(reg_exp, "\\1", string)), 
+       gi = gsub(reg_exp, "\\3", string))
 }

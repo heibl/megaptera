@@ -33,6 +33,8 @@
 \alias{dbUpdateSurrogate}
 \alias{dbWriteMSA}
 \alias{dbPReadDNA}
+\alias{dbReadSequence}
+\alias{dbReadSequenceSelected}
 \alias{dbProgress} % stepB, stepBOLD, stepC, stepD, stepE, stepF, stepMAFFT, stepPASTA, stepPOLENTA, stepH, stepI
 \alias{dbReadReference}
 \alias{dbUpdateLocus}
@@ -40,6 +42,7 @@
 \alias{dbUpdateReference_Clade} % stepD
 \alias{dbWriteDNAbin}
 \alias{dbWriteString}
+\alias{deleteSpecies} % selectMSA
 \alias{DNAbin2pg} % dbWriteMSA
 \alias{downloadSequences}
 \alias{EFetchHigherTaxon}
@@ -53,6 +56,7 @@
 \alias{formatDF} % nacbiTaxonomy, taxdumpSanity
 \alias{formatSpecList} % stepA
 \alias{fuzzy.match}
+\alias{gbflatInfo}
 \alias{getGeneRange}
 \alias{getLineage}
 \alias{getMaxDist}
@@ -75,9 +79,11 @@
 \alias{nucleotideOverlap}
 \alias{proParte} % prune.phylo.rank
 \alias{rcString} % stepF (outcommented)
+\alias{refSeqGene}
 \alias{revCompTest}
 \alias{robustXMLparse} % downloadSequences
 \alias{select.seqs}
+\alias{selectMSA}
 \alias{slog}
 \alias{specCons} % stepD
 \alias{speciesConsensus}

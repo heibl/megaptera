@@ -10,6 +10,7 @@ dbReadMSA(
   taxon,
   regex = TRUE,
   label = c("taxon", "acc"),
+  status = NULL,
   confid.scores = "all",
   row.confid = 0,
   col.confid = 0,

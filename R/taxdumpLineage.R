@@ -33,12 +33,23 @@ taxdumpLineage <- function(tax, taxon, highest.rank){
   ## Determine which separator is used by 'tax' and impose it on 'taxon'
   ## -------------------------------------------------------------------
   ## Beware of evil strings like 'Tuberculina sp. Ru_hy-01'
-  test <- head(tax$taxon[tax$rank == "species"])
-  underscore <- length(grep("^[[:upper:]][[:lower:]]{1,}_[[:lower:]]", test)) > 0
-  if (underscore){
-    taxon <- gsub(" ", "_", taxon)
-  } else {
+  # test <- head(tax$taxon[tax$rank == "species"])
+  # underscore <- length(grep("^[[:upper:]][[:lower:]]{1,}_[[:lower:]]", test)) > 0
+  # if (underscore){
+  #   taxon <- gsub(" ", "_", taxon)
+  # } else {
+  #   taxon <- gsub("_", " ", taxon)
+  # }
+  ## Try a variant, because taxon names 'Melyridae Dasytinae'
+  ## --------------------------------------------------------
+  if (gsub("_", " ", taxon) %in% tax$taxon){
     taxon <- gsub("_", " ", taxon)
+  } else {
+    if (!gsub(" ", "_", taxon) %in% tax$taxon){
+      stop("taxon ='", taxon, "' not in 't", tax, "'", sep = "")
+    } else {
+      taxon <- gsub(" ", "_", taxon)
+    }
   }
   
   ## Try to guess root (DIRTY!)

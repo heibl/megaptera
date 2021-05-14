@@ -9,10 +9,12 @@ Authors@R: person("Christoph", "Heibl",
 Imports:
     ape,
     bold,
+    crayon,
     crul,
     data.table,
     DBI,
     knitr,
+    lubridate,
     methods,
     parallel,
     RCurl,
@@ -22,7 +24,8 @@ Imports:
     RPostgreSQL,
     seqinr,
     tools,
-    XML
+    XML,
+    Rcpp
 Depends:
     R (>= 3.1),
     ips
@@ -36,7 +39,7 @@ License: GPL (>= 2)
 LazyData: true
 VignetteBuilder: knitr
 Packaged: Wed Feb 13 14:47:54 2019
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.1
 Collate: 
     'BOLD2megaptera.R'
     'DNAbin2pg.R'
@@ -106,6 +109,7 @@ Collate:
     'frmt.R'
     'fuzzy.match.R'
     'gbflat2db.R'
+    'gbflatInfo.R'
     'get3LetterCode.R'
     'getLineage.R'
     'giConsensus.R'
@@ -141,6 +145,7 @@ Collate:
     'nucleotideOverlap.R'
     'optimizeCoverage.R'
     'optimizeIdentity.R'
+    'outgroup.R'
     'overlappingPairs2.R'
     'pdfPhyloA0.R'
     'pg2DNAbin.R'
@@ -156,6 +161,7 @@ Collate:
     'specCons.R'
     'speciesConsensus.R'
     'speclist2taxdump.R'
+    'spectable2taxdump.R'
     'splitAlignment.R'
     'splitGiTaxon.R'
     'splitNonoverlapping.R'
@@ -181,16 +187,21 @@ Collate:
     'supermatrix.R'
     'supermatrix.mrbayes.R'
     'surrogateTips.R'
+    'taxCov.R'
     'taxdump2phylo.R'
     'taxdumpAddNode.R'
     'taxdumpChangeParent.R'
     'taxdumpChildren.R'
     'taxdumpDropTip.R'
     'taxdumpHigherRank.R'
+    'taxdumpInfo.R'
     'taxdumpLineage.R'
     'taxdumpMRCA.R'
     'taxdumpManageSynonym.R'
+    'taxdumpMerge.R'
+    'taxdumpMergeNodes.R'
     'taxdumpRankOrder.R'
+    'taxdumpRename.R'
     'taxdumpSanity.R'
     'taxdumpSubset.R'
     'taxdumpSynonym.R'
@@ -202,3 +213,6 @@ Collate:
     'valid.NCBI.taxon.R'
     'whereToInsert.R'
     'wrapSQL.R'
+    'zzz.R'
+LinkingTo: 
+    Rcpp

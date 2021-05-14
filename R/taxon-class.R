@@ -1,11 +1,11 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-10-30)
+## © C. Heibl 2014 (last update 2021-05-11)
 
 setClass("taxon", 
          representation = list(
-           ingroup = "list",
+           ingroup = "data.frame",
            extend.ingroup = "logical",
-           outgroup = "list",
+           outgroup = "data.frame",
            extend.outgroup = "logical",
            kingdom = "character",
            exclude.hybrids = "logical",

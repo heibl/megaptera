@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2019-11-13)
+## © C. Heibl 2017 (last update 2021-03-15)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get most-recent common ancestor (MRCA) of a group of species.

@@ -25,7 +25,7 @@ The pipeline's verbosity can be fine-tuned with \code{debug.level}:
 \section{Pipeline Parameters}{
  
 \describe{ 
-\item{\code{data.path}}{A character string giving the path to the directory there all
+\item{\code{data.path}}{A character string giving the path to the directory where all
   data and results will be stored (see \code{\link{megapteraInit}}).}
 \item{\code{gb.seq.download}}{A character string defining how sequences should be
   downloaded from GenBank Nucleotide; can be \code{"eutils"} or \code{"ftp"}.}

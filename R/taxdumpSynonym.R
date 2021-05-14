@@ -1,11 +1,13 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2019-07-18)
+## © C. Heibl 2017 (last update 2021-05-10)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Manage Synonyms
 #' @param tax A data frame in parent-child format.
 #' @param binomials A vector of mode \code{"character"} giving one or more taxon
 #'   names. The first name is considered to be the accepted name.
+#' @param user.acc A vector of mode \code{"character"} giving the taxon names
+#'   that the user accepts.
 #' @param keep.acc Logical, only applies when the accepted names in \code{tax}
 #'   and \code{binomial} are not identical: \code{TRUE} means the accepted name
 #'   from \code{tax} is kept, whereas the accepted name of \code{binomials} is
@@ -19,10 +21,11 @@
 #'   \code{\link{taxdump2phylo}}
 #' @note \code{add.syn} is only partly implemented and not tested, because under
 #'   the current use (adding synonyms to NCBI taxonomy) it does not make sense.
+#' @importFrom crayon %+% bold cyan green magenta silver
 #' @export
 
-taxdumpSynonym <- function(tax, binomials, keep.acc = FALSE, 
-                           keep.syn = TRUE, add.syn = TRUE, quiet = TRUE){
+taxdumpSynonym <- function(tax, binomials, user.acc,
+                           keep.acc = FALSE, keep.syn = TRUE, add.syn = TRUE, quiet = TRUE){
   
   ## CHECKS
   id <- duplicated(binomials)
@@ -37,9 +40,10 @@ taxdumpSynonym <- function(tax, binomials, keep.acc = FALSE,
   
   ## Assume that first element of 'binomials' is
   ## the accepted name, all others are synonyms
-  
   if (!quiet){
-    cat("Accepted name:", binomials[1], ".. ")
+    dts <- paste0(" ", paste(rep(".", 40 - nchar(binomials[1])), collapse = ""), " ")
+    msg <- silver("\raccepted name: " %+% magenta(binomials[1]) %+% dts)
+    cat(msg, "  ")
   }
  
   #################################################
@@ -81,18 +85,38 @@ taxdumpSynonym <- function(tax, binomials, keep.acc = FALSE,
     temp <- cbind(temp, status_b = NA)
     bb <- rbind(bb, temp)
   }
+  
+  ## A4. mark all names that are accepted by the user
+  ## ------------------------------------------------
+  if (!missing(user.acc)){
+    bb$status_b[bb$taxon %in% user.acc] <- "accepted"
+  }
+
   bb_archive <- bb
   
   #################################################
   ## PART B. EVALUATION + ADJUSTMENT
   #################################################
   
-  ## B1. Only intersection present - nothing to do
+  ## B1a. Only intersection present - nothing to do
   ## ---------------------------------------------
   if (nrow(bb) == 1){
-    cat("nothing to do")
+    cat(msg, green("OK"))
+    flush.console()
     return(tax)
-  } 
+  }
+  
+  ## B1b. NCBI says A is synonym of B, but user accepts both species
+  ## ---------------------------------------------------------------
+  # if (nrow(bb[(bb$status == "scientific name" | bb$taxon %in% binomials) & bb$status_b == "accepted", ]) > 1){
+  if (nrow(bb[bb$status_b == "accepted", ]) > 1){
+    # if(nrow(bb) > 2) stop("implement me!") tentative: stays with NCBI
+    nid <- max(tax[, c("parent_id", "id")]) + 1
+    tax$id[tax$taxon == binomials[1]] <- nid
+    tax$status[tax$taxon == binomials[1]] <- "scientific name"
+    return(tax)
+    cat(green("OK"))
+  }
   
   ## These are the names in tax
   ## tax[tax$taxon %in% bb$taxon, ]
@@ -174,6 +198,7 @@ taxdumpSynonym <- function(tax, binomials, keep.acc = FALSE,
           taxon = genus_b,
           rank = "genus",
           status = "scientific name",
+          origin = "taxdumpSynonym",
           stringsAsFactors = FALSE)
         tax$parent_id[tax$taxon %in% bb$taxon] <- nid 
         bb$parent_id[] <- nid
@@ -223,6 +248,6 @@ taxdumpSynonym <- function(tax, binomials, keep.acc = FALSE,
   
   if (any(is.na(tax$parent_id)) | any(is.na(tax$id)))
     stop("debug me! (NAs generated")
-  
+  flush.console()
   tax
 }

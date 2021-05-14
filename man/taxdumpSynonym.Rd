@@ -7,6 +7,7 @@
 taxdumpSynonym(
   tax,
   binomials,
+  user.acc,
   keep.acc = FALSE,
   keep.syn = TRUE,
   add.syn = TRUE,
@@ -18,6 +19,9 @@ taxdumpSynonym(
 
 \item{binomials}{A vector of mode \code{"character"} giving one or more taxon
 names. The first name is considered to be the accepted name.}
+
+\item{user.acc}{A vector of mode \code{"character"} giving the taxon names
+that the user accepts.}
 
 \item{keep.acc}{Logical, only applies when the accepted names in \code{tax}
 and \code{binomial} are not identical: \code{TRUE} means the accepted name

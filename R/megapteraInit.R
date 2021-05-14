@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2019 (last update 2019-10-30)
+## © C. Heibl 2019 (last update 2021-03-12)
 
 #' @title Initialize MEGAPTERA
 #' @description Creates a consist system of folders where data and metadata are
@@ -8,7 +8,7 @@
 #'   where megaptera should store data and results.
 #' @details \code{"megapteraInit"} creates a file system that is designed to
 #'   keep memory requirements and execution times at the necessary minimum
-#'   during subsequent runs of the MEGAPTERA pipeline. Individula projects can
+#'   during subsequent runs of the MEGAPTERA pipeline. Individual projects can
 #'   be created with \code{\link{megapteraProj}}.
 #' @return None, \code{megapteraInit} is called for its side effects.
 #' @seealso \code{\link{megapteraProj}}, \code{\link{ncbiTaxonomy}}

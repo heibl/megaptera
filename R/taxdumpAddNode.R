@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-10-25)
+## © C. Heibl 2014 (last update 2021-05-14)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Insert a taxon as new node to the NCBI taxonomy.
@@ -10,6 +10,9 @@
 #'   \code{"species"}.
 #' @param taxon A character string giving the name of the new taxon.
 #' @param parent A character string giving the name of the parent taxon.
+#' @param origin A character string giving a tag that will be stored in the
+#'   database and can later be used to reconstruct the origin of certain taxon
+#'   names.
 #' @details \code{taxdumpAddNode} can be used in two ways: (1) If \code{x} is an
 #'   object of class \code{"megapteraProj"}, the changes are made in the
 #'   underlying postgreSQL database and \code{TRUE} or \code{FALSE} is returned
@@ -26,7 +29,7 @@
 #'   \code{\link{taxdump2phylo}} and \code{\link{taxdump_isTerminal}}.
 #' @export
 
-taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent){
+taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent, origin = "user"){
 
   #########################################
   ## MODE 1: changes in postgreSQL database
@@ -131,11 +134,13 @@ taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent){
           tab <- unique(data.frame(taxon = c(taxon, parent),
                                    rank = c(rank, "genus"),
                                    status = "scientific name",
+                                   # origin = origin,
                                    stringsAsFactors = FALSE))
         } else {
           tab <- unique(data.frame(taxon = c(taxon, strip.spec(taxon), parent),
                                    rank = c(rank, "genus", parent_rank),
                                    status = "scientific name",
+                                   # origin = origin,
                                    stringsAsFactors = FALSE))
         }
       } else {
@@ -144,6 +149,7 @@ taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent){
         tab <- data.frame(taxon = c(taxon, parent),
                          rank = c(rank, parent_rank),
                          status = "scientific name",
+                         # origin = origin,
                          stringsAsFactors = FALSE)
       }  
     }
@@ -203,8 +209,8 @@ taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent){
     ## -------------------------------
     ID <- as.numeric(max(x[, c("id", "parent_id")]))
     ID <- rev(include) + ID
-    tab <- data.frame(id = ID, 
-                      parent_id = c(ID[-1], anchor_id), 
+    tab <- data.frame(parent_id = c(ID[-1], anchor_id), 
+                      id = ID, 
                       taxon = tab$taxon[include],
                       rank = tab$rank[include], 
                       status = tab$status[include],
@@ -212,6 +218,7 @@ taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent){
     
     ## Add new rows to taxonomy and return
     ## -----------------------------------
+    tab$origin <- origin
     return(rbind(x, tab))
   }
 }

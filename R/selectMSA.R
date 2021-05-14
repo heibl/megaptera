@@ -1,8 +1,9 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 20120-02-27)
+## © C. Heibl 2014 (last update 2021-03-15)
 
 #' @title Selection of Multiple Sequence Alignments
 #' @importFrom ape cbind.DNAbin
+#' @importFrom crayon %+% bold cyan magenta red silver
 #' @export
 
 selectMSA <- function(megProj, min.n.seq = 3, blocks = "split", 
@@ -10,13 +11,16 @@ selectMSA <- function(megProj, min.n.seq = 3, blocks = "split",
                       trim.ends = 0,
                       locus.coverage = 0.0,
                       global.coverage = 0.0,
-                      subset.locus, subset.species,
-                      exclude.locus, exclude.species,
-                      core.locus, core.species,
+                      subset.locus = NULL, subset.species = NULL,
+                      exclude.locus = NULL, exclude.species = NULL,
+                      core.locus = NULL, core.species = NULL,
                       best.sampled.congeneric = FALSE,
                       equal.taxon.sets = TRUE,
-                      use.outgroup = TRUE,
-                      protect.outgroup = FALSE, squeeze.outgroup){
+                      use.outgroup = TRUE, protect.outgroup = FALSE, squeeze.outgroup = NULL){
+  
+  ## Default argument values for debugging
+  ## min.n.seq = 3; blocks = "split"; row.confid = 0; col.confid = 0
+  ## subset.locus <- subset.species <- exclude.locus <- exclude.species <- core.locus <- core.species <- NULL
   
   ## INITIAL CHECKS + ADJUSTMENTS
   ## ----------------------------
@@ -26,12 +30,13 @@ selectMSA <- function(megProj, min.n.seq = 3, blocks = "split",
   blocks <- match.arg(blocks, c("concatenate", "ignore", "split"))
   if (blocks == "concatenate") blocks <- "split"
   
-  ## Get outgroup
-  ## ------------
-  outgroup <- dbReadTaxonomy(megProj)
-  outgroup <- lapply(megProj@taxon@outgroup, taxdumpChildren,
-                     tax = outgroup, tip.rank = "species")
-  outgroup <- gsub(" ", "_", do.call(rbind, outgroup)$taxon)
+  ## Get ingroup and outgroup
+  ## ------------------------
+  tax <- dbReadTaxonomy(megProj)
+  ingroup <- lapply(megProj@taxon@ingroup, taxdumpChildren,
+                     tax = tax, tip.rank = "species")
+  ingroup <- gsub(" ", "_", do.call(rbind, ingroup)$taxon)
+  og <- outgroup(megProj, sep = "_")
   
   #############################################
   ##  PART A: Determine tables (loci) to import
@@ -39,21 +44,20 @@ selectMSA <- function(megProj, min.n.seq = 3, blocks = "split",
   
   ## A1: Get list of available tables
   ## --------------------------------
-  cat("Looking for database tables ... ")
+  cat(silver("Checking available loci ... "))
   tabs <- checkBlocks(megProj, plot = FALSE, subset = subset.species)
-  # tabs <- checkBlocks(megProj, plot = FALSE)
-  cat(length(tabs), " found:", paste("\n-", sort(names(tabs))), sep = "")
+  cat(length(tabs), " found:\n", paste(" > ", sort(names(tabs)), "\n"), sep = "")
   
   ## A2: Determine tables that contain more than min.n.seq species
   ## -------------------------------------------------------------
   id <- sapply(tabs, function(z) any(z >= min.n.seq[1]))
   tabs <- names(tabs)[id]
-  cat("\n", length(tabs), " of these contain at least ", min.n.seq[1], 
-      " species:", sort(paste("\n-", tabs)), sep = "")
+  cat(silver(length(tabs), " of these contain at least ", min.n.seq[1], 
+      " species:", sort(paste(" > ", tabs, "\n"))), sep = "")
   
   ## A3: User-defined subset loci (optional)
   ## ---------------------------------------
-  if (!missing(subset.locus)){
+  if (!is.null(subset.locus)){
     cat("\nSubsetting to loci:", subset.locus)
     subset.locus <- paste(subset.locus, collapse = "|")
     tabs <- tabs[grep(subset.locus, tabs)]
@@ -61,7 +65,7 @@ selectMSA <- function(megProj, min.n.seq = 3, blocks = "split",
   
   ## A4: User-defined exclusion of loci (optional)
   ## ---------------------------------------------
-  if (!missing(exclude.locus)){
+  if (!is.null(exclude.locus)){
     cat("\nExcluding locus:", exclude.locus)
     exclude.locus <- paste(exclude.locus, collapse = "|")
     tabs <- tabs[-grep(exclude.locus, tabs)]
@@ -73,40 +77,45 @@ selectMSA <- function(megProj, min.n.seq = 3, blocks = "split",
   
   ## B1: Select and read individual alignments
   ## -----------------------------------------
-  cat("\nReading", length(tabs), "alignments ... ")
-  if (missing(subset.species)){
-    x <- lapply(tabs, dbReadMSA, x = megProj, blocks = blocks,
+  cat(silver("Reading " %+% magenta$bold(length(tabs)) %+% " alignments ... "))
+  if (is.null(subset.species)){
+    obj <- lapply(tabs, dbReadMSA, x = megProj, blocks = blocks,
                 label = "taxon", confid.scores = "col.means", 
                 row.confid = row.confid, col.confid = col.confid)
   } else {
-    x <- lapply(tabs, dbReadMSA, x = megProj, taxon = subset.species,
+    obj <- lapply(tabs, dbReadMSA, x = megProj, taxon = subset.species,
                 label = "taxon",
                 regex = FALSE, blocks = blocks, 
                 row.confid = row.confid, col.confid = col.confid)
   }
-  names(x) <- tabs
-  cat("OK")
-  if (any(sapply(x, is.null))) x <- x[!sapply(x, is.null)]
+  names(obj) <- tabs
+  if (any(sapply(obj, is.null))) obj <- obj[!sapply(obj, is.null)]
+  cat(green("OK\n"))
+  
+  ## taxonomic coverage
+  taxCov(obj, ingroup, og)
+ 
+  
   
   ## B2: Exclude species
   ## -------------------
-  if (!missing(exclude.species)){
-    cat("\nExcluding species locus-wise (user-decision)")
+  if (!is.null(exclude.species)){
+    cat("Excluding species locus-wise (user-decision)")
     for (loci in names(exclude.species)){
-      a <- x[[loci]]
+      a <- obj[[loci]]
       cs <- attr(a, "cs")
       id <- rownames(a) %in% gsub(" ", "_", exclude.species[[loci]])
       cat("\n- ", loci, ": ", paste(sort(exclude.species[[loci]]), collapse = (", ")), sep = "")
       a <- a[!id, ]
       attr(a, "cs") <- cs
-      x[[loci]] <- a
+      obj[[loci]] <- a
     }
   }
   
   ## B3: Handle blocks
   ## -----------------
-  block.id <- which(sapply(x, is.list))
-  cat("\n", length(block.id), " alignments are split into blocks", sep = "")
+  block.id <- which(sapply(obj, is.list))
+  cat(silver(length(block.id), " alignments are split into blocks\n"), sep = "")
   if (length(block.id)){
     concatenateBlocks <- function(ali, n){
       ali <- ali[which(sapply(ali, nrow) >= n)]
@@ -117,31 +126,34 @@ selectMSA <- function(megProj, min.n.seq = 3, blocks = "split",
       }
       ali
     }
-    cat("\nKeeping only blocks >", min.n.seq[2], "sequence")
-    x[block.id] <- lapply(x[block.id], concatenateBlocks, n = min.n.seq[2])
+    cat("Keeping only blocks >", min.n.seq[2], "sequence\n")
+    obj[block.id] <- lapply(obj[block.id], concatenateBlocks, n = min.n.seq[2])
   }
   
   ## B4: Trim tapering ends of alignment
   ## -----------------------------------
-  cat("\nTrimming alignment ends (columns with <", 
-      round(trim.ends * 100, 1), "% sequence information) ... ")
-  n <- sapply(x, ncol)
-  x <- lapply(x, trimEnds, min.n.seq = trim.ends)
-  cat(sum(n - sapply(x, ncol)), "columns deleted")
+  cat("Trimming alignment ends (columns with <", 
+      round(trim.ends * 100, 2), "% sequence information) ... ")
+  n <- sapply(obj, ncol)
+  obj <- lapply(obj, trimEnds, min.n.seq = trim.ends)
+  cat(sum(n - sapply(obj, ncol)), "columns deleted")
   
-  names(x) <- gsub(paste0("^", tip.rank, "_"), "", tabs)
-  spec.set <- lapply(x, rownames)
+  names(obj) <- gsub(paste0("^", tip.rank, "_"), "", tabs)
+  spec.set <- lapply(obj, rownames)
   spec.set <- table(unlist(spec.set))
   spec.set <- data.frame(spec = names(spec.set),
                          freq = spec.set,
                          stringsAsFactors = FALSE)
   nspec <- nrow(spec.set)
+  cat(green("OK\n"))
+  ## taxonomic coverage
+  taxCov(obj, ingroup, og)
   
   ## B5: Exclude species from alignments that have
   ## less than 'locus.coverage' percent sites
   ## ----------------------------------------
   if (locus.coverage > 0){
-    cat("\nExcluding snippets (<", locus.coverage, "% sites) ... ")
+    cat(silver("Excluding snippets (<", locus.coverage, "% sites) ... "))
     exclude.snippets <- function(a, locus.coverage){
       id <- coverage(a) >= locus.coverage
       cs <- attr(a, "cs")
@@ -156,23 +168,26 @@ selectMSA <- function(megProj, min.n.seq = 3, blocks = "split",
       }
       a
     }
-    x <- lapply(x, exclude.snippets, locus.coverage = locus.coverage)
+    obj <- lapply(obj, exclude.snippets, locus.coverage = locus.coverage)
+    cat(green("OK\n"))
+    ## taxonomic coverage
+    taxCov(obj, ingroup, og)
   }
   
   ## B5: Core set of species (optional)
   ## ----------------------------------
-  if (!missing(core.locus)){
-    cat("\nMaking core dataset ... ")
-    core.species <- lapply(x[core.locus], function(x) rownames(x))
+  if (!is.null(core.locus)){
+    cat(silver("Making core dataset ... "))
+    core.species <- lapply(obj[core.locus], function(x) rownames(x))
     core.species <- unique(unlist(core.species))
     if (protect.outgroup) core.species <- union(core.species, outgroup)
     subset.alignment <- function(a, s) deleteEmptyCells(a[rownames(a) %in% s, ], quiet = TRUE)
-    x <- lapply(x, subset.alignment, s = core.species)
-    x <- lapply(x, deleteSpecies, species = nn)
-    cat("OK")
+    obj <- lapply(obj, subset.alignment, s = core.species)
+    obj <- lapply(obj, deleteSpecies, species = nn)
+    cat(green("OK\n"))
     
     ## Any species lost?
-    spec.set2 <- lapply(x, rownames)
+    spec.set2 <- lapply(obj, rownames)
     spec.set2 <- table(unlist(spec.set2))
     spec.set2 <- data.frame(spec = names(spec.set2),
                             freq = spec.set2,
@@ -184,47 +199,49 @@ selectMSA <- function(megProj, min.n.seq = 3, blocks = "split",
       cat("WARNING:", nb.lost, "species lost:",
           paste("\n-", lost))
     } else {
-      cat("OK")
+      cat(green("OK\n"))
     }
+    ## taxonomic coverage
+    taxCov(obj, ingroup, og)
   }
   
   ## Delete outgroup
   ## ---------------
   if (!use.outgroup){
     cat("\nPreparing alignments without outgroup ... ")
-    x <- lapply(x, deleteSpecies, delete = outgroup)
+    obj <- lapply(obj, deleteSpecies, delete = og)
     cat("OK")
   }
   
   ## Create denser outgroup
   ## ----------------------
-  if (!missing(squeeze.outgroup)){
+  if (!is.null(squeeze.outgroup)){
     cat("\nCreating denser outgroup ... ")
-    o <- do.call(cbind.DNAbin, c(x, fill.with.gaps = TRUE))
-    o <- deleteEmptyCells(o[outgroup, ], quiet = TRUE)
+    o <- do.call(cbind.DNAbin, c(obj, fill.with.gaps = TRUE))
+    o <- deleteEmptyCells(o[og, ], quiet = TRUE)
     nn <- as.raw(c(240, 2, 4))
     names(nn) <- c("n", "?", "-")
-    nn <- apply(o, 1, function(x, n) length(which((x %in% nn))), n = nn)
+    nn <- apply(o, 1, function(z, n) length(which((z %in% nn))), n = nn)
     nn <- sort(nn, decreasing = TRUE)
-    outgroup <- names(tail(nn, squeeze.outgroup))
-    x <- lapply(x, deleteSpecies, delete = head(nn, -squeeze.outgroup))
+    og <- names(tail(nn, squeeze.outgroup))
+    obj <- lapply(obj, deleteSpecies, delete = head(nn, -squeeze.outgroup))
     cat("OK")
   }
   
   ## Create partition matrix
   ## -----------------------
   # if (!missing(partition)){
-  #   partition <- lapply(partition, intersect, names(x))
-  #   x <- x[match(unlist(partition), names(x))]
+  #   partition <- lapply(partition, intersect, names(obj))
+  #   obj <- obj[match(unlist(partition), names(obj))]
   #   concatenate <- function(dna, loci){
   #     dna <- dna[loci]
   #     do.call(cbind.DNAbin, c(dna, fill.with.gaps = TRUE))
   #   }
-  #   x <- xx <- lapply(partition, concatenate, dna = x)
+  #   obj <- xx <- lapply(partition, concatenate, dna = obj)
   # } else {
-  #   xx <- x
+  #   xx <- obj
   # }
-  p <- cbind(rep(1, length(x)), sapply(x, ncol))
+  p <- cbind(rep(1, length(obj)), sapply(obj, ncol))
   if (nrow(p) > 1){
     for (i in 2:nrow(p)){
       p[i, 1] <- p[i - 1, 2] + 1
@@ -238,15 +255,22 @@ selectMSA <- function(megProj, min.n.seq = 3, blocks = "split",
   ## equal taxon sets are requires (e.g. for linking trees in BEAST)
   ## ---------------------------------------------------------------
   if (equal.taxon.sets){
-    x <- do.call(cbind.DNAbin, c(x, fill.with.gaps = TRUE))
-    x <- apply(p, 1, function(x, z) x[, z[1]:z[2]], x = x)
+    stop("debug me!")
+    obj <- do.call(cbind.DNAbin, c(obj, fill.with.gaps = TRUE))
+    obj <- apply(p, 1, function(x, z) x[, z[1]:z[2]], x = obj)
   }
   
-  x
+  obj
 }
 
 ## Function to delete species from MSA with CS
 ## -------------------------------------------
+## This code is part of the megaptera package
+## © C. Heibl 2014 (last update 2021-03-12)
+
+#' @importFrom ips identifyEmptyCells
+#' @export
+
 deleteSpecies <- function(msa, delete, keep){
   
   keep <- setdiff(rownames(msa), delete)

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-10-30)
+## © C. Heibl 2014 (last update 2021-03-20)
 
 #' @title Step F: Select Sequences and Assemble FASTA file
 #' @description In \code{stepF} FASTA files will be assembled selecting all
@@ -10,6 +10,8 @@
 #'   If left empty, \code{update} is taken from \code{\link{dbPars}}.
 #' @param min.cov Numeric between 0 and 100 giving the minimum coverage (see
 #'   \code{qcovs} in BLASTN) to be selected into the final alignment.
+#' @param src A vector of mode \code{"character"} optionally restricting the
+#'   selection to sequences of a particular source.
 #' @param user.addition A vector of mode \code{"character"} giving the names of
 #'   taxa that should be included in the final alignment even if their BLAST
 #'   scores are bad. This is mainly intended for data exploration and should not
@@ -20,7 +22,11 @@
 #' @importFrom ips write.fas
 #' @export
 
-stepF <- function(x, update, min.cov = 25, user.addition){
+stepF <- function(x, update, max.evalue = 11, min.cov = 25, 
+                  src = "all", src.dogma = "limitation", 
+                  push.og = FALSE, user.addition){
+  
+  # max.evalue = 0; min.cov = 20; src = "BOLD"; src.dogma = "limitation"
   
   start <- Sys.time()
   
@@ -59,31 +65,61 @@ stepF <- function(x, update, min.cov = 25, user.addition){
   ## iniate logfile
   ## --------------
   logfile <- paste0("log/", gene, "-stepF.log")
-  if (file.exists(logfile)) unlink(logfile)
-  slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
-       paste("\n", Sys.time(), sep = ""),
-       "\nSTEP F: construct", tip.rank, "consensus sequences\n", 
-       file = logfile)
+  if ( file.exists(logfile) ) unlink(logfile)
+  slog(silver(bold(paste("megaptera", packageDescription("megaptera")$Version)) %+% "\n"
+              %+% as.character(Sys.time()) %+%  "\n"
+              %+% bold("STEP F") %+% ": select sequences for alignment\n"))
+  
+  #was: "\nSTEP F: construct", tip.rank, "consensus sequences\n", 
+ 
   
   ## open database connection
   conn <- dbconnect(x)
   
+  
+  
   ## TO DO: nachfolgenden Code sinnvoll einbetten!
   if (!update){
-    slog("\nUpdate: no -> deleting data from MSA tables", file = logfile)
+    slog(silver("Update: no -> deleting data from MSA tables\n"), file = logfile)
     SQL <- paste("DELETE FROM sequence_selected", 
                  "WHERE", wrapSQL(gene, "locus"))
     dbSendQuery(conn, SQL)
   } 
   
-  ## Select accessions that have an Expect value of at least 11
-  ## and a coverage of al least 20%
+  taxa_e <- paste("SELECT taxon FROM sequence", 
+                   "WHERE", wrapSQL(gene, "locus", "="),
+                   "AND evalue <=", max.evalue,
+                   "AND sstrand = 'plus'")
+  taxa_e <- dbGetQuery(conn, taxa_e)
+  taxa_c <- paste("SELECT taxon FROM sequence", 
+                   "WHERE", wrapSQL(gene, "locus", "="),
+                   "AND qcovs >=", min.cov, ## coverage
+                   "AND sstrand = 'plus'")
+  taxa_c <- dbGetQuery(conn, taxa_c)
+  taxa_ec <- paste("SELECT taxon FROM sequence", 
+                "WHERE", wrapSQL(gene, "locus", "="),
+                "AND evalue <=", max.evalue,
+                "AND qcovs >=", min.cov, ## coverage
+                "AND sstrand = 'plus'")
+  taxa_ec <- dbGetQuery(conn, taxa_ec)
+  slog(silver("Maximum E-value: ") %+% magenta$bold(max.evalue) %+% "\n")
+  slog(silver("Minimum coverage (qcovs): ") %+% magenta$bold(min.cov) %+% "\n")
+  slog(silver(" > E-value alone would pick ") %+% magenta(bold(nrow(taxa_e)) %+% " accessions/"
+                                            %+% bold(length(unique(taxa_e$taxon))) %+% " taxa\n"))
+  slog(silver(" > coverage alone would pick ") %+% magenta(bold(nrow(taxa_c)) %+% " accessions/"
+                                            %+% bold(length(unique(taxa_c$taxon))) %+% " taxa\n"))
+  slog(silver(" > E-value and coverage pick ") %+% magenta(bold(nrow(taxa_ec)) %+% " accessions/"
+                                            %+% bold(length(unique(taxa_ec$taxon))) %+% " taxa\n"))
+  
+  ## Select accessions that have an Expect value of at least 'max.evalue'
+  ## and a coverage of at least 'min.cov'
   ## Note: sstrand = minus: cannot be rc'd, they are just bad
   ## -----------------------------------------------------------
-  taxa <- paste("SELECT taxon, acc, length, mismatch, evalue, qcovs, sstrand",
+  slog(silver("Select candidate sequences ... "))
+  taxa <- paste("SELECT taxon, acc, length, mismatch, evalue, qcovs, pident, source",
                "FROM sequence", 
                "WHERE", wrapSQL(gene, "locus", "="),
-               "AND evalue <= 11",
+               "AND evalue <=", max.evalue,
                "AND qcovs >=", min.cov, ## coverage
                "AND sstrand = 'plus'",
                "ORDER BY (qcovs)")
@@ -100,18 +136,79 @@ stepF <- function(x, update, min.cov = 25, user.addition){
   if (tip.rank == "genus"){
     taxa$taxon <- strip.spec(taxa$taxon)
   }
+  slog(green("OK\n"))
+  
+  ## Restrict or prefer source of sequences
+  if (!is.null(source)){
+    nant <- function(z){magenta(bold(length(z)) %+% " accessions/" %+% bold(length(unique(z))) %+% " taxa")}
+    src_set <- unique(taxa$source)
+    src <- match.arg(src, src_set)
+    src.dogma <- match.arg(src.dogma, c("limitation", "preference"))
+    if (src.dogma == "limitation"){
+      slog(silver("Select only sequences from " %+% magenta$bold(src), "\n"))
+      taxa1 <- taxa[taxa$source == src, ]
+      slog(silver(" > i.e. available are " %+% nant(taxa1$taxon) %+% " instead of " %+% nant(taxa$taxon) %+% "\n"))
+    } else {
+      ## src.dogma == "preference"
+      slog(silver("Prefer", "Select only sequences from " 
+                  %+% magenta$bold(src), "\n"))
+      taxa1 <- taxa[taxa$source == src, ]
+      taxa2 <- taxa[taxa$source != src, ]
+      taxa2 <- taxa2[!taxa2$taxon %in% taxa1$taxon, ]
+      slog(silver(" > " %+% nant(taxa1$taxon) %+% " come from " %+% bold(src) %+% "\n"))
+      slog(silver(" > " %+% nant(taxa2$taxon) %+% " come from " 
+                  %+% bold(paste(src_set[src_set != src], collapse = "/")) %+% "\n"))
+      taxa1 <- rbind(taxa1, taxa2)
+    }
+    
+    
+    ## Make sure outgroup is included no whether the source is
+    ## -------------------------------------------------------
+    if (push.og){
+      og <- outgroup(x, sep = " ")
+      if (!length(intersect(taxa1$taxon, og))){
+        slog(silver("Try to push in outgroup sequences ... "))
+        taxa_og <- taxa[taxa$taxon %in% og, ]
+        if (!nrow(taxa_og)) {
+          slog(red("failed\n > no outgroup accessions comply with current setting of "  
+                   %+% bold(paste("min.cov", min.cov, sep = " = ")) %+%  " and "  
+                   %+% bold(paste("max.evalue", max.evalue, sep = " = ")) %+% "\n"))
+        } else {
+          slog(green("OK\n"))
+          slog(silver(" > " %+% nant(taxa_og$taxon) %+% " of the outgroup included by force\n"))
+          taxa1 <- rbind(taxa1, taxa_og)
+        }
+      }
+    }
+    
+    taxa <- taxa1
+  }
+  
+  ## Add Grade sensu Geneious
+  ## ------------------------
+  grade <- function(qcovs, evalue, pident, type = "nucleotide"){
+    type <- match.arg(type, c("nucleotide", "protein"))
+    mgident <- ifelse(type == "nucleotide", 50, 25)       ## minGradedIdentity
+    
+    (.5 * qcovs                                           ## fractionCoverage
+      + 25 * max(0, (1 - (evalue / 10^-200)))             ## eValue
+      + 25 * max(0, (pident - mgident)/(100 - mgident)))  ## percentIdentity
+    
+  } 
+  taxa$grade <- grade(taxa$qcovs, taxa$evalue, taxa$pident, type = "nuc")
+  
+  
   chooseAcc <- function(tab, spec){
     tab <- tab[tab$taxon == spec, ]
-    # if ("plus" %in% tab$sstrand){
-    #   tab <- tab[tab$sstrand == "plus", ] # do not use minus if plus is available
-    # }
-    tab <- tab[tab$evalue == min(tab$evalue), ] # lowest E-value and
-    tab <- tab[tab$qcovs == max(tab$qcovs), ] # greatest coverage
-    tab <- tab[tab$length == max(tab$length), ] # longest alignment
+    # tab <- tab[tab$evalue == min(tab$evalue), ] # lowest E-value and
+    # tab <- tab[tab$qcovs == max(tab$qcovs), ] # greatest coverage
+    # tab <- tab[tab$length == max(tab$length), ] # longest alignment
+    tab <- tab[tab$length == max(tab$length), ]
     tab[1, ]
   }
   chosen_acc <- lapply(unique(taxa$taxon), chooseAcc, tab = taxa)
   chosen_acc <- do.call(rbind, chosen_acc)
+  
   
   ## Check for existing sequences and delete them
   ## --------------------------------------------
@@ -135,16 +232,17 @@ stepF <- function(x, update, min.cov = 25, user.addition){
     selected <- c(selected, user.addition)
   }
   
-  ## Write choosen accessions to MSA table
-  ## -------------------------------------
+  
+  slog(silver("Select best sequence per taxon ... "))
   SQL <- paste("SELECT acc, taxon, sequence",
                "FROM sequence", 
                "WHERE", wrapSQL(selected, "acc", "=", "OR", by = 500))
   seqs <- lapply(SQL, dbGetQuery, conn = conn)
   seqs <- do.call(rbind, seqs)
-  slog("\n", nrow(seqs), " sequences selected", sep = "", file = logfile)
+  slog(green("OK\n"))
+  slog(silver(" > " %+% magenta$bold(nrow(seqs)) %+% " sequences selected\n"), file = logfile)
   r <- range(sapply(seqs$sequence, nchar))
-  slog("\nSequence lengths: ", r[1],"-", r[2], " bp", sep = "", file = logfile)
+  slog(silver(" > sequence lengths: " %+% magenta$bold(paste0(r[1],"-", r[2])) %+% " bp\n"), file = logfile)
   
   ## Do reverse-complements 
   ## ----------------------
@@ -153,6 +251,9 @@ stepF <- function(x, update, min.cov = 25, user.addition){
   #   seqs$sequence[id] <- rcString(seqs$sequence[id])
   # }
   
+  ## Write chosen accessions to MSA table
+  ## -------------------------------------
+  slog(silver("Write sequences to datebase ... "))
   SQL <- paste(wrapSQL(gene, term = NULL, boolean = NULL),
                wrapSQL(seqs$taxon, term = NULL, boolean = NULL),
                wrapSQL(seqs$acc, term = NULL, boolean = NULL),
@@ -163,16 +264,21 @@ stepF <- function(x, update, min.cov = 25, user.addition){
                "(locus, taxon, acc, status, sequence)",
                "VALUES (", SQL, ")")
   lapply(SQL, dbSendQuery, conn = conn)
+  slog(green("OK\n"))
   
   
   ## write to FASTA files
   ## ---------------------
+  # obj <- dbReadSequenceSelected(x, status = "raw")
   obj <- dbReadMSA(x)
-  write.fas(obj, paste0("msa/", gene, ".fas"))
+  fn <- paste0("msa/", gene, "-", length(obj), ".fas")
+  slog(silver("Write sequences to " %+% bold(fn) %+% " ..."))
+  write.fas(obj, fn)
+  slog(green("OK\n"))
   
   dbDisconnect(conn)
-  slog("\n\nSTEP F finished", file = logfile)
+  slog(silver("\nSTEP F finished"), file = logfile)
   td <- Sys.time() - start
-  slog(" after", round(td, 2), attr(td, "units"), "\n", file = logfile)
+  slog(silver(" after " %+% cyan(paste(round(td, 2), attr(td, "units"))) %+% "\n"), file = logfile)
   dbProgress(x, "step_f", "success")
 }

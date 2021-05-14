@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-10-09)
+## © C. Heibl 2014 (last update 2021-03-15)
 
 #' @title Step A: Creating a Project Taxonomy
 #' @description Creates a project taxonomy from the NCBI taxonomy (see
@@ -16,7 +16,9 @@
 #'   taxonomy; the next step in the pipeline is \code{\link{stepB}}.
 #' @export
 #' @import RCurl RPostgreSQL
-#' @importFrom utils write.table
+#' @importFrom crayon %+% bold cyan magenta silver
+#' @importFrom DBI dbExistsTable
+#' @importFrom utils flush.console write.table
 
 stepA <- function(x){
   
@@ -40,7 +42,7 @@ stepA <- function(x){
   
   conn <- dbconnect(x)
   if (dbExistsTable(conn, "taxonomy"))
-    slog("Existing taxonomy will be overwritten", file = logfile)
+    slog(silver("Existing taxonomy will be overwritten"), file = logfile)
   dbDisconnect(conn)
   
   ## Get global NCBI taxonomy
@@ -60,11 +62,23 @@ stepA <- function(x){
   ## -----------------------------
   tax <- taxdumpSubset(tax, mrca = x@taxon@kingdom)
   
+  ## Bug fix 2021-05-10: NCBI does not correctly use 'species', 'subspecies' and
+  ## 'varietas.' Many taxa below species-level, in particular synonyms, have
+  ## rank 'species' (or 'subspecies'), although they are of rank 'varietas'.
+  ## Unfortunately, this will cause taxdumpSynonym() to fail udner certain
+  ## circumstances. To circumvent this, we will overwrite these ranks:
+  ## -----------------------------------------------------------------
+  # tax$rank[grep("var[.]", tax$taxon)] <- "varietas"
+  
+  ## Mark table entries as stemming from NCBI
+  ## ----------------------------------------
+  tax$origin <- "NCBI"
+  
   ## INGROUP
   ## -------
   ig <- x@taxon@ingroup
   
-  ## This is rahter dirty, but should be a quick fix for the discrepancy that
+  ## This is rather dirty, but should be a quick fix for the discrepancy that
   ## arises between ICZN and Fauna Europea, which did not adopt its Gender Agreement
   ## -------------------------------------------------------------------------------
   # renderGender <- function(b){
@@ -80,37 +94,58 @@ stepA <- function(x){
   
   ## Check if/which ingroup taxa are present in NCBI taxonomy
   ## --------------------------------------------------------
+  slog(silver("\nchecking ingroup coverage of NCBI taxonomy: "), file = logfile)
+  dur <- Sys.time()
+  igtips <- 
   a <- sapply(ig, function(z, ncbi) any(z %in% ncbi), ncbi = tax$taxon)
-  if (x@params@debug.level){
-    if (!all(a)){
-      missing_ig <- ig[!a]
-      slog("\n", length(missing_ig), " ingroup taxa not in NCBI Taxonomy database:", 
-           formatSpecList(missing_ig), sep = "", file = logfile)
-      if (x@params@debug.level > 1){
-        ## only accepted names will be written to file
-        write.table(sapply(missing_ig, head, 1), file = "data/ingroup-not-NCBI-taxonomy.txt",
-                    quote = FALSE, row.names = FALSE, col.names = "INGROUP" )
-        slog("\nThe list of missing ingroup taxa was written to", 
-             "'data/ingroup-not-NCBI-taxonomy.txt'", file = logfile)
-      }
-    } else {
-      slog("\nAll ingroup taxa are present in NCBI Taxonomy database", file = logfile)
-    }
-  }
-  ig <- ig[a]
+  slog(bold(magenta(paste0(round(length(which(a)) / length(ig) * 100, 2), "% "))), file = logfile)
+  dur <- Sys.time() - dur
+  slog(cyan(paste0("(", round(dur, 1), attr(dur, "units"), ")")), file = logfile)
   
+  ig_root <- taxdumpMRCA(tax, unlist(ig[a]))
+  
+  ## Now add those taxa that are missing from NCBI. (2021-03-15) 
+  ## This is done without any further information by the user: 
+  ## 1. If a congener is present, the genus serves as anchor; 
+  ## 2. If not, the parent will be the ingroup root
+  ## -----------------------------------------------------------
+  if (!all(a)){
+    slog(silver("\nadding ") %+% bold(magenta(length(which(!a)))) %+% silver(" missing taxa\n"), 
+         file = logfile)
+    dur <- Sys.time()
+    for (i in which(!a)){
+      ## Synonyms of added species will be lost!
+      slog(magenta(paste0("\r> ", ig[[i]][1]), "                       "), file = logfile)
+      suppressWarnings(tax <- taxdumpAddNode(tax, taxon = ig[[i]][1], origin = "user: genus"))
+      if (!ig[[i]][1] %in% tax$taxon){
+        tax <- taxdumpAddNode(tax, taxon = ig[[i]][1], parent = ig_root, origin = "user: ingroup root")
+      }
+      flush.console()
+    }
+    dur <- Sys.time() - dur
+    slog(cyan(paste0("(", round(dur, 1), attr(dur, "units"), ")")), file = logfile)
+  }
+  
+  # save(list = ls(all.names = TRUE), file = "user_data/debug_stepA.rda")
+  # stop("this is just for debugging")
+ 
   ## Adjust accepted names/synonyms as user-defined
   ## ----------------------------------------------
   # tax2 <- tax
   # tax <- tax2
-  ## ig[which(sapply(ig, function(x, y) x %in% y, x = "Earophila badiata"))]
-  ## ig[grep("Dicallomera", ig)]
-  for (i in seq_along(ig)[]){
-    cat("\n", i, " ")
-    tax <- taxdumpSynonym(tax, binomials = ig[[i]], keep.acc = FALSE, 
-                   quiet = FALSE, keep.syn = TRUE, add.syn = TRUE)
+  ## ig[which(sapply(ig, function(x, y) x %in% y, x = "Melanotus rufipes"))]
+  ## ig[i <- grep("Scolytus multistriatus", ig)]
+  slog(silver("\nAdjust accepted names/synonyms as user-defined"), file = logfile)
+  dur <- Sys.time()
+  for (i in seq_along(ig)[i]){
+    # cat("\n", i, " ")
+    tax <- taxdumpSynonym(tax, binomials = ig[[i]], user.acc = sapply(ig, '[', i = 1),
+                          keep.acc = FALSE, keep.syn = TRUE, add.syn = TRUE,
+                          quiet = FALSE)
     # if (!taxdumpSanity(tax)) break
   }
+  dur <- Sys.time() - dur
+  slog(cyan(paste0("(", round(dur, 1), attr(dur, "units"), ")")), file = logfile)
   
   if (unique(sapply(unlist(ig), is.Linnean))){
     ingroup <- taxdumpSubset(tax, species = sapply(ig, head, n = 1))
@@ -148,7 +183,7 @@ stepA <- function(x){
   ## Adjust accepted names/synonyms as user-defined
   ## ----------------------------------------------
   for (i in seq_along(og)){
-    cat("\n", i, " ")
+    # cat("\n", i, " ")
     tax <- taxdumpSynonym(tax, binomials = og[[i]], quiet = FALSE, 
                           keep.acc = FALSE, keep.syn = FALSE)
   }

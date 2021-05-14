@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2015 (last update 2019-10-30)
+## © C. Heibl 2015 (last update 2021-05-11)
 
 #' @include taxonGuidetree-class.R
 #' @importFrom methods new
@@ -13,12 +13,12 @@
                              tip.rank = "species",
                              reference.rank = "auto",
                              guide.tree){
-  ingroup <- unique(ingroup); outgroup <- unique(outgroup)
-  if (is.factor(ingroup)) ingroup <- levels(ingroup)[ingroup]
-  if (is.factor(outgroup)) outgroup <- levels(outgroup)[outgroup]
-  if (is.character(ingroup)) ingroup <- as.list(ingroup)
-  if (is.character(outgroup)) outgroup <- as.list(outgroup)
-  
+  if (!taxdumpSanity(ingroup, quiet = TRUE)){
+    stop("inconsistent 'ingroup' object: run taxdumpSanity(ingroup) for diagnosis")
+  }
+  if (!taxdumpSanity(outgroup, quiet = TRUE)){
+    stop("inconsistent 'outgroup' object: run taxdumpSanity(outgroup) for diagnosis")
+  }
   tip.rank <- match.arg(tip.rank, c("genus", "species"))
   
   new("taxonGuidetree", 

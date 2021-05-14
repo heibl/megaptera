@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-03-05)
+## © C. Heibl 2014 (last update 2021-03-16)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Change a node's parent in the NCBI taxonomy.
@@ -24,6 +24,7 @@
 #'   \code{\link{taxdumpDropTip}}, \code{\link{taxdumpHigherRank}},
 #'   \code{\link{taxdumpMRCA}}, \code{\link{taxdumpSubset}},
 #'   \code{\link{taxdump2phylo}} and \code{\link{taxdump_isTerminal}}.
+#' @importFrom crayon %+% bold cyan magenta silver
 #' @importFrom DBI dbSendQuery   
 #' @export
 
@@ -47,7 +48,7 @@ taxdumpChangeParent <- function(x, taxon, new.parent, orphaned.parent = "synonym
   opid <- tax$parent_id[tax$taxon == taxon] ## old parent's ID
   oname <- tax$taxon[tax$id == opid] ## old parent's name
   npid <- tax$id[tax$taxon == new.parent] ## new parent's ID
-  if (!length(npid)) stop("'new.parent' not availbale - you can create it with taxdumpAddNode()")
+  if (!length(npid)) stop("'new.parent' not available - you can create it with taxdumpAddNode()")
   sid <- tax$id[tax$parent_id == opid & tax$taxon != taxon] ## sister taxa's ID
 
   if (inherits(x, "megapteraProj")){
@@ -57,8 +58,10 @@ taxdumpChangeParent <- function(x, taxon, new.parent, orphaned.parent = "synonym
                  "SET", wrapSQL(npid, "parent_id", "="), 
                  "WHERE", wrapSQL(taxon, "taxon", "="))
     dbSendQuery(conn, SQL)
-    cat("Parent of '", taxon, "' changed from '", tax$taxon[tax$id == opid],
-        "' [", opid, "] to '", new.parent, "' [", npid, "]", sep = "")
+    cat(silver("Parent of '" %+% magenta$bold(taxon) %+% "' changed from '" %+% 
+                magenta$bold(tax$taxon[tax$id == opid]) %+% "' [" %+% cyan(opid) %+% 
+                "] to '" %+% magenta$bold(new.parent) %+% "' [" %+% cyan(npid) %+% "]\n", 
+               sep = ""))
     
     
     if (!length(sid)){
@@ -74,12 +77,13 @@ taxdumpChangeParent <- function(x, taxon, new.parent, orphaned.parent = "synonym
                      wrapSQL(npid, "id", "="),
                      "WHERE", wrapSQL(opid, "id", "="))
         dbSendQuery(conn, SQL)
-        cat("\nStatus of previous parent ('", oname, "' [", opid, " -> ", npid, "])",
-            " changed to 'synonym'", sep = "")
+        cat(silver("Status of previous parent ('" %+% magenta$bold(oname) %+% 
+                     "' [" %+% cyan(opid) %+% " -> " %+% cyan(npid), 
+                   "]) changed to 'synonym'\n", sep = ""))
       }
     }
     dbDisconnect(conn)
-    cat("\nNo output - changes affect only the PostgreSQL database")
+    cat(silver("No output - changes affect only the PostgreSQL database\n"))
     invisible(TRUE)
     
   } else {
@@ -87,21 +91,22 @@ taxdumpChangeParent <- function(x, taxon, new.parent, orphaned.parent = "synonym
     ## change and return data frame 'tax'
     ## ----------------------------------
     tax$parent_id[tax$taxon == taxon] <- npid
-    cat("Parent of '", taxon, "' changed from '", tax$taxon[tax$id == opid],
-        "' [", opid, "] to '", new.parent, "' [", npid, "]", sep = "")
+    cat(silver("Parent of '" %+% magenta$bold(taxon) %+% "' changed from '" %+% 
+                 magenta$bold(tax$taxon[tax$id == opid]) %+% "' [" %+% cyan(opid) %+% 
+                 "] to '" %+% magenta$bold(new.parent) %+% "' [" %+% cyan(npid) %+% "]\n", sep = ""))
     if (!length(sid)){
       if (orphaned.parent == "delete"){
         tax <- tax[tax$id != opid, ]
-        cat("\nPrevious parent ('", oname, "' [", opid, "]) deleted", sep = "")
+        cat("Previous parent ('", oname, "' [", opid, "]) deleted\n", sep = "")
       } else {
         ## orphaned.parent == "synonym"
         tax$status[tax$id == opid] <- "synonym"
         tax$id[tax$id == opid] <- npid
-        cat("\nStatus of previous parent ('", oname, "' [", opid, " -> ", npid, "])",
-            " changed to 'synonym'", sep = "")
+        cat(silver("Status of previous parent ('" %+% magenta$bold(oname) %+% "' [" %+% cyan(opid) %+% 
+              " -> " %+% cyan(npid), "]) changed to 'synonym'\n", sep = ""))
       }
     }
-    cat("\nChanges affect  only the returned data frame (and not the PostgreSQL database)")
+    cat(silver("Changes affect only the returned data frame (and not the PostgreSQL database)"))
     return(tax)
   } 
 }

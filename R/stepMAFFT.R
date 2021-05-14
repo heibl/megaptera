@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2016 (last update 2019-10-30)
+## © C. Heibl 2016 (last update 2021-03-18)
 
 #' @title STEP G: MAFFT Alignment
 #' @description Use MAFFT to align tip-rank-level sequences.
@@ -19,6 +19,8 @@
 #' @param ep A numeric giving the offset value, which works like \code{gap
 #'   extension penalty}, for group-to-group alignment; default 0.0, but 0.123 is
 #'   recommended if no long indels are expected.
+#' @param use.guidetree Logical, indicating whether to use megaptera's guide
+#'   tree or not. In the latter case, MAFFT's internal guide tree is used.
 #' @details \code{"localpair"} selects the \bold{L-INS-i} algorithm, probably
 #'   most accurate; recommended for <200 sequences; iterative refinement method
 #'   incorporating local pairwise alignment information.
@@ -52,11 +54,13 @@
 #'
 #'   \url{http://mafft.cbrc.jp/alignment/software/index.html}
 #' @importFrom ape ladderize
+#' @importFrom crayon %+% bold cyan magenta silver
 #' @importFrom DBI dbDisconnect dbExistsTable
 #' @importFrom ips write.nex
 #' @export
 
-stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){	
+stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0, 
+                      use.guidetree = TRUE){	
   
   start <- Sys.time()
   quiet <- FALSE
@@ -95,12 +99,13 @@ stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){
   
   ## iniate logfile
   ## --------------
+  logfile <- paste0("log/", gene, "-stepF.log")
+  if ( file.exists(logfile) ) unlink(logfile)
+  slog(silver(bold(paste("megaptera", packageDescription("megaptera")$Version)) %+% "\n"
+              %+% as.character(Sys.time()) %+%  "\n"
+              %+% bold("STEP G") %+% ": MAFFT alignment\n"), file = logfile, megProj = x)
   logfile <- paste0("log/", gene, "-stepPASTA.log")
   if (!quiet & file.exists(logfile)) unlink(logfile)
-  slog(paste("\nmegaptera", packageDescription("megaptera")$Version),
-                    paste0("\n", Sys.time()),
-                    "\nSTEP G: MAFFT alignment\n", 
-                    paste("\nLocus:", gene), file = logfile, megProj = x)
   
   ## open database connection
   conn <- dbconnect(x)
@@ -139,15 +144,15 @@ stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){
   
   ## Read taxonomy and create guide tree
   ## -----------------------------------
-  slog("\nCreating comprehensive guide tree ... ", file = logfile, megProj = x)
+  slog(silver("Creating comprehensive guide tree ... "), file = logfile, megProj = x)
   gt <- comprehensiveGuidetree(x, tip.rank = tip.rank, subset = "sequence_selected")
-  slog("OK", file = logfile, megProj = x)
+  slog(green("OK\n"), file = logfile, megProj = x)
   
   ## Read DNA sequences and check if guide tree is compatible
   ## --------------------------------------------------------
-  slog("\nReading sequences ... ", file = logfile, megProj = x)
-  seqs <- dbReadMSA(x, label = "taxon")
-  slog("OK", file = logfile, megProj = x)
+  slog(silver("Reading sequences ... "), file = logfile, megProj = x)
+  seqs <- dbReadMSA(x, label = "taxon", status = "raw")
+  slog(green("OK\n"), file = logfile, megProj = x)
   
   ## Check ...
   if (is.matrix(seqs)){
@@ -182,56 +187,59 @@ stepMAFFT <- function(x, method = "auto", maxiterate = 0, op = 1.53, ep = 0){
   
   ## MAFFT alignment
   ## ---------------
-  slog("\nAligning sequences with MAFFT ... ", file = logfile, megProj = x)
-  seqs <- mafft(seqs, method = method, gt = gt, 
+  slog(silver("Aligning sequences with MAFFT ... "), file = logfile, megProj = x)
+  if (!use.guidetree){
+    gt <- NULL
+  }
+  seqs <- mafft(x = seqs, method = method, gt = gt, 
                 maxiterate = maxiterate, op = op, ep = ep,
                 thread = x@params@cpus, exec = x@align.exe)
   if (is.logical(seqs)){
     slog("failed", file = logfile, megProj = x)
     stop("MAFFT alignment failed")
   }
-  slog("OK", file = logfile, megProj = x)
+  slog(green("OK\n"), file = logfile, megProj = x)
   
   ## Prune ends of alignment from 'thin tails'
   ## -----------------------------------------
-  slog("\nPruning 'thin tails' from alignment ... ", file = logfile, megProj = x)
+  slog(silver("Pruning 'thin tails' from alignment ... "), file = logfile, megProj = x)
   seqs <- trimEnds(seqs, min(nrow(seqs), min.n.seq))
-  slog("OK", file = logfile, megProj = x)
+  slog(green("OK\n"), file = logfile, megProj = x)
   
   ## Detect and delete empty cells from alignment
   ## --------------------------------------------
-  slog("\nDetect and delete empty cells from alignment ... ", file = logfile, megProj = x)
+  slog(silver("Detect and delete empty cells from alignment ... "), file = logfile, megProj = x)
   seqs <- deleteEmptyCells(seqs, quiet = TRUE)
-  slog("OK", file = logfile, megProj = x)
+  slog(green("OK\n"), file = logfile, megProj = x)
 
   ## Sort alignment taxonomically
   ## ----------------------------
   if (nrow(seqs)){
-    slog("\nSort alignment according to guide tree ... ", file = logfile, megProj = x)
+    slog(silver("Sort alignment according to guide tree ... "), file = logfile, megProj = x)
     gt <- ladderize(gt)
     gt <- drop.tip(gt, setdiff(gt$tip.label, rownames(seqs)))
     seqs <- seqs[match(gt$tip.label, rownames(seqs)), ]
-    slog("OK", file = logfile, megProj = x)
+    slog(green("OK\n"), file = logfile, megProj = x)
   }
   
   ## Write to database 
   ## -----------------
-  slog("\nWriting alignment to database ... ", file = logfile, megProj = x)
+  slog(silver("Writing alignment to database ... "), file = logfile, megProj = x)
   dbWriteMSA(x, dna = seqs, status = "aligned")
   dbDisconnect(conn)
-  slog("OK", file = logfile, megProj = x)
+  slog(green("OK\n"), file = logfile, megProj = x)
   
   # Write files
   # -----------
-  seqs <- dbReadMSA(x)
-  slog("\nWriting alignment to PHYLIP file ... ", file = logfile, megProj = x)
+  seqs <- dbReadMSA(x, status = "aligned", label = "taxon", confid.scores = "ignore")
+  slog(silver("Writing alignment to PHYLIP file ... "), file = logfile, megProj = x)
   write.phy(seqs, paste0("msa/", gene, ".phy"))
-  slog("OK", file = logfile, megProj = x)
+  slog(green("OK\n"), file = logfile, megProj = x)
   
-  slog("\nWriting alignment to NEXUS file ... ", file = logfile, megProj = x)
+  slog(silver("Writing alignment to NEXUS file ... "), file = logfile, megProj = x)
   rownames(seqs) <- gsub("-", "_", rownames(seqs))
   write.nex(seqs, paste0("msa/", gene, ".nex"))
-  slog("OK", file = logfile, megProj = x)
+  slog(green("OK\n"), file = logfile, megProj = x)
 
   ## calculate mean absolute deviation (MAD)
   ## see Smith, Beaulieau, Donoghue (2009)

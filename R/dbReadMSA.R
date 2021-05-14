@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-12-10)
+## © C. Heibl 2014 (last update 2021-03-19)
 
 #' @title Read Sequences from Database
 #' @description Reads selected and assembled sequences (see \code{\link{stepF}}
@@ -25,6 +25,7 @@
 
 dbReadMSA <- function(x, locus, taxon, regex = TRUE,
                       label = c("taxon", "acc"),
+                      status = NULL,
                       confid.scores = "all",
                       row.confid = 0, col.confid = 0,
                       ignore.excluded = TRUE, 
@@ -59,6 +60,10 @@ dbReadMSA <- function(x, locus, taxon, regex = TRUE,
                "acc, sequence, reliability",
                "FROM sequence_selected",
                "WHERE", wrapSQL(locus, "locus", "="))
+  if (!is.null(status)) {
+    SQL <- paste(SQL,"AND", wrapSQL(status, "status", "="))
+  }
+               
   seqs <- dbGetQuery(conn, SQL)
   dbDisconnect(conn)
   if (!nrow(seqs)) {

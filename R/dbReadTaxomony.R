@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2019-03-07)
+## © C. Heibl 2017 (last update 2021-03-18)
 
 #' @rdname dbTaxonomy
 #' @import DBI
@@ -70,9 +70,11 @@ dbReadTaxonomy <- function(megProj, tip.rank, subset, tag, root = "tol",
     tn <- taxdump_isTerminal(tax)
     id <- tax$id[tn & tax$rank != tip.rank & tax$status != "synonym"]
     if (length(id)){
-      warning(length(id)," terminal taxa without a taxon of rank '", tip.rank, 
-              "' in their lineage were removed:",
-              paste("\n-", tax$taxon[tax$id %in% id]))
+      if (megProj@params@debug.level >= 3){
+        warning(length(id)," terminal taxa without a taxon of rank '", tip.rank, 
+                "' in their lineage were removed:",
+                paste("\n-", tax$taxon[tax$id %in% id]))
+      }
       tax <- taxdumpDropTip(tax, id)
     }
   }

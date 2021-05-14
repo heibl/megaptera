@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2019-03-11)
+## © C. Heibl 2017 (last update 2021-05-11)
 
 #' @title Sanity Check for Parent-Child Taxonomic Tables
 #' @description Does several sanity checks for taxonomic tables in parent-child format.
@@ -17,6 +17,13 @@
 taxdumpSanity <- function(tax, quiet = FALSE){
   
   is_sane <- TRUE
+  
+  ## Check input format
+  if (!inherits(tax, "data.frame")){
+    if (!quiet) cat("FATAL: 'tax' is not of class 'data.frame'\n")
+    return(FALSE)
+  }
+  
   
   id <- duplicated(tax)
   if (any(id) ){

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-11-05)
+## © C. Heibl 2014 (last update 2021-03-19)
 
 # TO DO: marker-wise deletion of species (line 38)
 
@@ -61,6 +61,7 @@
 #'   sequence matrix plus output and partitions as separate ASCII-formatted
 #'   files.
 #' @importFrom ape cbind.DNAbin write.tree
+#' @importFrom crayon %+% bold cyan magenta red silver
 #' @importFrom utils zip
 #' @export
 
@@ -69,11 +70,11 @@ supermatrix <- function(megProj, min.n.seq = 3, blocks = "split",
                         partition, trim.ends = 0,
                         locus.coverage = 0.0,
                         global.coverage = 0.0,
-                        subset.locus, subset.species,
-                        exclude.locus, exclude.species,
-                        core.locus, core.species,
+                        subset.locus = NULL, subset.species = NULL,
+                        exclude.locus = NULL, exclude.species = NULL,
+                        core.locus = NULL, core.species = NULL,
                         best.sampled.congeneric = FALSE,
-                        protect.outgroup = FALSE, squeeze.outgroup){
+                        protect.outgroup = FALSE, squeeze.outgroup = NULL){
   
   ## INITIAL CHECKS + ADJUSTMENTS
   ## ----------------------------
@@ -85,10 +86,7 @@ supermatrix <- function(megProj, min.n.seq = 3, blocks = "split",
   
   ## Get outgroup
   ## ------------
-  outgroup <- dbReadTaxonomy(megProj)
-  outgroup <- lapply(megProj@taxon@outgroup, taxdumpChildren,
-                     tax = outgroup, tip.rank = "species")
-  outgroup <- gsub(" ", "_", do.call(rbind, outgroup)$taxon)
+  og <- outgroup(megProj, sep = "_")
   
   x <- selectMSA(megProj = megProj,
                  min.n.seq = min.n.seq,
@@ -103,10 +101,10 @@ supermatrix <- function(megProj, min.n.seq = 3, blocks = "split",
   
   ## Prepare column weights. Note that these must be integers for RAxML
   ## ------------------------------------------------------------------
-  cat("\nPreparing column weights ... ")
+  cat(silver("Preparing column weights ... "))
   w <- unlist(lapply(x, "attr", which = "cs"))
   w <- round(w / min(w))
-  cat("OK")
+  cat(green("OK\n"))
   
   ## Create partitions
   ## -----------------
@@ -134,9 +132,9 @@ supermatrix <- function(megProj, min.n.seq = 3, blocks = "split",
   
   ## create SUPERMATRIX
   ## ------------------
-  cat("\nConcatenating alignments ... ")
+  cat(silver("Concatenating alignments ... "))
   x <- do.call(cbind.DNAbin, c(x, fill.with.gaps = TRUE))
-  cat("OK")
+  cat(green("OK\n"))
   
   ## Exclude species by user decision
   ## --------------------------------
@@ -144,17 +142,17 @@ supermatrix <- function(megProj, min.n.seq = 3, blocks = "split",
     exclude.species <- intersect(exclude.species, rownames(x))
     nes <- length(exclude.species)
     if (nes > 0){
-      cat("\nExcluding ", nes ," (", round(nes/nrow(x), 2), 
+      cat("Excluding ", nes ," (", round(nes/nrow(x), 2), 
           "%) species by user decision ... ", sep = "")
       x <- x[!rownames(x) %in% exclude.species, ]
-      cat("OK")
+      cat(green("OK\n"))
     }
   }
   
   ## Create denser ingroup
   ## ---------------------
   if (best.sampled.congeneric){
-    cat("\nKeeping only one best-sampled species per genus ... ")
+    cat("Keeping only one best-sampled species per genus ... ")
     percentInformative <- function(z){
       length(which(!z %in% as.raw(c(n = 240, "?" = 2, "-" = 4))))/length(z)
     }
@@ -167,13 +165,14 @@ supermatrix <- function(megProj, min.n.seq = 3, blocks = "split",
     bsc <- split(bsc, f = bsc$genus)
     bsc <- sapply(bsc, function(z) z$species[which.max(z$fraction)])
     x <- x[bsc, ]
-    cat("OK")
+    cat(green("OK\n"))
   }
   
   ## Detect actual outgroup
   ## ----------------------
-  outgroup <- intersect(outgroup, rownames(x))
-  cat("\nNumber of available outgroup species:", length(outgroup))
+  og <- intersect(og, rownames(x))
+  cat(silver("Number of available outgroup species: " 
+             %+% red$bold(length(og)) %+% "\n"))
   
   ## Make filenames (from here on 'x' does not change any more)
   ## ----------------------------------------------------------
@@ -185,20 +184,22 @@ supermatrix <- function(megProj, min.n.seq = 3, blocks = "split",
   ## Assess amount of missing data
   ## -----------------------------
   md <- length(which(x %in% as.raw(c(n = 240, "?" = 2, "-" = 4))))/length(x)
-  cat("\nSupermatrix contains ", round(md * 100, 2), 
-      "% missing data (including gaps)", sep = "")
+  cat(silver("Supermatrix (" 
+             %+% magenta(bold(nrow(x)) %+% " taxa/" %+% bold(ncol(x)) %+% " characters") 
+             %+% ") contains " %+% magenta$bold(paste0(round(md * 100, 2), "%"))
+             %+% " missing data (including gaps)\n"))
   
   ## prepare guide tree 
   ## ------------------
-  cat("\nPreparing comprehensive guidetree ... ")
+  cat("Preparing comprehensive guidetree ... ")
   gt <- comprehensiveGuidetree(megProj, 
                                tip.rank = tip.rank,
                                subset = x)
-  cat("OK")
+  cat(green("OK\n"))
   
   ## write outgroup + partitions files
   ## ---------------------------------
-  og <- paste(outgroup, collapse = ",")
+  og <- paste(og, collapse = ",")
   clip <- pipe("pbcopy", "w")
   write(og, file = clip)
   close(clip)
@@ -207,14 +208,15 @@ supermatrix <- function(megProj, min.n.seq = 3, blocks = "split",
   
   ## zip
   ## ---
-  cat("\nZipping supermatrix ..\n")
-  zip(zipfile = fn, files = fns[c("phy", "partitions", "outgroup")])
+  cat("Zipping supermatrix ...")
+  dump <- zip(zipfile = fn, files = fns[c("phy", "partitions", "outgroup")])
   obj <- list(zipname = fn,
               supermatrix = x,
               outgroup = og,
               partitions = p,
               weights = w,
               guide.tree = gt)
+  cat(green("OK\n"))
   
   ## write data as PHY and NEX
   ## -------------------------

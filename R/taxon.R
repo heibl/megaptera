@@ -26,12 +26,13 @@
   } else {
     
     ##
-    ingroup <- unique(ingroup); outgroup <- unique(outgroup)
-    if (is.factor(ingroup)) ingroup <- levels(ingroup)[ingroup]
-    if (is.factor(outgroup)) outgroup <- levels(outgroup)[outgroup]
-    if (is.character(ingroup)) ingroup <- as.list(ingroup)
-    if (is.character(outgroup)) outgroup <- as.list(outgroup)
-    
+    if (!taxdumpSanity(ingroup, quiet = TRUE)){
+      stop("inconsistent 'ingroup' object: run taxdumpSanity(ingroup) for diagnosis")
+    }
+    if (!taxdumpSanity(outgroup, quiet = TRUE)){
+      stop("inconsistent 'outgroup' object: run taxdumpSanity(outgroup) for diagnosis")
+    }
+   
     tip.rank <- match.arg(tip.rank, c("genus", "species"))
     
     new("taxon", 
@@ -56,10 +57,12 @@ setMethod("show",
             arg <- format(arg)
             
             formatTaxa <- function(taxa){
-              n <- length(taxa)
-              taxa <- paste(head(taxa, 2), collapse = ", ") 
-              if ( n > 2 ) taxa <- paste(taxa, ", ... [", n, "]")
-              taxa
+              root <- taxa$taxon[taxa$id == taxa$parent_id]
+              spec <- taxa$taxon[taxa$rank == "species" & taxa$status == "scientific name"]
+              n <- length(spec)
+              spec <- sort(spec)[c(1, n)]
+              spec <- paste(spec, collapse = ifelse(n > 2, ", ..., ", ", "))
+              paste0(n, " species of ", root, ": ", spec)
             }
             out <- c(
               object@tip.rank,

@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2018 (last update 2020-02-20)
+## © C. Heibl 2018 (last update 2021-03-18)
 
 #' @title stepBLASTN: Filter Homologous Sequences
 #' @description Filters homologous sequences using the BLASTB tool
@@ -31,6 +31,7 @@
 stepBLAST <- function(x, word.size = 11, gapopen = 5, gapextend = 2,
                       penalty = -3, reward = 1){
   
+  ## word.size = 11; gapopen = 5; gapextend = 2; penalty = -3; reward = 1
   start <- Sys.time()
   
   ## CHECKS
@@ -48,17 +49,29 @@ stepBLAST <- function(x, word.size = 11, gapopen = 5, gapextend = 2,
   outn <- paste0("data/out_", gsub("^_", "", gene), ".txt")
   # dbProgress(x, "step_b", "error")
   
-  ## Create BLAST database
-  ## ---------------------
+  ## iniate logfile
+  ## --------------
+  logfile <- paste0("log/", gene, "-stepBLAST.log")
+  if ( file.exists(logfile) ) unlink(logfile)
+  slog(silver(bold(paste("megaptera", packageDescription("megaptera")$Version)) %+% "\n"
+              %+% as.character(Sys.time()) %+%  "\n"
+              %+% bold("STEP BLAST") %+% ": BLAST sequences against reference\n"))
+  
+  
+  ## Create BLAST reference database
+  ## -------------------------------
+  slog(silver("Create BLAST reference database ... "))
   write.fas(x@locus@reference, refn)
   cmd <- paste("/usr/local/ncbi/blast/bin/makeblastdb", 
                "-in", refn, 
                "-dbtype nucl",
                "-parse_seqids")
-  system(cmd)
+  system(cmd, ignore.stdout = TRUE)
+  slog(green("OK\n"))
   
   ## Prepare Sequences
   ## ------------------
+  slog(silver("Prepare sequences for BLAST ... "))
   conn <- dbconnect(x)
   seqs <- dbGetQuery(conn, "SELECT acc, sequence FROM sequence")
   acc_table <- data.frame(raw = seqs$acc,
@@ -68,9 +81,11 @@ stepBLAST <- function(x, word.size = 11, gapopen = 5, gapextend = 2,
   seqs <- paste(paste0(">", acc_table$canonical), seqs$sequence, sep = "\n")
   cat(seqs, file = dbn, sep = "\n")
   remove(seqs)
+  slog(green("OK\n"))
   
   ## Do the BLAST
   ## ------------
+  slog(silver("Execute BLAST search ... "))
   cls <- c("qseqid", "sseqid", 
            "length", 
            "mismatch", 
@@ -96,10 +111,12 @@ stepBLAST <- function(x, word.size = 11, gapopen = 5, gapextend = 2,
                "-max_target_seqs 10000",
                outfmt,
                "-out", outn)
-  system(cmd)
+  system(cmd, ignore.stdout = TRUE)
+  slog(green("OK\n"))
   
   ## Parse output 
   ## ------------
+  slog(silver("Parse BLAST output ... "))
   res <- fread(outn)
   names(res) <- cls
   ## For every accession select hit with lowest E-value
@@ -108,12 +125,17 @@ stepBLAST <- function(x, word.size = 11, gapopen = 5, gapextend = 2,
   
   ## Revert to raw accession numbers
   res$qseqid <- acc_table$raw[match(res$qseqid, acc_table$canonical)]
+  slog(green("OK\n"))
   
-  message("blastn returned ", nrow(res), " hits (E-value <=", max(res$evalue), ")")
+  ## Calculate 'grade'
+  ## -----------------
+  slog(silver(" > BLASTN returned " %+% magenta$bold(nrow(res)) %+% " hits " 
+              %+% cyan("(E-value <= " %+% as.character(max(res$evalue)) %+% ")\n")))
   
   
   ## We only keep hits which improve previous E-values
   ## -------------------------------------------------
+  slog(silver("Compare to previous BLAST searches ... "))
   previous <- "SELECT acc, qcovs, evalue FROM sequence WHERE locus IS NOT NULL"
   previous <- dbGetQuery(conn, previous)
   previous <- previous[previous$acc %in% res$qseqid, ]
@@ -121,10 +143,12 @@ stepBLAST <- function(x, word.size = 11, gapopen = 5, gapextend = 2,
   res <- data.frame(res, previous[match(res$qseqid, previous$acc), ])
   res$evalue.1[is.na(res$evalue.1)] <- 1000 ## these are the accs not yet BLASTED
   res <- res[res$evalue < res$evalue.1, -(14:16)]
-  message(nrow(res), " of these hits are new or represent lower E-values")
+  slog(green("OK\n"))
+  slog(silver(" > " %+% magenta$bold(nrow(res)) %+% " of these hits are new or represent lower E-values\n"))
   
   ## Update database
   ## ---------------
+  slog(silver("Write results to database ... "))
   if (nrow(res)){
     SQL <- paste("UPDATE sequence",
                  "SET", wrapSQL(gene, "locus", "=", NULL),
@@ -140,7 +164,12 @@ stepBLAST <- function(x, word.size = 11, gapopen = 5, gapextend = 2,
                  ",", wrapSQL(res$bitscore, "bitscore", "=", NULL),
                  ",", wrapSQL(res$sstrand, "sstrand", "=", NULL),
                  "WHERE", wrapSQL(res$qseqid, "acc", "=", NULL))
-    lapply(SQL, dbSendQuery, conn = conn)
+    dump <- lapply(SQL, dbSendQuery, conn = conn)
   }
+  slog(green("OK\n"))
+  
+  
   dbDisconnect(conn)
+  
+  
 }

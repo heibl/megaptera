@@ -1,11 +1,16 @@
 
 #' @export
-dbReadSequence <- function(x, locus = x@locus){
+dbReadSequence <- function(x, locus = x@locus, taxon = NULL){
   
   conn <- dbconnect(x)
+  
+  if (!is.null(taxon)){
+    taxon <- paste("AND", wrapSQL(taxon, "taxon", "="))
+  }
   seqs <- paste("SELECT taxon, acc, sequence", 
                 "FROM sequence",
                 "WHERE", wrapSQL(locus@sql, "locus", "="),
+                taxon,
                 "ORDER BY taxon")
   seqs <- dbGetQuery(conn, seqs)
   dbDisconnect(conn)
@@ -16,15 +21,23 @@ dbReadSequence <- function(x, locus = x@locus){
 }
 
 #' @export
-dbReadSequenceSelected <- function(x, locus = x@locus@sql, status = "reliability", threshold = 0.25){
+dbReadSequenceSelected <- function(x, locus = x@locus@sql, taxon = NULL, 
+                                   status = "reliability", threshold = 0.25){
   
   ## Query database
   ## --------------
   conn <- dbconnect(x)
+  if (!is.null(taxon)){
+    taxon <- paste("AND", wrapSQL(taxon, "taxon", "="))
+  }
+  if (!is.null(status)){
+    status <- paste("AND", wrapSQL(status, "status", "~"))
+  }
   seqs <- paste("SELECT taxon, sequence, reliability", 
                 "FROM sequence_selected",
                 "WHERE", wrapSQL(locus, "locus", "="),
-                "AND", wrapSQL("reliability", "status", "~"),
+                taxon,
+                status,
                 "ORDER BY taxon")
   seqs <- dbGetQuery(conn, seqs)
   dbDisconnect(conn)

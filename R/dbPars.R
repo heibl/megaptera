@@ -1,9 +1,9 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2020-05-15)
+## © C. Heibl 2014 (last update 2021-03-20)
 
 #' @title Set Database Parameters
 #' @description Sets the connection parameters for a PostgreSQL database and, as
-#'   a side effect, creates the database, if it does not yet exist.
+#'   a side effect, creates the database with relevant tables, if it does not yet exist.
 #' @param host A vector of mode \code{"character"}, giving the name of the host,
 #'   most often this will be \code{"localhost"}.
 #' @param port Numeric, giving the port number, most often \code{5432}.
@@ -111,6 +111,7 @@
                  "(acc character varying NOT NULL,",
                  "taxon character varying  NOT NULL,",
                  "taxon_source character varying  NOT NULL,",
+                 "source character varying,",
                  "locus character varying,",
                  "status character varying,",
                  "qseqid character varying,",
@@ -165,7 +166,7 @@ setMethod("show",
           signature(object = "dbPars"),
           function (object) 
           {
-            cat("PostgreSQL connection parameters:",
+            cat("\nPostgreSQL connection parameters:",
                 "\n     host =", object@host,
                 "\n     port =", object@port,
                 "\n   dbname =", object@dbname,

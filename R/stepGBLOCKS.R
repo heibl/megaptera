@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-12-18)
+## © C. Heibl 2014 (last update 2021-03-19)
 
 #' @title Detect Homology Uncertainty in Alingment
 #' @description Use GBLOCKS to detect positions of uncertain homology and remove
@@ -15,13 +15,13 @@
 stepGBLOCKS <- function(x){
   
   start <- Sys.time()
-  
+
   ## CHECKS
   ## ------
   if (!inherits(x, "megapteraProj"))
     stop("'x' is not of class 'megapteraProj'")
   if (x@locus@kind == "undefined") stop("undefined locus not allowed")
-  
+
   ## check if previous step has been run
   ## -----------------------------------
   status <- dbProgress(x)
@@ -39,7 +39,7 @@ stepGBLOCKS <- function(x){
   # if (status$step_h == "success") {
   #   dbProgress(x, "step_i", "error")
   # }
-  
+
   ## DEFINITIONS
   ## -----------
   gene <- x@locus@sql
@@ -55,7 +55,7 @@ stepGBLOCKS <- function(x){
   b3 <- x@params@gb3
   b4 <- x@params@gb4
   b5 <- x@params@gb5
-  
+
   ## iniate logfile
   ## --------------
   logfile <- paste0("log/", gene, "-stepI.log")
@@ -65,11 +65,11 @@ stepGBLOCKS <- function(x){
        "\nSTEP I: detecting nucleotide positions of uncertain homology\n",
        paste("\nLocus:", x@locus@sql),
        file = logfile)
-  
+
   ## open database connection
   ## ------------------------
   conn <- dbconnect(x)
-  
+
   ## check if msa table exists
   ## -------------------------
   if (!dbExistsTable(conn, msa.tab)){
@@ -80,7 +80,7 @@ stepGBLOCKS <- function(x){
          file = logfile)
     return()
   }
-  
+
   ## check if at least 3 (ingroup) species are available
   ## ---------------------------------------------------
   n <- paste("SELECT count(taxon)",
@@ -89,10 +89,10 @@ stepGBLOCKS <- function(x){
   n <- dbGetQuery(conn, n)$count
   if (n < 3){
     dbDisconnect(conn)
-    slog("\nWARNING: only", n, "species available, no alignment possible\n", 
+    slog("\nWARNING: only", n, "species available, no alignment possible\n",
          file = logfile, megProj = x)
     td <- Sys.time() - start
-    slog("\nSTEP GG finished after", round(td, 2), attr(td, "units"), 
+    slog("\nSTEP GG finished after", round(td, 2), attr(td, "units"),
          "\n", file = logfile, megProj = x)
     dbProgress(x, "step_g", "failure")
     return()
@@ -103,21 +103,24 @@ stepGBLOCKS <- function(x){
     n <- which(is.ingroup(x, n$taxon))
     if (length(n) < 3){
       dbDisconnect(conn)
-      slog("\nWARNING:", length(n), "ingroup species available, no alignment possible\n", 
+      slog("\nWARNING:", length(n), "ingroup species available, no alignment possible\n",
            file = logfile, megProj = x)
       td <- Sys.time() - start
-      slog("\nSTEP GG finished after", round(td, 2), attr(td, "units"), 
+      slog("\nSTEP GG finished after", round(td, 2), attr(td, "units"),
            "\n", file = logfile, megProj = x)
       dbProgress(x, "step_g", "failure")
       return()
     }
   }
-  
+
   ## read alignment
   ## --------------
-  slog("\nReading alignment", file = logfile)
-  a <- dbReadMSA(x)
-
+  slog(silver("Reading alignment ... "), file = logfile)
+  a <- dbReadMSA(x, status = "aligned")
+  slog(silver("of " %+% magenta$bold(nrow(a)) %+% " taxa and "
+              %+% magenta$bold(ncol(a)) %+% " characters ... "), file = logfile)
+  slog(green("OK\n"))
+  
   if (is.null(a)) {
     dbDisconnect(conn)
     slog("\nWARNING: no sequences conform to current parameter setting\n", file = logfile)
@@ -129,16 +132,17 @@ stepGBLOCKS <- function(x){
   
   ## Masking of poorly aligned nucleotides
   ## -------------------------------------
-  slog("\nMasking poorly aligned regions:", file = logfile)
+  slog("Masking poorly aligned regions:", file = logfile)
   score <- gblocks(a, exec = gblocks.exe,
                    b1 = b1, b2 = b2, b3 = b3, b4 = b4, b5 = b5, 
                    target = "score") # with least conservative default
+  slog(green("OK\n"))
   
   ## Write scores to database 
   ## ------------------------
-  slog("\nWrite reliability scores to database ...", file = logfile)
+  slog(silver("Write reliability scores to database ... "), file = logfile)
   dbWriteMSA(x, dna = a, score = score, status = "aligned")
-  slog("done", file = logfile)
+  slog(green("OK\n"))
   
   ## write files
   ## -----------

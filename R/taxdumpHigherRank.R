@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2020-05-15)
+## © C. Heibl 2017 (last update 2021-03-15)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get the taxon name of a certain higher rank for a particular
@@ -23,12 +23,16 @@
 
 taxdumpHigherRank <- function(x, taxon, rank, it.max = 30){
   
+  ## Get taxonomy
   if (inherits(x, "megapteraProj")){
-    # x <- dbReadTaxonomy(x, subset = taxon)
     x <- dbReadTaxonomy(x)
   }
   taxon <- gsub("_", " ", taxon)
   
+  ## Make sure 'rank' is available in 'tax'
+  rank <- match.arg(rank, unique(x$rank))
+  
+  ## Make sure 'taxon' is available in 'tax'
   if (!taxon %in% x$taxon){
     warning("there is no taxon '", taxon, "' in 'x'")
     return(NA)
@@ -46,10 +50,14 @@ taxdumpHigherRank <- function(x, taxon, rank, it.max = 30){
     repeat {
       i <- i + 1
       z <- x[x$id %in% x$parent_id[x$id == z$id] & x$status == "scientific name", ]
+      if (!nrow(z)) return(NA) ## footnote 1
       if (z$rank == rank | i > it.max) break
     }
     ifelse(z$rank == rank, z$taxon, NA)
   }
   sapply(taxon, core, x = x, rank = rank, it.max = it.max)
 }
+
+## footnote 1: This is for cases when the target rank is not present in the
+## taxonomy and the 'tree-of-life tail' is shorter than it.max
 

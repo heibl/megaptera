@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package 
-##  © C. Heibl 2017 (last update 2019-03-05)
+##  © C. Heibl 2017 (last update 2021-03-15)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get subset of a taxonomy table in parent-child format.
@@ -83,6 +83,7 @@ taxdumpSubset <- function(tax, mrca, species, root = "tol", syn = FALSE){
       id <- all_ids <- tax[tax$taxon %in% species, "id"]
       while (length(id) > 1) {
         id <- unique(tax$parent_id[tax$id %in% id & tax$status == "scientific name"])
+        # print(id)
         all_ids <- c(all_ids, id)
       }
       # tax <- tax[tax$id %in% all_ids, c("parent_id", "id", "taxon", "rank")]
@@ -94,7 +95,7 @@ taxdumpSubset <- function(tax, mrca, species, root = "tol", syn = FALSE){
     if (root == "mrca") {
       id <- tax$id[tax$taxon == "cellular organisms"]
       repeat {
-        new_id <- tax[tax$parent_id == id[1], "id"]
+        new_id <- tax$id[tax$parent_id == id[1] & tax$status == "scientific name"]
         if (length(new_id) > 1) {
           id[1] <- 1 ## replace MRCA by root
           break

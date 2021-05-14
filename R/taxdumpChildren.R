@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2019-11-13)
+## © C. Heibl 2017 (last update 2021-04-12)
 
 #' @title Utilities for NCBI Taxdump
 #' @description Get all children of certain rank for a given taxon.
@@ -62,8 +62,8 @@ taxdumpChildren <- function(tax, taxon, immediate = FALSE,
     taxon <- gsub("_", " ", taxon)
   }
   
-  ## Check if taxon is contained in tax
-  ## ----------------------------------
+  ## Check if taxon is not contained in tax
+  ## --------------------------------------
   if (!taxon %in% tax$taxon){
     stop("taxon '", taxon, "' is not present in 'tax'", sep = "")
   }
@@ -116,38 +116,40 @@ taxdumpChildren <- function(tax, taxon, immediate = FALSE,
   tax <- tax[!tax$id %in% id, ]
   
   ## Remove *lineages* that do not terminate in structurally
-  ## valid Latin binomials according to 'indet'
-  ## ------------------------------------------
-  if (missing(indet)) {
-    indet <- indet.strings(collapse = TRUE)
-  }
-  notvalid <- grep(indet, tax$taxon)
-  notvalid <- intersect(notvalid, which(tax$rank == "species"))
-  message(notvalid)
-  if (length(notvalid)){
-    
-    notvalid <- sort(tax$id[notvalid])
-    for (i in notvalid){
-      tax <- taxdumpDropTip(tax, i)
+  ## valid Latin binomials according to 'indet'. Makes sense only 
+  ## if tip rank is species
+  ## -------------------------------------------------------------
+  if (tip.rank == "species"){
+    if (missing(indet)) {
+      indet <- indet.strings(collapse = TRUE)
     }
-    
-    ## Might need this bit in the future if
-    ## the above code turns out to be to slow
-    ## --------------------------------------
-    # pid <- tax$parent_id[notvalid]
-    # pid <- table(pid)
-    # z <- table(tax$parent_id)
-    # z <- z[names(z) %in% names(pid)]
-    # d <- z - pid
-    # entire_genus <- d[d == 0]
-    # pp_genus <- names(d)[d > 0]
-    # 
-    # notvalid <- intersect(notvalid, which(tax$parent_id %in% pp_genus))
-    # tax <- tax[-notvalid]
-    # 
-    # notvalid <- grep(indet.strings(collapse = TRUE), tax$taxon)
-    # notvalid <- intersect(notvalid, which(tax$rank == "species"))
-  
+    notvalid <- grep(indet, tax$taxon)
+    notvalid <- intersect(notvalid, which(tax$rank == "species"))
+    # message(notvalid)
+    if (length(notvalid)){
+      
+      notvalid <- sort(tax$id[notvalid])
+      for (i in notvalid){
+        tax <- taxdumpDropTip(tax, i)
+      }
+      
+      ## Might need this bit in the future if
+      ## the above code turns out to be to slow
+      ## --------------------------------------
+      # pid <- tax$parent_id[notvalid]
+      # pid <- table(pid)
+      # z <- table(tax$parent_id)
+      # z <- z[names(z) %in% names(pid)]
+      # d <- z - pid
+      # entire_genus <- d[d == 0]
+      # pp_genus <- names(d)[d > 0]
+      # 
+      # notvalid <- intersect(notvalid, which(tax$parent_id %in% pp_genus))
+      # tax <- tax[-notvalid]
+      # 
+      # notvalid <- grep(indet.strings(collapse = TRUE), tax$taxon)
+      # notvalid <- intersect(notvalid, which(tax$rank == "species"))
+    }
   }
   tax
 }

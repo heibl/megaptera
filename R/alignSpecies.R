@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2017-12-13)
+## © C. Heibl 2014 (last update 2021-03-12)
 
 #' @import DBI
 #' @export
@@ -41,8 +41,7 @@ alignSpecies <- function(megProj, spec){
 #     dbSendQuery(conn, SQL)
 #     slog("\n-- NOTE:", length(exclude), "seqs. of", spec, "excluded", file = logfile)
 #   }
-  dbWriteDNA(conn, acc.tab, seqs, enforce.binomial = FALSE, 
-             status = "aligned")
+  dbWriteDNA(conn, acc.tab, seqs, status = "aligned")
   
   ## clear results from previous runs of stepE
   ## -----------------------------------------

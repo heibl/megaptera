@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2017 (last update 2019-02-12)
+## © C. Heibl 2017 (last update 2021-03-12)
 
 #' @title Read and Write DNA Sequences
 #' @description Read and write DNA Sequences from/to PostgreSQL Database.
@@ -16,7 +16,6 @@
 #'   be interpreted as a regular expression (see \code{\link{regex}}).
 #' @param dna An object of class \code{\link[ape]{DNAbin}} to write to the
 #'   database.
-#' @param enforce.binomial Logical
 #' @param max.bp An integer, only sequences equal or shorter than \code{max.bp}
 #'   will be returned.
 #' @param max.evalue A positive real number giving the highest accepted Expectation

@@ -4,11 +4,13 @@
 \alias{speclist2taxdump}
 \title{Utilities for NCBI Taxdump}
 \usage{
-speclist2taxdump(species)
+speclist2taxdump(species, root = "root")
 }
 \arguments{
 \item{species}{A vector of mode \code{"character"} giving a set of species or
 genus names.}
+
+\item{root}{A character string giving the taxon name of the root node.}
 }
 \description{
 Convert a list of species or genera into a taxonomy table in

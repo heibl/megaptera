@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2019-09-17)
+## © C. Heibl 2014 (last update 2021-03-12)
 
 #' @title Create an Object of Class "megapteraPars"
 #' @description S4 Class for parameters of a megaptera project pipeline, as
@@ -8,7 +8,7 @@
 #'   names of the parameters described in the `Pipeline Parameters' section.
 #' @section Pipeline Parameters: 
 #' \describe{ 
-#' \item{\code{data.path}}{A character string giving the path to the directory there all
+#' \item{\code{data.path}}{A character string giving the path to the directory where all
 #'   data and results will be stored (see \code{\link{megapteraInit}}).}
 #' \item{\code{gb.seq.download}}{A character string defining how sequences should be
 #'   downloaded from GenBank Nucleotide; can be \code{"eutils"} or \code{"ftp"}.}

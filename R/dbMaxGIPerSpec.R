@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2014 (last update 2018-05-11)
+## © C. Heibl 2014 (last update 2021-03-18)
 
 #' @title Limit Numbers of Sequences per Species
 #' @description Some species (e.g. model organism) have thousands or more
@@ -33,7 +33,7 @@ dbMaxGIPerSpec <- function(megProj, max.gi.per.spec, prefer = "longest", taxon){
   ## -----------
   gene <- megProj@locus@sql
   if (gene == "undefined") stop("undefined locus not allowed")
-  acc.tab <- paste("acc", gsub("^_", "", gene), sep = "_")
+  acc.tab <- "sequence"
   logfile <- paste0("log/", gene, "-stepB.log")
   prefer <- match.arg(prefer, c("longest", "shortest", "most frequent length", "random"))
   
@@ -55,7 +55,7 @@ dbMaxGIPerSpec <- function(megProj, max.gi.per.spec, prefer = "longest", taxon){
   
   ## Exclude accession (if necessary)
   ## --------------------------------
-  tax <- paste("SELECT gi, taxon, npos", 
+  tax <- paste("SELECT acc, taxon, npos", 
                  "FROM", acc.tab,
                  "WHERE status != 'excluded (indet)'",
                  "AND status != 'excluded (too long)'")

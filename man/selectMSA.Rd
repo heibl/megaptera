@@ -13,17 +13,17 @@ selectMSA(
   trim.ends = 0,
   locus.coverage = 0,
   global.coverage = 0,
-  subset.locus,
-  subset.species,
-  exclude.locus,
-  exclude.species,
-  core.locus,
-  core.species,
+  subset.locus = NULL,
+  subset.species = NULL,
+  exclude.locus = NULL,
+  exclude.species = NULL,
+  core.locus = NULL,
+  core.species = NULL,
   best.sampled.congeneric = FALSE,
   equal.taxon.sets = TRUE,
   use.outgroup = TRUE,
   protect.outgroup = FALSE,
-  squeeze.outgroup
+  squeeze.outgroup = NULL
 )
 }
 \description{

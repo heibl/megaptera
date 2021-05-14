@@ -1,5 +1,5 @@
 ## This code is part of the megaptera package
-## © C. Heibl 2019 (last update 2019-09-23)
+## © C. Heibl 2019 (last update 2021-03-18)
 
 #' @title Read GenBank Flatfiles
 #' @description Read a GenBank flatfile, optionally filter its contents according to
@@ -11,12 +11,13 @@
 #'   flatfile).
 #' @param megProj An object of class \code{\link{megapteraProj}}.
 #' @importFrom ape as.DNAbin
+#' @importFrom crayon %+% bold cyan green magenta silver
 #' @export
 
 
 gbflat2db <- function(file, taxa = NULL, megProj){
   
-  message("\n", file)
+  slog(silver(file) %+% "\n")
   conn <- file(file, open = "r")
   seqs <- readLines(con = conn)
   close(conn)
@@ -24,7 +25,7 @@ gbflat2db <- function(file, taxa = NULL, megProj){
     stop("debug me!")
   }
   
-  ## Identify individual accesssions and extract them
+  ## Identify individual accessions and extract them
   ## ------------------------------------------------
   end <- which(seqs == "//")
   start <- grep("^LOCUS", seqs[1:100])[1]
@@ -75,7 +76,7 @@ gbflat2db <- function(file, taxa = NULL, megProj){
     taxlist[[which(id)]][1]
   }
   taxa_accepted <- sapply(taxa_available, chooseAccepted, taxlist = taxa)
-  message("Found ", length(taxa_available), " sequences")
+  slog(silver(" > found " %+% magenta$bold(length(taxa_available)) %+% " sequences"))
   
   ## Create data frame and write to database
   ## ---------------------------------------
@@ -96,7 +97,7 @@ gbflat2db <- function(file, taxa = NULL, megProj){
         
       }
     }
-    message("Writing ", nrow(seqs), " sequences to database")
+    slog(silver(" > writing " %+% magenta$bold(nrow(seqs)) %+% " sequences to database"))
     dbWriteTable(conn, "sequence", seqs, row.names = FALSE, append = TRUE)
     # slog("\n..", nrow(seqs), "sequences written to", acc.tab, "", 
     # file = logfile, megProj = megProj)  

@@ -7,7 +7,7 @@
 stepGenBankFTP(x, update)
 }
 \arguments{
-\item{x}{An object of class \code{\link{megaperaProj}}}
+\item{x}{An object of class \code{\link{megapteraProj}}}
 
 \item{update}{A vector of mode \code{"character"} giving the name of a taxon.}
 }
