@@ -1,5 +1,5 @@
 
-
+#' @export
 
 taxdumpMerge <- function(a, b, linconf = "b"){
   
@@ -11,6 +11,10 @@ taxdumpMerge <- function(a, b, linconf = "b"){
   ## will not be considered
   ## ---------------------------------------------
   BID <- sort(unique(b$id))
+  
+  load("user_data/DEV_taxdumpMerge2.rda")
+  BID <- BID[which(BID == i):length(BID)]
+  
   for (i in BID){
     
     taxon <- b$taxon[b$id == i & b$status == "scientific name"]
