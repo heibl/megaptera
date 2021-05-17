@@ -4,7 +4,7 @@
 \alias{taxdumpMergeNodes}
 \title{Utilities for NCBI Taxdump}
 \usage{
-taxdumpMergeNodes(x, nodes, accept = nodes[1])
+taxdumpMergeNodes(x, nodes, accept = nodes[1], new.child, new.child.rank)
 }
 \arguments{
 \item{x}{An object of class \code{\link{megapteraProj}} or a data frame in

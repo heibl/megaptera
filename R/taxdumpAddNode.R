@@ -207,7 +207,7 @@ taxdumpAddNode <- function(x, tab, rank = "species", taxon, parent, origin = "us
     
     ## Construct new rows for taxonomy
     ## -------------------------------
-    ID <- as.numeric(max(x[, c("id", "parent_id")]))
+    ID <- as.numeric(max(c(x$id, x$parent_id)))
     ID <- rev(include) + ID
     tab <- data.frame(parent_id = c(ID[-1], anchor_id), 
                       id = ID, 
